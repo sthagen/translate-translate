@@ -62,8 +62,7 @@ class ParseState(object):
     def decode(self, string):
         if self.encoding is not None:
             return decode(string, self.encoding)
-        else:
-            return string
+        return string
 
     def read_line(self):
         current = self.next_line
@@ -120,7 +119,7 @@ def parse_prev_msgid_plural(parse_state, unit):
 
 def parse_comment(parse_state, unit):
     next_line = parse_state.next_line.lstrip()
-    if len(next_line) > 0 and next_line[0] in ('#', '|'):
+    if next_line and next_line[0] in ('#', '|'):
         next_char = next_line[1]
         if next_char == '.':
             append(unit.automaticcomments, next_line)
@@ -154,10 +153,9 @@ def parse_comment(parse_state, unit):
 def parse_comments(parse_state, unit):
     if not parse_comment(parse_state, unit):
         return None
-    else:
-        while parse_comment(parse_state, unit):
-            pass
-        return True
+    while parse_comment(parse_state, unit):
+        pass
+    return True
 
 
 def read_obsolete_lines(parse_state):
@@ -196,10 +194,9 @@ def parse_quoted(parse_state, start_pos=0):
         right = rfind(line, '"')
         if left != right:
             return parse_state.read_line()[left:right+1]
-        else:
-            # There is no terminating quote, so we append an extra quote, but
-            # we also ignore the newline at the end (therefore the -1)
-            return parse_state.read_line()[left:-1] + '"'
+        # There is no terminating quote, so we append an extra quote, but
+        # we also ignore the newline at the end (therefore the -1)
+        return parse_state.read_line()[left:-1] + '"'
     return None
 
 
@@ -268,13 +265,11 @@ def parse_msgstr_array_entry(parse_state, msgstr_dict):
     right_bracket_pos = find(line, ']', MSGSTR_ARRAY_ENTRY_LEN)
     if right_bracket_pos >= 0:
         entry = get_entry(parse_state, right_bracket_pos)
-        if len(entry) > 0:
+        if entry:
             add_to_dict(msgstr_dict, line, right_bracket_pos, entry)
             return True
-        else:
-            return False
-    else:
         return False
+    return False
 
 
 def parse_msgstr_array(parse_state, unit):
@@ -289,20 +284,18 @@ def parse_msgstr_array(parse_state, unit):
 
 
 def parse_plural(parse_state, unit):
-    if parse_msgid_plural(parse_state, unit) and \
-       (parse_msgstr_array(parse_state, unit) or parse_msgstr(parse_state, unit)):
-        return True
-    else:
-        return False
+    return bool(
+        parse_msgid_plural(parse_state, unit)
+        and (parse_msgstr_array(parse_state, unit) or parse_msgstr(parse_state, unit))
+    )
 
 
 def parse_msg_entries(parse_state, unit):
     parse_msgctxt(parse_state, unit)
-    if parse_msgid(parse_state, unit) and \
-       (parse_msgstr(parse_state, unit) or parse_plural(parse_state, unit)):
-        return True
-    else:
-        return False
+    return bool(
+        parse_msgid(parse_state, unit)
+        and (parse_msgstr(parse_state, unit) or parse_plural(parse_state, unit))
+    )
 
 
 def parse_unit(parse_state, unit=None):
@@ -314,13 +307,12 @@ def parse_unit(parse_state, unit=None):
     parsed_msg_entries = parse_msg_entries(parse_state, unit)
     if parsed_comments or parsed_msg_entries:
         return unit
-    else:
-        return None
+    return None
 
 
 def set_encoding(parse_state, store, unit):
     charset = None
-    if isinstance(unit.msgstr, list) and len(unit.msgstr) and isinstance(unit.msgstr[0], six.string_types):
+    if isinstance(unit.msgstr, list) and unit.msgstr and isinstance(unit.msgstr[0], six.string_types):
         charset = re.search("charset=([^\\s\\\\n]+)", "".join(unit.msgstr))
     if charset:
         encoding = charset.group(1)

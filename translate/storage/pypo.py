@@ -28,6 +28,7 @@ import re
 import six
 import textwrap
 from io import BytesIO
+from itertools import chain
 
 from translate.lang import data
 from translate.misc import quote
@@ -89,14 +90,14 @@ def escapeforpo(line):
     for special_key in po_escape_map:
         special_locations.extend(quote.find_all(line, special_key))
     special_locations = sorted(dict.fromkeys(special_locations).keys())
-    escaped_line = ""
+    escaped_line = []
     last_location = 0
     for location in special_locations:
-        escaped_line += line[last_location:location]
-        escaped_line += po_escape_map[line[location:location+1]]
+        escaped_line.append(line[last_location:location])
+        escaped_line.append(po_escape_map[line[location:location+1]])
         last_location = location + 1
-    escaped_line += line[last_location:]
-    return escaped_line
+    escaped_line.append(line[last_location:])
+    return "".join(escaped_line)
 
 
 def unescapehandler(escape):
@@ -175,17 +176,17 @@ def unescape(line):
         if true_escape:
             true_escape_places.append(escape_pos)
 
-    extracted = u""
+    extracted = []
     lastpos = 0
     for pos in true_escape_places:
         # everything leading up to the escape
-        extracted += line[lastpos:pos]
+        extracted.append(line[lastpos:pos])
         # the escaped sequence (consuming 2 characters)
-        extracted += unescapehandler(line[pos:pos+2])
+        extracted.append(unescapehandler(line[pos:pos+2]))
         lastpos = pos+2
 
-    extracted += line[lastpos:]
-    return extracted
+    extracted.append(line[lastpos:])
+    return u"".join(extracted)
 
 
 def unquotefrompo(postr):
@@ -201,8 +202,7 @@ def extractstr(string):
     right = string.rfind('"')
     if right > -1:
         return string[left:right+1]
-    else:
-        return string[left:] + '"'
+    return string[left:] + '"'
 
 
 @six.python_2_unicode_compatible
@@ -321,8 +321,7 @@ class pounit(pocommon.pounit):
         """Returns the unescaped msgstr"""
         if isinstance(self.msgstr, dict):
             return multistring(list(map(unquotefrompo, self.msgstr.values())))
-        else:
-            return unquotefrompo(self.msgstr)
+        return unquotefrompo(self.msgstr)
 
     @target.setter
     def target(self, target):
@@ -400,14 +399,16 @@ class pounit(pocommon.pounit):
             return
         text = data.forceunicode(text)
         commentlist = self.othercomments
-        linestart = "# "
+        linestart = "#"
         autocomments = False
         if origin in ["programmer", "developer", "source code"]:
             autocomments = True
             commentlist = self.automaticcomments
-            linestart = "#. "
-        text = text.split("\n")
-        newcomments = [linestart + line + "\n" for line in text]
+            linestart = "#."
+        newcomments = [
+            "".join((linestart, " " if line else "", line, "\n"))
+            for line in text.split("\n")
+        ]
         if position == "append":
             newcomments = commentlist + newcomments
         elif position == "prepend":
@@ -447,15 +448,13 @@ class pounit(pocommon.pounit):
     def _msgidlen(self):
         if self.hasplural():
             return len(unquotefrompo(self.msgid)) + len(unquotefrompo(self.msgid_plural))
-        else:
-            return len(unquotefrompo(self.msgid))
+        return len(unquotefrompo(self.msgid))
 
     def _msgstrlen(self):
         if isinstance(self.msgstr, dict):
             combinedstr = "\n".join(filter(None, [unquotefrompo(msgstr) for msgstr in six.itervalues(self.msgstr)]))
             return len(combinedstr)
-        else:
-            return len(unquotefrompo(self.msgstr))
+        return len(unquotefrompo(self.msgstr))
 
     def merge(self, otherpo, overwrite=False, comments=True, authoritative=False):
         """Merges the otherpo (with the same msgid) into this one.
@@ -466,7 +465,7 @@ class pounit(pocommon.pounit):
 
         def mergelists(list1, list2, split=False):
             # Decode where necessary (either all bytestrings or all unicode)
-            if six.text_type in [type(item) for item in list2] + [type(item) for item in list1]:
+            if any(isinstance(item, six.text_type) for item in chain(list1, list2)):
                 for position, item in enumerate(list1):
                     if isinstance(item, bytes):
                         list1[position] = item.decode("utf-8")
@@ -544,7 +543,7 @@ class pounit(pocommon.pounit):
                 and is_null(self.msgctxt))
 
     def isblank(self):
-        if self.isheader() or len(self.msgidcomments):
+        if self.isheader() or self.msgidcomments:
             return False
         if (self._msgidlen() == 0) and (self._msgstrlen() == 0) and (is_null(self.msgctxt)):
             return True
@@ -643,21 +642,21 @@ class pounit(pocommon.pounit):
         if isinstance(partlines, dict):
             partkeys = sorted(partlines.keys())
             return "".join([self._getmsgpartstr("%s[%d]" % (partname, partkey), partlines[partkey], partcomments) for partkey in partkeys])
-        partstr = partname + " "
+        partstr = [partname, " "]
         partstartline = 0
-        if len(partlines) > 0 and len(partcomments) == 0:
-            partstr += partlines[0]
+        if partlines and not partcomments:
+            partstr.append(partlines[0])
             partstartline = 1
-        elif len(partcomments) > 0:
-            if len(partlines) > 0 and len(unquotefrompo(partlines[:1])) == 0:
+        elif partcomments:
+            if partlines and not unquotefrompo(partlines[:1]):
                 # if there is a blank leader line, it must come before the comment
-                partstr += partlines[0] + '\n'
+                partstr.extend((partlines[0], '\n'))
                 # but if the whole string is blank, leave it in
                 if len(partlines) > 1:
                     partstartline += 1
             else:
                 # All partcomments should start on a newline
-                partstr += '""\n'
+                partstr.append('""\n')
             # combine comments into one if more than one
             if len(partcomments) > 1:
                 combinedcomment = []
@@ -674,11 +673,10 @@ class pounit(pocommon.pounit):
                 if partcomments[0] == '""':
                     partcomments = partcomments[1:]
             # comments first, no blank leader line needed
-            partstr += "\n".join(partcomments)
-            partstr = quote.rstripeol(partstr)
+            partstr.append(quote.rstripeol("\n".join(partcomments)))
         else:
-            partstr += '""'
-        partstr += '\n'
+            partstr.append('""')
+        partstr.append('\n')
         # add the rest
         previous = None
         for partline in partlines[partstartline:]:
@@ -686,8 +684,8 @@ class pounit(pocommon.pounit):
             if previous == '""' and partline == '""':
                 continue
             previous = partline
-            partstr += partline + '\n'
-        return partstr
+            partstr.extend((partline, '\n'))
+        return "".join(partstr)
 
     def __str__(self):
         """Convert to a string."""
@@ -697,7 +695,7 @@ class pounit(pocommon.pounit):
         """return this po element as a string"""
 
         def add_prev_msgid_lines(lines, prefix, header, var):
-            if len(var) > 0:
+            if var:
                 lines.append("%s %s %s\n" % (prefix, header, var[0]))
                 lines.extend("%s %s\n" % (prefix, line) for line in var[1:])
 
