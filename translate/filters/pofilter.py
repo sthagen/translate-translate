@@ -29,7 +29,6 @@ for full descriptions of all tests.
 """
 
 import os
-import six
 
 from translate.filters import autocorrect, checks
 from translate.misc import optrecurse
@@ -100,7 +99,7 @@ class pocheckfilter(object):
         """Lists the docs for filters available on checker."""
         filterdict = self.checker.getfilters()
         filterdocs = ["%s\t%s" % (name, filterfunc.__doc__.split('\n\n')[0])
-                      for (name, filterfunc) in six.iteritems(filterdict)]
+                      for (name, filterfunc) in filterdict.items()]
         filterdocs.sort()
 
         return "\n".join(filterdocs)
@@ -148,7 +147,7 @@ class pocheckfilter(object):
 
             if filter_result:
                 if filter_result != autocorrect:
-                    for filter_name in six.iterkeys(filter_result):
+                    for filter_name in filter_result:
                         filter_message = filter_result[filter_name]['message']
 
                         if self.options.addnotes:

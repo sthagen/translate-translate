@@ -19,10 +19,8 @@
 
 """tests for storage base classes"""
 
-from __future__ import print_function
 
 import os
-import six
 import warnings
 from io import BytesIO
 
@@ -171,15 +169,15 @@ class TestTranslationUnit:
             assert len(elems[0].sub) == 1
             assert len(elems[1].sub) == 3
 
-            assert six.text_type(elems[0]) == target_mstr.strings[0]
-            assert six.text_type(elems[1]) == target_mstr.strings[1]
+            assert str(elems[0]) == target_mstr.strings[0]
+            assert str(elems[1]) == target_mstr.strings[1]
 
-            assert six.text_type(elems[1].sub[0]) == u'<b>'
-            assert six.text_type(elems[1].sub[1]) == u'string'
-            assert six.text_type(elems[1].sub[2]) == u'</b>'
+            assert str(elems[1].sub[0]) == u'<b>'
+            assert str(elems[1].sub[1]) == u'string'
+            assert str(elems[1].sub[2]) == u'</b>'
         else:
             assert len(elems[0].sub) == 1
-            assert six.text_type(elems[0]) == target_mstr.strings[0]
+            assert str(elems[0]) == target_mstr.strings[0]
 
     def test_rich_set(self):
         """Basic test for converting from multistrings to StringElem trees."""

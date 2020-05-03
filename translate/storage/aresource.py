@@ -23,7 +23,6 @@
 import copy
 import os
 import re
-import six
 
 from lxml import etree
 
@@ -38,7 +37,6 @@ WHITESPACE = ' \n\t'  # Whitespace that we collapse.
 MULTIWHITESPACE = re.compile('[ \n\t]{2}(?!\\\\n)')
 
 
-@six.python_2_unicode_compatible
 class AndroidResourceUnit(base.TranslationUnit):
     """A single entry in the Android String resource file."""
 
@@ -202,7 +200,7 @@ class AndroidResourceUnit(base.TranslationUnit):
                             # it will ignore leading/trailing whitespace.
                             if not codepoint_str.isalnum():
                                 raise ValueError(codepoint_str)
-                            codepoint = six.unichr(int(codepoint_str, 16))
+                            codepoint = chr(int(codepoint_str, 16))
                         except ValueError:
                             raise ValueError('bad unicode escape sequence')
 
@@ -374,6 +372,13 @@ class AndroidResourceUnit(base.TranslationUnit):
                 self.xmlelement.remove(entry)
 
             self.xmlelement.text = "\n    "
+
+            # Include "other" as copy of "many" if "other" is not present. This avoids crashes
+            # of Android builts with broken plurals handling.
+            if "other" not in plural_tags and "many" in plural_tags:
+                # Create copy here to avoid modifications to laguage.data
+                plural_tags = plural_tags + ["other"]
+                plural_strings.append(plural_strings[-1])
 
             for plural_tag, plural_string in zip(plural_tags, plural_strings):
                 item = etree.Element("item")

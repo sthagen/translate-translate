@@ -2,7 +2,6 @@
 
 import io
 
-import six
 
 import pytest
 
@@ -208,7 +207,7 @@ class TestMozLangFile(test_base.TestTranslationStore):
         out.seek(0)
         assert (
             out.read()
-            == six.text_type(
+            == str(
                 "## active ##\n"
                 "## some_tag ##\n"
                 "## another_tag ##\n"

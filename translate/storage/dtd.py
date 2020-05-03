@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Classes that hold units of .dtd files (:class:`dtdunit`) or entire files
+r"""Classes that hold units of .dtd files (:class:`dtdunit`) or entire files
 (:class:`dtdfile`).
 
 These are specific .dtd files for localisation used by mozilla.
@@ -84,7 +84,6 @@ Escaping in Android DTD
 """
 
 import re
-import six
 import warnings
 from io import BytesIO
 try:
@@ -225,7 +224,6 @@ def removeinvalidamps(name, value):
     return value
 
 
-@six.python_2_unicode_compatible
 class dtdunit(base.TranslationUnit):
     """An entity definition from a DTD file (and any associated comments)."""
 
@@ -554,7 +552,7 @@ class dtdfile(base.TranslationStore):
                     break
                 if lines[end].find(b'<!ENTITY') > -1:
                     foundentity = True
-                if foundentity and re.match(b"[\"']\s*>", lines[end]):
+                if foundentity and re.match(br"[\"']\s*>", lines[end]):
                     end += 1
                     break
                 end += 1
@@ -574,7 +572,7 @@ class dtdfile(base.TranslationStore):
         """Write content to file"""
         content = b''
         for dtd in self.units:
-            unit_str = six.text_type(dtd).encode(self.encoding)
+            unit_str = str(dtd).encode(self.encoding)
             out.write(unit_str)
             content += unit_str
         if not self._valid_store(content):

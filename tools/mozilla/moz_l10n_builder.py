@@ -30,7 +30,6 @@
 import glob
 import os
 import shutil
-import six
 import tempfile
 import time
 from subprocess import Popen, PIPE
@@ -121,7 +120,7 @@ def get_langs(lang_args):
 
     langs = []
 
-    if isinstance(lang_args, six.string_types):
+    if isinstance(lang_args, str):
         if lang_args == 'ALL':
             lang_args = ['ALL']
         elif lang_args == 'ZA':

@@ -33,9 +33,9 @@ comments.
 
 import os
 import re
-import six
 import warnings
 from io import BytesIO
+import struct
 
 from translate.misc import quote, wStringIO
 
@@ -44,7 +44,8 @@ from translate.misc import quote, wStringIO
 
 normalfilenamechars = b"/#.0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 normalizetable = b""
-for i in map(six.int2byte, range(256)):
+int2byte = struct.Struct(">B").pack
+for i in map(int2byte, range(256)):
     if i in normalfilenamechars:
         normalizetable += i
     else:
@@ -131,7 +132,7 @@ def unescape_text(text):
         .replace("\\r", "\r").replace("\a", "\\\\")
 
 
-helptagre = re.compile('''<[/]??[a-z_\-]+?(?:| +[a-z]+?=".*?") *[/]??>''')
+helptagre = re.compile(r'''<[/]??[a-z_\-]+?(?:| +[a-z]+?=".*?") *[/]??>''')
 
 
 def escape_help_text(text):
@@ -228,7 +229,6 @@ class ooline(object):
                 self.localid, self.platform)
 
 
-@six.python_2_unicode_compatible
 class oounit:
     """this represents a number of translations of a resource"""
 
@@ -257,7 +257,7 @@ class oounit:
                 lines = [new_line]
         else:
             lines = self.lines
-        return "\r\n".join([six.text_type(line) for line in lines])
+        return "\r\n".join([str(line) for line in lines])
 
 
 class oofile:
@@ -306,13 +306,6 @@ class oofile:
             parts = line.split("\t")
             thisline = ooline(parts)
             self.addline(thisline)
-
-    def __str__(self, *args, **kwargs):
-        if six.PY2:
-            out = BytesIO()
-            self.serialize(out, **kwargs)
-            return out.getvalue()
-        return super(oofile, self).__str__()
 
     def __bytes__(self):
         out = BytesIO()

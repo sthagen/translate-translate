@@ -23,9 +23,7 @@ units.
 
 import heapq
 import re
-import six
 from operator import itemgetter
-from six.moves import filter as ifilter
 
 from translate.misc.multistring import multistring
 from translate.search import lshtein, terminology
@@ -109,7 +107,7 @@ class matcher(object):
         """
         if isinstance(units, base.TranslationUnit):
             units = [units]
-        for candidate in ifilter(self.usable, units):
+        for candidate in (unit for unit in units if self.usable(unit)):
             simpleunit = base.TranslationUnit("")
             # We need to ensure that we don't pass multistrings futher, since
             # some modules (like the native Levenshtein) can't use it.
@@ -117,8 +115,8 @@ class matcher(object):
                 if len(candidate.source.strings) > 1:
                     simpleunit.orig_source = candidate.source
                     simpleunit.orig_target = candidate.target
-                simpleunit.source = six.text_type(candidate.source)
-                simpleunit.target = six.text_type(candidate.target)
+                simpleunit.source = str(candidate.source)
+                simpleunit.target = str(candidate.target)
             else:
                 simpleunit.source = candidate.source
                 simpleunit.target = candidate.target
@@ -239,14 +237,14 @@ class matcher(object):
 # The tuples define a regular expression to search for, and with what it
 # should be replaced.
 ignorepatterns = [
-    ("y\s*$", "ie"),          # category/categories, identify/identifies, apply/applied
-    ("[\s-]+", ""),           # down time / downtime, pre-order / preorder
+    (r"y\s*$", "ie"),          # category/categories, identify/identifies, apply/applied
+    (r"[\s-]+", ""),           # down time / downtime, pre-order / preorder
     ("-", " "),               # pre-order / pre order
     (" ", "-"),               # pre order / pre-order
 ]
 ignorepatterns_re = [(re.compile(a), b) for (a, b) in ignorepatterns]
 
-context_re = re.compile("\s+\(.*\)\s*$")
+context_re = re.compile(r"\s+\(.*\)\s*$")
 
 
 class terminologymatcher(matcher):

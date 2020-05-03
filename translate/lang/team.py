@@ -20,11 +20,8 @@
 """Module to guess the language ISO code based on the 'Language-Team' entry in
 the header of a Gettext PO file.
 """
-from __future__ import print_function, unicode_literals
 
 import re
-
-import six
 
 
 __all__ = ('LANG_TEAM_CONTACT_SNIPPETS', 'guess_language')
@@ -37,7 +34,7 @@ LANG_TEAM_REGEX = (
     ("ubuntu-l10n", "ubuntu-l10n-([a-z_A-Z]+)@lists.ubuntu.com", None),
     ("translate-discuss",
      "translate-discuss-([a-z_A-Z]+)@lists.sourceforge.net", None),
-    ("kde-i18n", "kde-i18n-([a-z_A-Z]+)@(?:lists\.|mail\.|)kde.org", ["doc"]),
+    ("kde-i18n", r"kde-i18n-([a-z_A-Z]+)@(?:lists\.|mail\.|)kde.org", ["doc"]),
     ("kde-l10n", "kde-l10n-([a-z_A-Z]+)@kde.org", None),
     ("fedoraproject", "trans-([a-z_A-Z]+)@lists.fedoraproject.org", None),
     ("gnome.org", "gnome-([a-z_A-Z]+)-list@gnome.org", ["latin"]),
@@ -406,7 +403,7 @@ def _snippet_guesser(snippets_dict, string, filter_=_nofilter):
     before examination
     """
     string = filter_(string)
-    for possible_lang, snippets in six.iteritems(snippets_dict):
+    for possible_lang, snippets in snippets_dict.items():
         for snippet in snippets:
             if filter_(snippet) in string:
                 return possible_lang

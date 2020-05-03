@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-u"""Manage the Trados .txt Translation Memory format
+r"""Manage the Trados .txt Translation Memory format
 
 A Trados file looks like this:
 
@@ -41,7 +41,6 @@ A Trados file looks like this:
 """
 
 import re
-import six
 import time
 
 try:
@@ -90,14 +89,14 @@ http://msdn.microsoft.com/en-us/library/aa140283(v=office.10).aspx
 
 def unescape(text):
     """Convert Trados text to normal Unicode string"""
-    for trados_escape, char in six.iteritems(RTF_ESCAPES):
+    for trados_escape, char in RTF_ESCAPES.items():
         text = text.replace(trados_escape, char)
     return text
 
 
 def escape(text):
     """Convert Unicode string to Trodas escapes"""
-    for trados_escape, char in six.iteritems(RTF_ESCAPES):
+    for trados_escape, char in RTF_ESCAPES.items():
         text = text.replace(char, trados_escape)
     return text
 
@@ -108,7 +107,7 @@ class TradosTxtDate(object):
     def __init__(self, newtime=None):
         self._time = None
         if newtime:
-            if isinstance(newtime, six.string_types):
+            if isinstance(newtime, str):
                 self.timestring = newtime
             elif isinstance(newtime, time.struct_time):
                 self.time = newtime
@@ -179,7 +178,7 @@ class TradosUnit(base.TranslationUnit):
 class TradosSoup(BeautifulSoup):
 
     MARKUP_MASSAGE = [
-        (re.compile('<(?P<fulltag>(?P<tag>[^\s\/]+).*?)>(?P<content>.+)\r'),
+        (re.compile('<(?P<fulltag>(?P<tag>[^\\s\\/]+).*?)>(?P<content>.+)\r'),
          lambda x: '<%(fulltag)s>%(content)s</%(tag)s>' % x.groupdict()),
     ]
 

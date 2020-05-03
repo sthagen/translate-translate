@@ -24,14 +24,6 @@ __all__ = ('get_abs_data_filename', )
 import os
 import sys
 
-import six
-
-
-def upath(path):
-    if six.PY2:
-        return six.text_type(path, sys.getfilesystemencoding())
-    return path
-
 
 def get_abs_data_filename(path_parts, basedirs=None):
     """Get the absolute path to the given file- or directory name in the
@@ -40,7 +32,7 @@ def get_abs_data_filename(path_parts, basedirs=None):
     :type  path_parts: list
     :param path_parts: The path parts that can be joined by ``os.path.join()``.
     """
-    if isinstance(path_parts, six.string_types):
+    if isinstance(path_parts, str):
         path_parts = [path_parts]
 
     DATA_DIRS = [
@@ -51,7 +43,7 @@ def get_abs_data_filename(path_parts, basedirs=None):
     if not basedirs:
         # Useful for running from checkout or similar layout. This will find
         # Toolkit's data files
-        base = os.path.dirname(upath(__file__))
+        base = os.path.dirname(__file__)
         BASE_DIRS = [
             base,
             os.path.join(base, os.path.pardir),
@@ -75,7 +67,7 @@ def get_abs_data_filename(path_parts, basedirs=None):
 
     BASE_DIRS += [
         # installed linux (/usr/bin) as well as Windows
-        os.path.dirname(upath(sys.executable)),
+        os.path.dirname(sys.executable),
     ]
 
     for basepath, data_dir in ((x, y) for x in BASE_DIRS for y in DATA_DIRS):

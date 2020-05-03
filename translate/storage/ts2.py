@@ -32,38 +32,18 @@ both.
 `2 <http://doc.qt.io/qt-5/qstring.html#arg-2>`_
 """
 
-import six
 from lxml import etree
 
 from translate.lang import data
 from translate.misc.deprecation import deprecated
 from translate.misc.multistring import multistring
 from translate.misc.xml_helpers import reindent
-from translate.storage import base, lisa
+from translate.storage import lisa
 from translate.storage.placeables import general
 from translate.storage.workflow import StateEnum as state
 
 
 # TODO: handle translation types
-
-NPLURALS = {
-    'jp': 1,
-    'en': 2,
-    'fr': 2,
-    'lv': 3,
-    'ga': 3,
-    'cs': 3,
-    'sk': 3,
-    'mk': 3,
-    'lt': 3,
-    'ru': 3,
-    'pl': 3,
-    'ro': 3,
-    'sl': 4,
-    'mt': 4,
-    'cy': 5,
-    'ar': 6,
-}
 
 
 class tsunit(lisa.LISAunit):
@@ -95,7 +75,7 @@ class tsunit(lisa.LISAunit):
         S_TRANSLATED: (state.UNREVIEWED, state.MAX),
     }
 
-    statemap_r = dict((i[1], i[0]) for i in six.iteritems(statemap))
+    statemap_r = dict((i[1], i[0]) for i in statemap.items())
     _context = None
 
     def createlanguageNode(self, lang, text, purpose):
@@ -497,11 +477,10 @@ class tsfile(lisa.LISAfile):
         return True
 
     def nplural(self):
-        lang = self.header.get("language")
-        if lang in NPLURALS:
-            return NPLURALS[lang]
-        else:
+        lang = data.get_language(self.header.get("language"))
+        if lang is None:
             return 1
+        return lang[1]
 
     def serialize(self, out):
         """Write the XML document to a file."""

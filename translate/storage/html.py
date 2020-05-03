@@ -21,10 +21,9 @@
 """module for parsing html files for translation"""
 
 import re
-import six
 
-from six.moves import html_parser
-from six.moves.html_entities import name2codepoint
+import html.parser
+from html.entities import name2codepoint
 
 from translate.misc.deprecation import deprecated
 from translate.storage import base
@@ -33,7 +32,7 @@ from translate.storage.base import ParseError
 
 # Override the piclose tag from simple > to ?> otherwise we consume HTML
 # within the processing instructions
-html_parser.piclose = re.compile('\?>')
+html.parser.piclose = re.compile(r'\?>')
 
 
 strip_html_re = re.compile(r'''
@@ -68,7 +67,7 @@ def strip_html(text):
     text = text.strip()
 
     # If all that is left is PHP, return ""
-    result = re.findall('(?s)^<\?.*?\?>$', text)
+    result = re.findall(r'(?s)^<\?.*?\?>$', text)
     if len(result) == 1:
         return ""
 
@@ -78,7 +77,7 @@ def strip_html(text):
     return text
 
 
-normalize_re = re.compile("\s\s+")
+normalize_re = re.compile(r"\s\s+")
 
 
 def normalize_html(text):
@@ -125,7 +124,7 @@ class htmlunit(base.TranslationUnit):
         return self.locations
 
 
-class htmlfile(html_parser.HTMLParser, base.TranslationStore):
+class htmlfile(html.parser.HTMLParser, base.TranslationStore):
     UnitClass = htmlunit
 
     MARKINGTAGS = [
@@ -193,8 +192,7 @@ class htmlfile(html_parser.HTMLParser, base.TranslationStore):
         else:
             self.callback = callback
         self.includeuntaggeddata = includeuntaggeddata
-        htmlargs = {'convert_charrefs': True} if six.PY34 else {}
-        html_parser.HTMLParser.__init__(self, **htmlargs)
+        html.parser.HTMLParser.__init__(self, convert_charrefs=True)
 
         if inputfile is not None:
             htmlsrc = inputfile.read()
@@ -204,7 +202,7 @@ class htmlfile(html_parser.HTMLParser, base.TranslationStore):
     def _simple_callback(self, string):
         return string
 
-    ENCODING_RE = re.compile(b'''<meta.*
+    ENCODING_RE = re.compile(br'''<meta.*
                                 content.*=.*?charset.*?=\s*?
                                 ([^\s]*)
                                 \s*?["']\s*?>
@@ -247,7 +245,7 @@ class htmlfile(html_parser.HTMLParser, base.TranslationStore):
         strings to help our regexes out.
 
         """
-        result = re.findall('(?s)<\?(.*?)\?>', text)
+        result = re.findall(r'(?s)<\?(.*?)\?>', text)
         for pi in result:
             pi_escaped = pi.replace("<", "%lt;").replace(">", "%gt;")
             self.pidict[pi_escaped] = pi
@@ -289,7 +287,7 @@ class htmlfile(html_parser.HTMLParser, base.TranslationStore):
         if text == '&nbsp;':
             return False
 
-        pattern = '<\?.*?\?>'  # Lazily strip all PHP
+        pattern = r'<\?.*?\?>'  # Lazily strip all PHP
         result = re.sub(pattern, '', text).strip()
         pattern = '<[^>]*>'  # Strip all HTML tags
         result = re.sub(pattern, '', result).strip()
@@ -415,14 +413,14 @@ class htmlfile(html_parser.HTMLParser, base.TranslationStore):
 
     def handle_charref(self, name):
         """Handle entries in the form &#NNNN; e.g. &#8417;"""
-        self.handle_data(six.unichr(int(name)))
+        self.handle_data(chr(int(name)))
 
     def handle_entityref(self, name):
         """Handle named entities of the form &aaaa; e.g. &rsquo;"""
         if name in ['gt', 'lt', 'amp']:
             self.handle_data("&%s;" % name)
         else:
-            self.handle_data(six.unichr(name2codepoint.get(name, u"&%s;" % name)))
+            self.handle_data(chr(name2codepoint.get(name, u"&%s;" % name)))
 
     def handle_comment(self, data):
         # we can place comments above the msgid as translator comments!

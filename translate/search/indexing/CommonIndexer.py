@@ -24,7 +24,6 @@ base class for interfaces to indexing engines for pootle
 """
 
 import os
-import six
 
 import translate.lang.data
 
@@ -177,19 +176,19 @@ class CommonDatabase(object):
             elif isinstance(query, tuple):
                 field, value = query
                 # perform unicode normalization
-                field = translate.lang.data.normalize(six.text_type(field))
-                value = translate.lang.data.normalize(six.text_type(value))
+                field = translate.lang.data.normalize(str(field))
+                value = translate.lang.data.normalize(str(value))
                 # check for the choosen match type
                 if analyzer is None:
                     analyzer = self.get_field_analyzers(field)
                 result.append(self._create_query_for_field(
                     field, value, analyzer=analyzer))
             # parse plaintext queries
-            elif isinstance(query, six.string_types):
+            elif isinstance(query, str):
                 if analyzer is None:
                     analyzer = self.analyzer
                 # perform unicode normalization
-                query = translate.lang.data.normalize(six.text_type(query))
+                query = translate.lang.data.normalize(str(query))
                 result.append(self._create_query_for_string(
                     query, require_all=require_all, analyzer=analyzer))
             else:
@@ -297,7 +296,7 @@ class CommonDatabase(object):
                 if key is None:
                     if isinstance(value, list):
                         terms = value[:]
-                    elif isinstance(value, six.string_types):
+                    elif isinstance(value, str):
                         terms = [value]
                     else:
                         raise ValueError("Invalid data type to be indexed: %s" %
@@ -315,7 +314,7 @@ class CommonDatabase(object):
                         self._add_field_term(
                             doc, key, self._decode(one_term),
                             (analyze_settings & self.ANALYZER_TOKENIZE > 0))
-            elif isinstance(dataset, six.string_types):
+            elif isinstance(dataset, str):
                 self._add_plain_term(
                     doc, self._decode(dataset),
                     (self.ANALYZER_DEFAULT & self.ANALYZER_TOKENIZE > 0))
@@ -450,7 +449,7 @@ class CommonDatabase(object):
         if len(ident_list) == 0:
             # no matching items
             return 0
-        if isinstance(ident_list[0], six.integer_types):
+        if isinstance(ident_list[0], int):
             # create a list of IDs of all successfully removed documents
             success_delete = [match for match in ident_list
                               if self.delete_document_by_id(match)]
@@ -526,7 +525,7 @@ class CommonDatabase(object):
         """
         for field, analyzer in field_analyzers.items():
             # check for invald input types
-            if not isinstance(field, six.string_types):
+            if not isinstance(field, str):
                 raise TypeError("field name must be a string")
             if not isinstance(analyzer, int):
                 raise TypeError("the analyzer must be a whole number (int)")
@@ -552,7 +551,7 @@ class CommonDatabase(object):
             # return a copy
             return dict(self.field_analyzers)
         # one field is requested
-        if isinstance(fieldnames, six.string_types):
+        if isinstance(fieldnames, str):
             if fieldnames in self.field_analyzers:
                 return self.field_analyzers[fieldnames]
             else:
@@ -574,8 +573,8 @@ class CommonDatabase(object):
                 result = text.decode("UTF-8")
             except UnicodeDecodeError:
                 result = text.decode("charmap")
-        elif not isinstance(text, six.text_type):
-            result = six.text_type(text)
+        elif not isinstance(text, str):
+            result = str(text)
         else:
             result = text
         # perform unicode normalization

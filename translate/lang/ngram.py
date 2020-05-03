@@ -25,25 +25,22 @@
 .. note:: Orignal code from http://thomas.mangin.me.uk/data/source/ngram.py
 """
 
-from __future__ import unicode_literals
 
 import glob
 import io
 import re
-import six
 import sys
 from os import path
-from six.moves import range
 
 
 nb_ngrams = 400
-white_space_re = re.compile('\s+')
+white_space_re = re.compile(r'\s+')
 
 
 class _NGram:
 
     def __init__(self, arg=None):
-        if isinstance(arg, six.string_types):
+        if isinstance(arg, str):
             self.addText(arg)
             self.normalise()
         elif isinstance(arg, dict):
@@ -133,7 +130,7 @@ class NGram:
         ngram = _NGram(text)
         r = 'guess'
 
-        min = six.MAXSIZE
+        min = sys.maxsize
 
         for lang in self.ngrams:
             d = self.ngrams[lang].compare(ngram)

@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
 
 from pytest import importorskip, raises
 
 from translate.convert import po2ini, test_convert
 from translate.misc import wStringIO
-from translate.storage import po
 
 
 importorskip("iniparse")

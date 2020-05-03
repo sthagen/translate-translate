@@ -78,15 +78,10 @@ Extended Attributes
     The last 4 columns allow users to define and manage extended attributes.
     These are left as is and are not directly managed byour implemenation.
 """
-from __future__ import unicode_literals
 
-import six
 import time
 
-if six.PY2:
-    from backports import csv
-else:
-    import csv
+import csv
 
 from translate.misc.deprecation import deprecated
 from translate.storage import base
@@ -211,7 +206,7 @@ class WordfastTime(object):
         self._time = None
         if not newtime:
             self.time = None
-        elif isinstance(newtime, six.string_types):
+        elif isinstance(newtime, str):
             self.timestring = newtime
         elif isinstance(newtime, time.struct_time):
             self.time = newtime
@@ -290,7 +285,6 @@ class WordfastHeader(object):
     tucount = property(None, settucount)
 
 
-@six.python_2_unicode_compatible
 class WordfastUnit(base.TranslationUnit):
     """A Wordfast translation memory unit"""
 

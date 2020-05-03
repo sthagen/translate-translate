@@ -21,13 +21,8 @@
 or entire files (csvfile) for use with localisation
 """
 
-from __future__ import unicode_literals
 
-import six
-if six.PY2:
-    from backports import csv
-else:
-    import csv
+import csv
 
 from translate.storage import base
 
@@ -41,7 +36,6 @@ class DefaultDialect(csv.excel):
 csv.register_dialect('default', DefaultDialect)
 
 
-@six.python_2_unicode_compatible
 class csvunit(base.TranslationUnit):
     spreadsheetescapes = [("+", "\\+"), ("-", "\\-"), ("=", "\\="), ("'", "\\'")]
 
@@ -132,7 +126,7 @@ class csvunit(base.TranslationUnit):
     def match_header(self):
         """see if unit might be a header"""
         some_value = False
-        for key, value in six.iteritems(self.todict()):
+        for key, value in self.todict().items():
             if value:
                 some_value = True
             if key.lower() != 'fuzzy' and value and key.lower() != value.lower():
@@ -158,7 +152,7 @@ class csvunit(base.TranslationUnit):
         return source, target
 
     def fromdict(self, cedict, encoding='utf-8'):
-        for key, value in six.iteritems(cedict):
+        for key, value in cedict.items():
             rkey = fieldname_map.get(key, key)
             if value is None or key is None or key == EXTRA_KEY:
                 continue
@@ -328,7 +322,7 @@ class csvfile(base.TranslationStore):
     def serialize(self, out):
         """Write to file"""
         source = self.getoutput()
-        if isinstance(source, six.text_type):
+        if isinstance(source, str):
             # Python 3
             out.write(source.encode(self.encoding))
         else:

@@ -22,7 +22,6 @@
 """
 
 import os.path
-import six
 from io import BytesIO
 
 from translate.misc import optrecurse
@@ -133,7 +132,7 @@ class ConvertOptionParser(optrecurse.RecursiveOptionParser, object):
         """Filters output options, processing relevant switches in options."""
         if self.usepots and options.pot:
             outputoptions = {}
-            for (inputformat, templateformat), (outputformat, convertor) in six.iteritems(self.outputoptions):
+            for (inputformat, templateformat), (outputformat, convertor) in self.outputoptions.items():
                 inputformat = self.potifyformat(inputformat)
                 templateformat = self.potifyformat(templateformat)
                 outputformat = self.potifyformat(outputformat)
@@ -275,7 +274,7 @@ class ArchiveConvertOptionParser(ConvertOptionParser):
 
     def isarchive(self, fileoption, filepurpose='input'):
         """Returns whether the file option is an archive file."""
-        if not isinstance(fileoption, six.string_types):
+        if not isinstance(fileoption, str):
             return False
         mustexist = (filepurpose != 'output')
         if mustexist and not os.path.isfile(fileoption):

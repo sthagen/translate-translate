@@ -23,7 +23,6 @@ See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/command
 for examples and usage instructions.
 """
 
-import six
 
 from translate.convert import convert
 from translate.storage import factory
@@ -32,7 +31,7 @@ from translate.storage.symbian import *
 
 
 def escape(text):
-    for key, val in six.iteritems(po_escape_map):
+    for key, val in po_escape_map.items():
         text = text.replace(key, val)
     return '"%s"' % text
 
@@ -44,7 +43,7 @@ def replace_header_items(ps, replacments):
         if match is not None:
             key = match.groupdict()['key']
             if key in replacments:
-                ps.current_line = match.expand('\g<key>\g<space>%s\n' % replacments[key])
+                ps.current_line = match.expand('\\g<key>\\g<space>%s\n' % replacments[key])
         ps.read_line()
 
 
@@ -59,7 +58,7 @@ def parse(ps, header_replacements, body_replacements):
                 key = match.groupdict()['id']
                 if key in body_replacements:
                     value = body_replacements[key].target or body_replacements[key].source
-                    ps.current_line = match.expand(u'\g<start>\g<id>\g<space>%s\n' % escape(value))
+                    ps.current_line = match.expand(u'\\g<start>\\g<id>\\g<space>%s\n' % escape(value))
             ps.read_line()
     except StopIteration:
         pass

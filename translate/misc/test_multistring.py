@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import pytest
-import six
 
 from translate.misc import multistring
-
-
-str_prefix = '' if six.PY3 else 'u'
 
 
 class TestMultistring:
@@ -28,14 +23,11 @@ class TestMultistring:
     def test_repr(self):
         t = multistring.multistring
         s1 = t(u"test")
-        assert repr(s1) == "multistring([%s'test'])" % str_prefix
+        assert repr(s1) == "multistring(['test'])"
         assert eval(u'multistring.%s' % repr(s1)) == s1
 
         s2 = t(["test", u"mé"])
-        if six.PY3:
-            assert repr(s2) == "multistring(['test', 'mé'])"
-        else:
-            assert repr(s2) == "multistring([u'test', u'm\\xe9'])"
+        assert repr(s2) == "multistring(['test', 'mé'])"
         assert eval(u'multistring.%s' % repr(s2)) == s2
 
     def test_replace(self):
@@ -81,24 +73,21 @@ class TestMultistring:
     def test_coercion(self):
         t = multistring.multistring
         assert str(t("test")) == "test"
-        assert six.text_type(t("téßt")) == "téßt"
+        assert str(t("téßt")) == "téßt"
 
     def test_unicode_coercion(self):
         t = multistring.multistring
-        assert six.text_type(t("test")) == u"test"
-        assert six.text_type(t(u"test")) == u"test"
-        assert six.text_type(t("téßt")) == u"téßt"
-        assert six.text_type(t(u"téßt")) == u"téßt"
-        assert six.text_type(t(["téßt", "blāh"])) == u"téßt"
-        assert six.text_type(t([u"téßt"])) == u"téßt"
+        assert str(t("test")) == u"test"
+        assert str(t(u"test")) == u"test"
+        assert str(t("téßt")) == u"téßt"
+        assert str(t(u"téßt")) == u"téßt"
+        assert str(t(["téßt", "blāh"])) == u"téßt"
+        assert str(t([u"téßt"])) == u"téßt"
 
     def test_list_coercion(self):
         t = multistring.multistring
-        assert six.text_type([t(u"test")]) == u"[multistring([%s'test'])]" % str_prefix
-        if six.PY3:
-            assert six.text_type([t(u"tést")]) == u"[multistring(['tést'])]"
-        else:
-            assert six.text_type([t(u"tést")]) == u"[multistring([u't\\xe9st'])]"
+        assert str([t(u"test")]) == u"[multistring(['test'])]"
+        assert str([t(u"tést")]) == u"[multistring(['tést'])]"
 
     def test_multistring_hash(self):
         t = multistring.multistring

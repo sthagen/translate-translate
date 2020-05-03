@@ -1,5 +1,3 @@
-import pytest
-import six
 from lxml import etree
 
 from translate.misc.xml_helpers import setXMLspace
@@ -73,14 +71,14 @@ class TestXLIFFUnit(test_base.TestTranslationUnit):
                    "NULL bytes or control characters")
         for code in xliff.ASCII_CONTROL_CODES:
             self.unit.target = u'Een&#x%s;' % code.lstrip('0') or '0'
-            assert self.unit.target == u'Een%s' % six.unichr(int(code, 16))
-            self.unit.target = u'Een%s' % six.unichr(int(code, 16))
-            assert self.unit.target == u'Een%s' % six.unichr(int(code, 16))
+            assert self.unit.target == u'Een%s' % chr(int(code, 16))
+            self.unit.target = u'Een%s' % chr(int(code, 16))
+            assert self.unit.target == u'Een%s' % chr(int(code, 16))
 
     def test_unaccepted_control_chars_escapes_roundtrip(self):
         """Test control characters go ok on escaping roundtrip."""
         for code in xliff.ASCII_CONTROL_CODES:
-            special = u'Een%s' % six.unichr(int(code, 16))
+            special = u'Een%s' % chr(int(code, 16))
             self.unit.source = special
             print("unit.source:", repr(self.unit.source))
             print("special:", repr(special))
@@ -510,3 +508,30 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         assert bytes(xfile) == xlfsource
         xfile.units[0].addnote('Test note')
         assert bytes(xfile) == xlfsourcenote
+
+    def test_add_target(self):
+        xlfsource = b'''<?xml version='1.0' encoding='UTF-8'?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.1" version="1.1">
+  <file original="doc.txt" source-language="en-US">
+    <body>
+      <trans-unit id="1" xml:space="preserve">
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
+'''
+        xlftarget = '''<?xml version='1.0' encoding='UTF-8'?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.1" version="1.1">
+  <file original="doc.txt" source-language="en-US">
+    <body>
+      <trans-unit id="1" xml:space="preserve">
+      <target>Soubor</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
+'''
+        xfile = xliff.xlifffile.parsestring(xlfsource)
+        assert bytes(xfile) == xlfsource
+        xfile.units[0].rich_target = [u"Soubor"]
+        assert bytes(xfile).decode('ascii') == xlftarget

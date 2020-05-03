@@ -59,11 +59,9 @@ TODOs and Ideas for possible features:
   - phrases
 """
 
-from __future__ import unicode_literals
 
 import logging
 import re
-import six
 
 from translate.lang import data
 
@@ -272,7 +270,7 @@ class Common(object):
         ellipses_end = text.endswith("...")
         if ellipses_end:
             text = text[:-3]
-        for source, target in six.iteritems(cls.puncdict):
+        for source, target in cls.puncdict.items():
             text = text.replace(source, target)
         if ellipses_end:
             if "..." in cls.puncdict:

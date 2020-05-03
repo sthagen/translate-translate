@@ -22,9 +22,7 @@ delimiters
 """
 
 import logging
-import six
-
-from six.moves import html_entities
+import html.entities
 
 
 def find_all(searchin, substr):
@@ -154,7 +152,7 @@ def extractwithoutquotes(source, startdelim, enddelim, escape=None,
                         replace_escape = includeescapes(section[epos:epos + lenescape + 1])
                         # TODO: deprecate old method of returning boolean from
                         # includeescape, by removing this if block
-                        if not isinstance(replace_escape, six.string_types):
+                        if not isinstance(replace_escape, str):
                             if replace_escape:
                                 replace_escape = section[epos:epos + lenescape + 1]
                             else:
@@ -263,7 +261,7 @@ def entitydecode(source, name2codepoint):
             if char == ";":
                 if (len(possibleentity) > 0 and
                     possibleentity in name2codepoint):
-                    entchar = six.unichr(name2codepoint[possibleentity])
+                    entchar = chr(name2codepoint[possibleentity])
                     if entchar == u'&' and _has_entity_end(source[i+1:]):
                         output += "&" + possibleentity + ";"
                     else:
@@ -290,7 +288,7 @@ def htmlentityencode(source):
 
     :param unicode source: Source string to encode
     """
-    return entityencode(source, html_entities.codepoint2name)
+    return entityencode(source, html.entities.codepoint2name)
 
 
 def htmlentitydecode(source):
@@ -298,7 +296,7 @@ def htmlentitydecode(source):
 
     :param unicode source: Source string to decode
     """
-    return entitydecode(source, html_entities.name2codepoint)
+    return entitydecode(source, html.entities.name2codepoint)
 
 
 def javapropertiesencode(source):
@@ -372,7 +370,7 @@ controlchars = {
 
 def escapecontrols(source):
     """escape control characters in the given string"""
-    for key, value in six.iteritems(controlchars):
+    for key, value in controlchars.items():
         source = source.replace(key, value)
     return source
 
@@ -395,11 +393,11 @@ def propertiesdecode(source):
         otherwise an escaped control character.
         """
         if 32 <= i:
-            return six.unichr(i)
-        elif six.unichr(i) in controlchars:
+            return chr(i)
+        elif chr(i) in controlchars:
             # we just return the character, unescaped
             # if people want to escape them they can use escapecontrols
-            return six.unichr(i)
+            return chr(i)
         return "\\u%04x" % i
 
     while s < len(source):

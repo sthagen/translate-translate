@@ -24,7 +24,6 @@ fit into any other sub-category.
 
 import re
 
-import six
 
 from translate.storage.placeables.base import G, Ph, StringElem
 
@@ -346,7 +345,7 @@ def to_general_placeables(tree,
 
     for baseclass, gclasslist in classmap.items():
         if isinstance(tree, baseclass):
-            gclass = [c for c in gclasslist if c.parse(six.text_type(tree))]
+            gclass = [c for c in gclasslist if c.parse(str(tree))]
             if gclass:
                 newtree = gclass[0]()
 

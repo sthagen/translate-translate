@@ -21,11 +21,7 @@
 
 import codecs
 import logging
-import six
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
 from io import BytesIO
 
 from translate.misc.deprecation import deprecated
@@ -54,7 +50,6 @@ class ParseError(Exception):
         return repr(self.inner_exc)
 
 
-@six.python_2_unicode_compatible
 class TranslationUnit(object):
     """Base class for translation units.
 
@@ -162,7 +157,7 @@ class TranslationUnit(object):
         >>> TranslationUnit.rich_to_multistring(rich)
         multistring(u'foo bar')
         """
-        return multistring([six.text_type(elem) for elem in elem_list])
+        return multistring([str(elem) for elem in elem_list])
 
     def multistring_to_rich(self, mulstring):
         """Convert a multistring to a list of "rich" string trees:
@@ -485,7 +480,7 @@ class TranslationUnit(object):
     def get_state_id(self, n=None):
         if n is None:
             n = self.get_state_n()
-        for state_id, state_range in six.iteritems(self.STATE):
+        for state_id, state_range in self.STATE.items():
             if state_range[0] <= n < state_range[1]:
                 return state_id
         if self.STATE:
@@ -730,13 +725,6 @@ class TranslationStore(object):
         odict['fileobj'] = None
         return odict
 
-    def __str__(self):
-        # This allows the old str(store) method for serialization to be kept
-        # for compatibility purpose.
-        if six.PY2:
-            return self.__bytes__()
-        return super(TranslationStore, self).__str__()
-
     def __bytes__(self):
         out = BytesIO()
         self.serialize(out)
@@ -774,7 +762,7 @@ class TranslationStore(object):
     def parsestring(cls, storestring):
         """Convert the string representation back to an object."""
         newstore = cls()
-        if isinstance(storestring, six.text_type):
+        if isinstance(storestring, str):
             # parse() is expecting bytes
             storestring = storestring.encode(cls.default_encoding)
         newstore.parse(storestring)
@@ -843,7 +831,7 @@ class TranslationStore(object):
 
         for encoding in encodings:
             try:
-                r_text = six.text_type(text, encoding)
+                r_text = str(text, encoding)
                 r_encoding = encoding
                 break
             except UnicodeDecodeError:
@@ -859,7 +847,7 @@ class TranslationStore(object):
 
     def savefile(self, storefile):
         """Write the string representation to the given file (or filename)."""
-        if isinstance(storefile, six.string_types):
+        if isinstance(storefile, str):
             storefile = open(storefile, 'wb')
         self.fileobj = storefile
         self._assignname()
@@ -887,7 +875,7 @@ class TranslationStore(object):
         """Reads the given file (or opens the given filename) and parses back
         to an object.
         """
-        if isinstance(storefile, six.string_types):
+        if isinstance(storefile, str):
             storefile = open(storefile, 'rb')
         mode = getattr(storefile, "mode", 'rb')
         #For some reason GzipFile returns 1, so we have to test for that here

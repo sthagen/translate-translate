@@ -22,7 +22,6 @@ import shutil
 import tempfile
 from zipfile import ZipFile
 
-import six
 
 from translate.storage.projstore import *
 
@@ -81,7 +80,7 @@ class BundleProjectStore(ProjectStore):
         """
         if fname and fname in self.zip.namelist():
             raise ValueError("File already in bundle archive: %s" % (fname))
-        if not fname and isinstance(afile, six.string_types) and afile in self.zip.namelist():
+        if not fname and isinstance(afile, str) and afile in self.zip.namelist():
             raise ValueError("File already in bundle archive: %s" % (afile))
 
         afile, fname = super(BundleProjectStore, self).append_file(afile, fname, ftype)
@@ -99,7 +98,7 @@ class BundleProjectStore(ProjectStore):
         """Remove the file with the given project name from the project."""
         super(BundleProjectStore, self).remove_file(fname, ftype)
         self._zip_delete([fname])
-        tempfiles = [tmpf for tmpf, prjf in six.iteritems(self._tempfiles) if prjf == fname]
+        tempfiles = [tmpf for tmpf, prjf in self._tempfiles.items() if prjf == fname]
         if tempfiles:
             for tmpf in tempfiles:
                 try:

@@ -71,7 +71,6 @@ import json
 import uuid
 from collections import OrderedDict
 
-import six
 
 from translate.misc.deprecation import deprecated
 from translate.misc.multistring import multistring
@@ -88,12 +87,12 @@ class JsonUnit(base.TranslationUnit):
         # Identifier at this level
         self._item = identifier if item is None else item
         # Type conversion for the unit
-        self._type = six.text_type if source is None else type(source)
+        self._type = str if source is None else type(source)
         if notes:
             self.notes = notes
         self.placeholders = placeholders
         if source:
-            if issubclass(self._type, six.string_types):
+            if issubclass(self._type, str):
                 self.target = source
             else:
                 self.target = str(source)
@@ -129,7 +128,7 @@ class JsonUnit(base.TranslationUnit):
         return self.getid().lstrip('.')
 
     def converttarget(self):
-        if issubclass(self._type, six.string_types):
+        if issubclass(self._type, str):
             return self.target
         else:
             return self._type(self.target)
@@ -187,7 +186,7 @@ class JsonFile(base.TranslationStore):
         :param last_node: the last list or dict
         """
         if isinstance(data, dict):
-            for k, v in six.iteritems(data):
+            for k, v in data.items():
                 for x in self._extract_units(v, stop, "%s.%s" % (prev, k), k, None, data):
                     yield x
         elif isinstance(data, list):
@@ -272,7 +271,7 @@ class WebExtensionJsonFile(JsonFile):
     UnitClass = WebExtensionJsonUnit
 
     def _extract_units(self, data, stop=None, prev="", name_node=None, name_last_node=None, last_node=None):
-        for item, value in six.iteritems(data):
+        for item, value in data.items():
             unit = self.UnitClass(
                 value.get('message', ''),
                 item,
@@ -349,7 +348,7 @@ class I18NextFile(JsonNestedFile):
             plurals_simple = [key.rsplit('_', 1)[0] for key in data if key.endswith('_plural')]
             processed = set()
 
-            for k, v in six.iteritems(data):
+            for k, v in data.items():
                 # Check already processed items
                 if k in processed:
                     continue

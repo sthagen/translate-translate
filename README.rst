@@ -5,20 +5,20 @@ Translate Toolkit
    :alt: Join the chat at https://gitter.im/translate/pootle
    :target: https://gitter.im/translate/pootle
 
-.. image:: https://img.shields.io/travis/translate/translate/master.svg?style=flat-square
+.. image:: https://github.com/translate/translate/workflows/Test/badge.svg
     :alt: Build Status
-    :target: https://travis-ci.org/translate/translate
+    :target: https://github.com/translate/translate/actions
 
 .. image:: https://img.shields.io/codecov/c/github/translate/translate/master.svg?style=flat-square
     :alt: Test Coverage
     :target: https://codecov.io/gh/translate/translate/branch/master
 
-.. image:: https://img.shields.io/requires/github/translate/translate/master.svg?style=flat-square
-    :target: https://requires.io/github/translate/translate/requirements/?branch=master
+.. image:: https://api.dependabot.com/badges/status?host=github&repo=translate/translate
+    :target: https://app.dependabot.com/accounts/translate/repos/3769696
     :alt: Requirements
 
 .. image:: https://img.shields.io/pypi/v/translate-toolkit.svg?style=flat-square
-    :alt: Downloads
+    :alt: Released version
     :target: https://pypi.python.org/pypi/translate-toolkit/
 
 .. image:: https://img.shields.io/pypi/pyversions/translate-toolkit.svg?style=flat-square
@@ -89,10 +89,7 @@ Requirements
    Will install all recommended requirements, while ``optional.txt`` will also
    install support for all other formats.
 
-Python 2.7 or later is required.
-
-Python 2.6 is no longer supported by the Python Software Foundation, while the
-Toolkit may work in versions before Python 2.7 this is not supported.
+The Toolkit requires Python 3.5 or newer.
 
 The package lxml is needed for XML file processing. You should install version
 3.5.0 or later. <http://lxml.de/> Depending on your platform, the easiest way
@@ -117,8 +114,8 @@ use libgettextpo from the gettext-tools package (it might have a slightly
 different name on your distribution). This can greatly speed up access to PO
 files, but has not yet been tested as extensively. Feedback is most welcome.
 
-The package iniparse is necessary for ini2po and po2ini.
-https://github.com/candlepin/python-iniparse
+The package iniparse is necessary for ini2po and po2ini:
+<https://pypi.org/project/iniparse/>
 
 The python-Levenshtein package will improve performance for fuzzy matching if
 it is available. This can improve the performance of pot2po, for example.  It
@@ -143,9 +140,6 @@ Gaupol might need the 'Universal Encoding Detector'
 
 Trados TXT TM support requires the BeautifulSoup parser
 <http://www.crummy.com/software/BeautifulSoup/>
-
-CSV based file formats require backports.csv package on Python 2
-<https://pypi.org/project/backports.csv/>.
 
 
 Program overview

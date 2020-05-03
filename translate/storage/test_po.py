@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
 
-import six
 from pytest import mark, raises
 
 from translate.misc import wStringIO
@@ -309,7 +307,7 @@ msgstr[1] "Kóeie"
         pofile = self.poparse(posource)
         unit = pofile.units[0]
         assert isinstance(unit.source, multistring)
-        assert isinstance(unit.source.strings[1], six.text_type)
+        assert isinstance(unit.source.strings[1], str)
 
     def test_nongettext_location(self):
         """test that we correctly handle a non-gettext (file:linenumber) location"""
@@ -321,7 +319,7 @@ msgstr[1] "Kóeie"
         print(locations)
         assert len(locations) == 1
         assert locations[0] == u"programming/C/programming.xml:44(para)"
-        assert isinstance(locations[0], six.text_type)
+        assert isinstance(locations[0], str)
 
     def test_percent_location(self):
         """test that we correctly handle a location with percent chars"""
@@ -791,7 +789,7 @@ msgstr "b"
 '''
         pofile = self.poparse(posource)
         for line in pofile.units[0].getnotes():
-            assert isinstance(line, six.text_type)
+            assert isinstance(line, str)
 
     def test_non_ascii_header_comments_2(self):
         posource = r'''
@@ -884,8 +882,7 @@ msgstr ""
 msgid "a"
 msgstr "d"
 '''
-        if six.PY3:
-            posource = posource.encode('utf-8')
+        posource = posource.encode('utf-8')
         pofile = self.poparse(posource)
         unit = pofile.units[1]
         unit.target = u"ḓ"
@@ -907,8 +904,6 @@ msgid "a"
 msgid_plural "aa"
 msgstr[0] ""
 '''
-        if six.PY2:
-            posource = posource.decode('utf-8')
         pofile = self.poparse(posource)
         unit = pofile.units[1]
         print(str(unit))
@@ -1020,8 +1015,6 @@ msgid ""
 msgstr ""
 "_: I'll be clever and translate in a text editor and duplicate the KDE comment"
 '''
-        if six.PY2:
-            posource = posource.decode('utf-8')
         pofile = self.poparse(posource)
         unit = pofile.units[1]
         assert unit.source == u'The actual source text'

@@ -20,7 +20,6 @@
 """class that handles all header functions for a header in a po file"""
 
 import re
-import six
 import time
 from collections import OrderedDict
 
@@ -94,7 +93,7 @@ def update(existing, add=False, **kwargs):
             removed.append(key)
         elif add and key in fixedargs:
             headerargs[key] = fixedargs.pop(key)
-    for key, value in six.iteritems(existing):
+    for key, value in existing.items():
         if key not in removed:
             headerargs[key] = value
     if add:
@@ -270,7 +269,7 @@ class poheader(object):
 
     def updateheaderplural(self, nplurals, plural):
         """Update the Plural-Form PO header."""
-        if isinstance(nplurals, six.string_types):
+        if isinstance(nplurals, str):
             nplurals = int(nplurals)
         self.updateheader(add=True, Plural_Forms="nplurals=%d; plural=%s;" % (nplurals, plural))
 
@@ -310,7 +309,7 @@ class poheader(object):
         :param lang: the new target language code
         :type lang: str
         """
-        if isinstance(lang, six.string_types) and len(lang) > 1:
+        if isinstance(lang, str) and len(lang) > 1:
             self.updateheader(add=True, Language=lang, X_Poedit_Language=None, X_Poedit_Country=None)
 
     def getprojectstyle(self):

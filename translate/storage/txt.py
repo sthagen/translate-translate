@@ -27,21 +27,20 @@ Supported formats are
 """
 
 import re
-import six
 
 from translate.misc.deprecation import deprecated
 from translate.storage import base
 
 
 dokuwiki = []
-dokuwiki.append(("Dokuwiki heading", re.compile(r"( ?={2,6}[\s]*)(.+)"), re.compile("([\s]*={2,6}[\s]*)$")))
-dokuwiki.append(("Dokuwiki bullet", re.compile(r"([\s]{2,}\*[\s]*)(.+)"), re.compile("[\s]+$")))
-dokuwiki.append(("Dokuwiki numbered item", re.compile(r"([\s]{2,}-[\s]*)(.+)"), re.compile("[\s]+$")))
+dokuwiki.append(("Dokuwiki heading", re.compile(r"( ?={2,6}[\s]*)(.+)"), re.compile(r"([\s]*={2,6}[\s]*)$")))
+dokuwiki.append(("Dokuwiki bullet", re.compile(r"([\s]{2,}\*[\s]*)(.+)"), re.compile(r"[\s]+$")))
+dokuwiki.append(("Dokuwiki numbered item", re.compile(r"([\s]{2,}-[\s]*)(.+)"), re.compile(r"[\s]+$")))
 
 mediawiki = []
-mediawiki.append(("MediaWiki heading", re.compile(r"(={1,5}[\s]*)(.+)"), re.compile("([\s]*={1,5}[\s]*)$")))
-mediawiki.append(("MediaWiki bullet", re.compile(r"(\*+[\s]*)(.+)"), re.compile("[\s]+$")))
-mediawiki.append(("MediaWiki numbered item", re.compile(r"(#+[\s]*)(.+)"), re.compile("[\s]+$")))
+mediawiki.append(("MediaWiki heading", re.compile(r"(={1,5}[\s]*)(.+)"), re.compile(r"([\s]*={1,5}[\s]*)$")))
+mediawiki.append(("MediaWiki bullet", re.compile(r"(\*+[\s]*)(.+)"), re.compile(r"[\s]+$")))
+mediawiki.append(("MediaWiki numbered item", re.compile(r"(#+[\s]*)(.+)"), re.compile(r"[\s]+$")))
 
 flavours = {
     "dokuwiki": dokuwiki,
@@ -51,7 +50,6 @@ flavours = {
 }
 
 
-@six.python_2_unicode_compatible
 class TxtUnit(base.TranslationUnit):
     """This class represents a block of text from a text file"""
 
@@ -157,4 +155,4 @@ class TxtFile(base.TranslationStore):
         for idx, unit in enumerate(self.units):
             if idx > 0:
                 out.write(b'\n\n')
-            out.write(six.text_type(unit).encode(self.encoding))
+            out.write(str(unit).encode(self.encoding))

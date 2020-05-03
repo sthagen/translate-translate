@@ -32,7 +32,6 @@ import ctypes.util
 import logging
 import os
 import re
-import six
 import sys
 import tempfile
 from ctypes import (CFUNCTYPE, POINTER, Structure, c_char_p, c_int, c_long,
@@ -272,11 +271,11 @@ def get_libgettextpo_version():
 
 
 def gpo_encode(value):
-    return value.encode('utf-8') if isinstance(value, six.text_type) else value
+    return value.encode('utf-8') if isinstance(value, str) else value
 
 
 def gpo_decode(value):
-    if isinstance(value, six.text_type):
+    if isinstance(value, str):
         return value
     elif isinstance(value, bytes):
         return value.decode('utf-8')
@@ -409,7 +408,7 @@ class pounit(pocommon.pounit):
         if self.hasplural():
             if isinstance(target, multistring):
                 target = target.strings
-            elif isinstance(target, six.string_types):
+            elif isinstance(target, str):
                 target = [target]
         # for non-plurals: check number of items in 'target'
         elif isinstance(target, (dict, list)):
@@ -435,7 +434,7 @@ class pounit(pocommon.pounit):
                 gpo.po_message_set_msgstr_plural(self._gpo_message, i, gpo_encode(targetstring))
         # add the values of a dict
         elif isinstance(target, dict):
-            for i, targetstring in enumerate(six.itervalues(target)):
+            for i, targetstring in enumerate(target.values()):
                 gpo.po_message_set_msgstr_plural(self._gpo_message, i, gpo_encode(targetstring))
         # add a single string
         else:
@@ -635,7 +634,7 @@ class pounit(pocommon.pounit):
             if locline == -1:
                 locstring = locname
             else:
-                locstring = u":".join([locname, six.text_type(locline)])
+                locstring = u":".join([locname, str(locline)])
             locations.append(pocommon.unquote_plus(locstring))
             i += 1
             location = gpo.po_message_filepos(self._gpo_message, i)

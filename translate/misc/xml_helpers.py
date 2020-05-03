@@ -20,7 +20,6 @@
 """Helper functions for working with XML."""
 
 import re
-import six
 
 from lxml import etree
 
@@ -47,9 +46,9 @@ def getText(node, xml_space="preserve"):
     """
     xml_space = getXMLspace(node, xml_space)
     if xml_space == "default":
-        return six.text_type(string_xpath_normalized(node))  # specific to lxml.etree
+        return str(string_xpath_normalized(node))  # specific to lxml.etree
     else:
-        return six.text_type(string_xpath(node))  # specific to lxml.etree
+        return str(string_xpath(node))  # specific to lxml.etree
 
     # If we want to normalise space and only preserve it when the directive
     # xml:space="preserve" is given in node or in parents, consider this code:

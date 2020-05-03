@@ -17,12 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
 
 import difflib
 import os
 import os.path as path
-import six
 import sys
 import zipfile
 
@@ -46,8 +44,8 @@ def setup_module(module):
 def args(src, tgt, **kwargs):
     arg_list = []
     arg_list.extend([u'--errorlevel=traceback', src, tgt])
-    for flag, value in six.iteritems(kwargs):
-        value = six.text_type(value)
+    for flag, value in kwargs.items():
+        value = str(value)
         if len(flag) == 1:
             arg_list.append(u'-%s' % flag)
         else:

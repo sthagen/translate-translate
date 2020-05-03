@@ -20,7 +20,6 @@
 """functions to get decorative/informative text out of strings..."""
 
 import re
-import six
 import unicodedata
 
 from translate.lang import data
@@ -93,8 +92,8 @@ def isvalidaccelerator(accelerator, acceptlist=None):
     :rtype: Boolean
     :return: True if the supplied character is an acceptable accelerator
     """
-    assert isinstance(accelerator, six.text_type)
-    assert isinstance(acceptlist, six.text_type) or acceptlist is None
+    assert isinstance(accelerator, str)
+    assert isinstance(acceptlist, str) or acceptlist is None
     if len(accelerator) == 0:
         return False
     if acceptlist is not None:
@@ -229,7 +228,7 @@ def getvariables(startmarker, endmarker):
 def getnumbers(str1):
     """returns any numbers that are in the string"""
     # TODO: handle locale-based periods e.g. 2,5 for Afrikaans
-    assert isinstance(str1, six.text_type)
+    assert isinstance(str1, str)
     numbers = []
     innumber = False
     degreesign = u'\xb0'
@@ -284,15 +283,15 @@ def getfunctions(str1):
 
 def getemails(str1):
     """returns the email addresses that are in a string"""
-    return re.findall('[\w\.\-]+@[\w\.\-]+', str1)
+    return re.findall(r'[\w\.\-]+@[\w\.\-]+', str1)
 
 
 def geturls(str1):
     """returns the URIs in a string"""
     # TODO turn this into a verbose and compiled regex
-    URLPAT = 'https?:[\w/\.:;+\-~\%#\$?=&,()]+|' + \
-             'www\.[\w/\.:;+\-~\%#\$?=&,()]+|' + \
-             'ftp:[\w/\.:;+\-~\%#?=&,]+'
+    URLPAT = r'https?:[\w/\.:;+\-~\%#\$?=&,()]+|' + \
+             r'www\.[\w/\.:;+\-~\%#\$?=&,()]+|' + \
+             r'ftp:[\w/\.:;+\-~\%#?=&,]+'
     return re.findall(URLPAT, str1)
 
 

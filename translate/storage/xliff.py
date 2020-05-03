@@ -22,7 +22,6 @@
 The official recommendation is to use the extention .xlf for XLIFF files.
 """
 
-import six
 from lxml import etree
 
 from translate.misc.deprecation import deprecated
@@ -77,7 +76,7 @@ ASCII_CONTROL_CODES = [
     '001f',  # Unicode Character 'INFORMATION SEPARATOR ONE' (U+001F)
 ]
 
-ASCII_CONTROL_CHARACTERS = {code: six.unichr(int(code, 16))
+ASCII_CONTROL_CHARACTERS = {code: chr(int(code, 16))
                             for code in ASCII_CONTROL_CODES}
 
 ASCII_CONTROL_CHARACTERS_ESCAPES = {code: u'&#x%s;' % code.lstrip('0') or '0'
@@ -115,7 +114,7 @@ class xliffunit(lisa.LISAunit):
         "final": S_SIGNED_OFF + 1,
     }
 
-    statemap_r = dict((i[1], i[0]) for i in six.iteritems(statemap))
+    statemap_r = dict((i[1], i[0]) for i in statemap.items())
 
     STATE = {
         S_UNTRANSLATED: (state.EMPTY, state.NEEDS_WORK),
@@ -158,7 +157,7 @@ class xliffunit(lisa.LISAunit):
         # Escape the unaccepted ASCII control characters.
         for code in ASCII_CONTROL_CODES:
             text = text.replace(
-                six.unichr(int(code, 16)),
+                chr(int(code, 16)),
                 u'&#x%s;' % code.lstrip('0') or '0')
 
         langset.text = text
@@ -505,14 +504,14 @@ class xliffunit(lisa.LISAunit):
             # unit has no proper file ancestor, probably newly created
             pass
         # hide the fact that we sanitize ID_SEPERATOR
-        uid += six.text_type(self.xmlelement.get("id") or u"").replace(ID_SEPARATOR_SAFE, ID_SEPARATOR)
+        uid += str(self.xmlelement.get("id") or u"").replace(ID_SEPARATOR_SAFE, ID_SEPARATOR)
         return uid
 
     def addlocation(self, location):
         self.setid(location)
 
     def getlocations(self):
-        id_attr = six.text_type(self.xmlelement.get("id") or u"")
+        id_attr = str(self.xmlelement.get("id") or u"")
         # XLIFF files downloaded from PO projects in Pootle
         # might have id equal to .source, so let's avoid
         # that:
@@ -594,7 +593,7 @@ class xliffunit(lisa.LISAunit):
         strings = mstr
         if isinstance(mstr, multistring):
             strings = mstr.strings
-        elif isinstance(mstr, six.string_types):
+        elif isinstance(mstr, str):
             strings = [mstr]
 
         return [xml_to_strelem(s) for s in strings]
@@ -604,7 +603,7 @@ class xliffunit(lisa.LISAunit):
         """Override :meth:`TranslationUnit.rich_to_multistring` which is used
         by the ``rich_source`` and ``rich_target`` properties.
         """
-        return multistring([six.text_type(elem) for elem in elem_list])
+        return multistring([str(elem) for elem in elem_list])
 
 
 class xlifffile(lisa.LISAfile):

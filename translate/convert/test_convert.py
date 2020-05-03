@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import six
 
 import pytest
 
@@ -43,7 +42,7 @@ class TestConvertCommand(object):
         argv = list(argv)
         kwoptions = getattr(self, "defaultoptions", {}).copy()
         kwoptions.update(kwargs)
-        for key, value in six.iteritems(kwoptions):
+        for key, value in kwoptions.items():
             if value is True:
                 argv.append("--%s" % key)
             else:
@@ -72,7 +71,7 @@ class TestConvertCommand(object):
 
     def create_testfile(self, filename, contents):
         """creates the given file in the testdirectory with the given contents"""
-        if isinstance(contents, six.text_type):
+        if isinstance(contents, str):
             contents = contents.encode('utf-8')
         testfile = self.open_testfile(filename, "wb")
         testfile.write(contents)

@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-import six
 from contextlib import contextmanager
 
 from lxml import etree
@@ -51,7 +50,7 @@ class Translatable(object):
         If not, then there's nothing to translate.
         """
         for chunk in self.source:
-            if isinstance(chunk, six.text_type) and chunk.strip() != u"":
+            if isinstance(chunk, str) and chunk.strip() != u"":
                 return True
         return False
 
@@ -105,13 +104,13 @@ def process_translatable(dom_node, state):
 
     Any translatable content present in a child node is treated as a placeable.
     """
-    source = [six.text_type(dom_node.text or u"")]
+    source = [str(dom_node.text or u"")]
 
     # Append Translatable objects and unicode strings for the translatable
     # content for all the children.
     for child in dom_node:
         source.append(_process_placeable(child, state))
-        source.append(six.text_type(child.tail or u""))
+        source.append(str(child.tail or u""))
 
     translatable = Translatable(state.placeable_name,
                                 state.xpath_breadcrumb.xpath, dom_node, source,
@@ -156,7 +155,7 @@ def _retrieve_idml_placeables(dom_node, state):
                                        False))
 
             if child.tail is not None and child.tail.strip():
-                source.append(six.text_type(child.tail))
+                source.append(str(child.tail))
 
             continue
 
@@ -170,7 +169,7 @@ def _retrieve_idml_placeables(dom_node, state):
             nested_stuff = []
 
             if child.text is not None and child.text.strip():
-                nested_stuff = [six.text_type(child.text)]
+                nested_stuff = [str(child.text)]
 
             nested_stuff.extend(_retrieve_idml_placeables(child, state))
 
@@ -179,7 +178,7 @@ def _retrieve_idml_placeables(dom_node, state):
                                        nested_stuff, state.is_inline))
 
             if child.tail is not None and child.tail.strip():
-                source.append(six.text_type(child.tail))
+                source.append(str(child.tail))
 
     return source
 
@@ -288,10 +287,10 @@ def _to_placeables(parent_translatable, translatable, id_maker):
     """
     result = []
     for chunk in translatable.source:
-        if isinstance(chunk, six.text_type):
+        if isinstance(chunk, str):
             result.append(chunk)
         else:
-            id = six.text_type(id_maker.get_id(chunk))
+            id = str(id_maker.get_id(chunk))
             if chunk.is_inline:
                 sub = _to_placeables(parent_translatable, chunk, id_maker)
                 result.append(xliff.G(id=id, sub=sub))
@@ -384,7 +383,7 @@ def _walk_translatable_tree(translatables, store_adder, parent_translatable,
 
 
 def reverse_map(a_map):
-    return dict((value, key) for key, value in six.iteritems(a_map))
+    return dict((value, key) for key, value in a_map.items())
 
 
 def build_idml_store(odf_file, store, parse_state, store_adder=None):

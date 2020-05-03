@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
 
 import os
-import six
 from io import BytesIO
-from six.moves.urllib import parse
+from urllib import parse
 
 from translate.convert import oo2po, po2oo, test_convert
 from translate.storage import oo, po
@@ -18,7 +16,7 @@ class TestOO2PO(object):
 
     def convert(self, oosource, sourcelanguage='en-US', targetlanguage='af-ZA'):
         """helper that converts oo source to po source without requiring files"""
-        if isinstance(oosource, six.text_type):
+        if isinstance(oosource, str):
             oosource = oosource.encode('utf-8')
         inputoo = oo.oofile(oosource)
         convertor = self.conversion_class(sourcelanguage, targetlanguage)

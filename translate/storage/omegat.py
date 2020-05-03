@@ -37,14 +37,9 @@ Encoding
     encoded files use the .utf8 extension while system encoded files use
     the .tab extension.
 """
-from __future__ import unicode_literals
 
 import locale
-import six
-if six.PY2:
-    from backports import csv
-else:
-    import csv
+import csv
 
 from translate.misc.deprecation import deprecated
 from translate.storage import base
@@ -67,7 +62,6 @@ class OmegaTDialect(csv.Dialect):
 csv.register_dialect("omegat", OmegaTDialect)
 
 
-@six.python_2_unicode_compatible
 class OmegaTUnit(base.TranslationUnit):
     """An OmegaT glossary unit"""
 

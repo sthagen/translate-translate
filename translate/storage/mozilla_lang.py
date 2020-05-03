@@ -26,7 +26,6 @@ See https://github.com/mozilla-l10n/langchecker/wiki/.lang-files-format for
 specifications on the format.
 """
 
-import six
 
 from translate.storage import base, txt
 
@@ -38,7 +37,6 @@ def strip_ok(string):
     return string
 
 
-@six.python_2_unicode_compatible
 class LangUnit(base.TranslationUnit):
     """This is just a normal unit with a weird string output"""
 
@@ -156,10 +154,10 @@ class LangStore(txt.TxtFile):
             out.write(b"## active ##")
             out.write(eol)
         for header in self._headers:
-            out.write(six.text_type(header).encode('utf-8'))
+            out.write(str(header).encode('utf-8'))
             out.write(eol)
         for unit in self.units:
-            out.write(six.text_type(unit).encode('utf-8'))
+            out.write(str(unit).encode('utf-8'))
             out.write(eol * 3)
 
     def getlangheaders(self):

@@ -25,7 +25,6 @@ Luke Arno can be found at http://lukearno.com/
 """
 
 import re
-import six
 from itertools import starmap
 from wsgiref.util import shift_path_info
 
@@ -125,7 +124,7 @@ class Selector(object):
         
         Prefix will override self.prefix for this mapping.
         """
-        # Thanks to Sébastien Pierre 
+        # Thanks to SÃ©bastien Pierre
         # for suggesting that this accept keyword args.
         if method_dict is None:
             method_dict = {}
@@ -145,7 +144,7 @@ class Selector(object):
         app, svars, methods, matched = \
             self.select(environ['PATH_INFO'], environ['REQUEST_METHOD'])
         unnamed, named = [], {}
-        for k, v in six.iteritems(svars):
+        for k, v in svars.items():
             if k.startswith('__pos'):
                 k = k[5:]
             named[k] = v
@@ -215,7 +214,7 @@ class Selector(object):
         ``@prefix`` and ``@parser`` directives take effect 
         until the end of the file or until changed.
         """
-        if isinstance(the_file, six.string_types):
+        if isinstance(the_file, str):
             the_file = open(the_file)
         oldprefix = self.prefix
         if prefix is not None:
@@ -282,7 +281,7 @@ class Selector(object):
 
 
 class SimpleParser(object):
-    """Callable to turn path expressions into regexes with named groups.
+    r"""Callable to turn path expressions into regexes with named groups.
     
     For instance ``"/hello/{name}"`` becomes ``r"^\/hello\/(?P<name>[^\^.]+)$"``
 

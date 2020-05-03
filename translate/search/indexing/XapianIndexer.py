@@ -32,17 +32,14 @@ It is not completely working, but it should give you a good start.
 """
 
 import re
-import six
-import sys
 from . import CommonIndexer
 import xapian
 import os
-import time
-import logging
 
 
 def is_available():
-    return xapian.major_version() > 0
+    # Gracefully handle mocking while building docs
+    return repr(xapian.major_version()) == "xapian.major_version" or xapian.major_version() > 0
 
 
 # in xapian there is a length restriction for term strings
@@ -363,7 +360,7 @@ class XapianDatabase(CommonIndexer.CommonDatabase):
         :rtype: list of dicts
         """
         result = []
-        if isinstance(fieldnames, six.string_types):
+        if isinstance(fieldnames, str):
             fieldnames = [fieldnames]
         try:
             self._walk_matches(query, _extract_fieldvalues,

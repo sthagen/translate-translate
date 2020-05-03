@@ -1,0 +1,51 @@
+name: Test on MacOS
+
+on:
+  push:
+    paths-ignore:
+    - "docs/**"
+  pull_request:
+    paths-ignore:
+    - "docs/**"
+
+jobs:
+  test:
+
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        requirements: [latest]
+        python-version: [3.5, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache pip
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install brew dependencies
+      run: |
+        brew install gettext
+        echo "::add-path::/usr/local/opt/gettext/bin"
+    - name: Update pip
+      run: pip install --upgrade pip wheel
+    - name: Install pip dependencies
+      if: matrix.requirements == 'latest'
+      run: pip install -r requirements/dev.txt
+    - name: Install
+      run: pip install .
+    - name: py.test
+      run: py.test --cov=. -r EfsxX -W error::DeprecationWarning
+    - name: test-functional
+      run: make test-functional
+    - name: Coverage
+      run: |
+        coverage xml
+    - uses: codecov/codecov-action@v1
+      with:
+        name: ${{ runner.os }}, Python ${{ matrix.python-version }}, ${{ matrix.requirements }}

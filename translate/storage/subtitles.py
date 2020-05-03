@@ -27,7 +27,6 @@ A patch to gaupol is required to open utf-8 files successfully.
 """
 
 import os
-import six
 from io import StringIO
 from tempfile import NamedTemporaryFile
 
@@ -48,10 +47,7 @@ except ImportError:
         _determiner = FormatDeterminer()
         determine = _determiner.determine
     except ImportError:
-        if six.PY3:
-            raise ImportError('\naeidon or gaupol package required for Subtitle support')
-        else:
-            raise ImportError('\ngaupol package required for Subtitle support')
+        raise ImportError('\naeidon or gaupol package required for Subtitle support')
 
 from translate.storage import base
 
@@ -127,7 +123,7 @@ class SubtitleFile(base.TranslationStore):
         elif hasattr(storefile, 'filename'):
             self.filename = storefile.filename
             storefile.close()
-        elif isinstance(storefile, six.string_types):
+        elif isinstance(storefile, str):
             self.filename = storefile
 
         if self.filename and os.path.exists(self.filename):

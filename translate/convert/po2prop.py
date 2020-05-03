@@ -23,7 +23,6 @@ See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/command
 for examples and usage instructions.
 """
 
-import six
 import warnings
 
 from translate.convert import accesskey, convert
@@ -174,7 +173,7 @@ class reprop(object):
                     else:
                         value = self._handle_accesskeys(unit, key)
                     self.inecho = False
-                    assert isinstance(value, six.text_type)
+                    assert isinstance(value, str)
                     returnline = "%(key)s%(del)s%(value)s%(term)s%(eol)s" % {
                         "key": "%s%s%s" % (self.personality.key_wrap_char,
                                            key,
@@ -189,7 +188,7 @@ class reprop(object):
             else:
                 self.inecho = True
                 returnline = line + eol
-        assert isinstance(returnline, six.text_type)
+        assert isinstance(returnline, str)
         return returnline
 
 
@@ -246,9 +245,9 @@ def main(argv=None):
     parser.add_option(
         "", "--personality", dest="personality",
         default=properties.default_dialect, type="choice",
-        choices=list(properties.dialects.keys()),
+        choices=list(properties.dialects),
         help="override the input file format: %s (for .properties files, default: %s)" % (
-            ", ".join(six.iterkeys(properties.dialects)), properties.default_dialect),
+            ", ".join(properties.dialects), properties.default_dialect),
         metavar="TYPE")
     parser.add_option(
         "", "--encoding", dest="encoding", default=None,

@@ -31,7 +31,6 @@ When adding a new test here, please document and explain their behaviour on the
 
 import logging
 import re
-import six
 
 from translate.filters import decoration, helpers, prefilters, spelling
 from translate.filters.decorators import (cosmetic, critical, extraction,
@@ -55,7 +54,7 @@ logger = logging.getLogger(__name__)
 # Extended to support Python named format specifiers and objective-C special
 # "%@" format specifier
 # (see https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/Strings/Articles/formatSpecifiers.html)
-printf_pat = re.compile('''
+printf_pat = re.compile(r'''
         %(                          # initial %
         (?P<boost_ord>\d+)%         # boost::format style variable order, like %1%
         |
@@ -70,11 +69,11 @@ printf_pat = re.compile('''
         )''', re.VERBOSE)
 
 # The name of the XML tag
-tagname_re = re.compile("<[\s]*([\w\/]*).*?(/)?[\s]*>", re.DOTALL)
+tagname_re = re.compile(r"<[\s]*([\w\/]*).*?(/)?[\s]*>", re.DOTALL)
 
 # We allow escaped quotes, probably for old escaping style of OOo helpcontent
 #TODO: remove escaped strings once usage is audited
-property_re = re.compile(" (\w*)=((\\\\?\".*?\\\\?\")|(\\\\?'.*?\\\\?'))")
+property_re = re.compile(" (\\w*)=((\\\\?\".*?\\\\?\")|(\\\\?'.*?\\\\?'))")
 
 # The whole tag
 tag_re = re.compile("<[^>]+>")
@@ -143,7 +142,6 @@ def tagproperties(strings, ignore):
     return properties
 
 
-@six.python_2_unicode_compatible
 class FilterFailure(Exception):
     """This exception signals that a Filter didn't pass, and gives an
     explanation or a comment.
@@ -153,7 +151,7 @@ class FilterFailure(Exception):
         if not isinstance(messages, list):
             messages = [messages]
 
-        assert isinstance(messages[0], six.text_type)  # Assumption: all of same type
+        assert isinstance(messages[0], str)  # Assumption: all of same type
 
         self.messages = messages
 
@@ -466,7 +464,7 @@ class UnitChecker(object):
                 filterresult = self.run_test(filterfunction, unit)
             except FilterFailure as e:
                 filterresult = False
-                filtermessage = six.text_type(e)
+                filtermessage = str(e)
             except Exception as e:
                 if self.errorhandler is None:
                     raise ValueError("error in filter %s: %r, %r, %s" %
@@ -495,7 +493,7 @@ class UnitChecker(object):
         self.results_cache = {}
 
         if not categorised:
-            for name, info in six.iteritems(failures):
+            for name, info in failures.items():
                 failures[name] = info['message']
         return failures
 
@@ -530,7 +528,7 @@ class TranslationChecker(UnitChecker):
 
             for pluralform in unit.target.strings:
                 try:
-                    if not test(self.str1, six.text_type(pluralform)):
+                    if not test(self.str1, str(pluralform)):
                         filterresult = False
                 except FilterFailure as e:
                     filterresult = False
@@ -1535,11 +1533,11 @@ class StandardChecker(TranslationChecker):
         # serves no purpose to get sourcelang.sentenceend
         str1 = re.sub(u"[^%s]( I )" % self.config.sourcelang.sentenceend, u" i ", str1)
 
-        capitals1 = helpers.filtercount(str1, six.text_type.isupper)
-        capitals2 = helpers.filtercount(str2, six.text_type.isupper)
+        capitals1 = helpers.filtercount(str1, str.isupper)
+        capitals2 = helpers.filtercount(str2, str.isupper)
 
-        alpha1 = helpers.filtercount(str1, six.text_type.isalpha)
-        alpha2 = helpers.filtercount(str2, six.text_type.isalpha)
+        alpha1 = helpers.filtercount(str1, str.isalpha)
+        alpha2 = helpers.filtercount(str2, str.isalpha)
 
         # Capture the all caps case
         if capitals1 == alpha1:
@@ -1828,8 +1826,8 @@ class StandardChecker(TranslationChecker):
 
             return number
 
-        sourcepatterns = ["\(s\)"]
-        targetpatterns = ["\(s\)"]
+        sourcepatterns = [r"\(s\)"]
+        targetpatterns = [r"\(s\)"]
         sourcecount = numberofpatterns(str1, sourcepatterns)
         targetcount = numberofpatterns(str2, targetpatterns)
 
@@ -2127,7 +2125,7 @@ class MozillaChecker(StandardChecker):
 
         return True
 
-    mozilla_dialog_re = re.compile("""(                          # option pair "key: value;"
+    mozilla_dialog_re = re.compile(r"""(                         # option pair "key: value;"
                                       (?P<key>[-a-z]+)           # key
                                       :\s+                       # seperator
                                       (?P<number>\d+(?:[.]\d+)?) # number

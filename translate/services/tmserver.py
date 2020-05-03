@@ -23,10 +23,9 @@ clients using JSON over HTTP.
 
 import json
 import logging
-import six
 from argparse import ArgumentParser
 from io import BytesIO
-from six.moves.urllib import parse
+from urllib import parse
 
 from translate.misc import selector, wsgi
 from translate.storage import base, tmdb
@@ -38,7 +37,7 @@ class TMServer(object):
     def __init__(self, tmdbfile, tmfiles, max_candidates=3, min_similarity=75,
                  max_length=1000, prefix="", source_lang=None,
                  target_lang=None):
-        if not isinstance(tmdbfile, six.text_type):
+        if not isinstance(tmdbfile, str):
             import sys
             tmdbfile = tmdbfile.decode(sys.getfilesystemencoding())
 
@@ -76,7 +75,7 @@ class TMServer(object):
     def translate_unit(self, environ, start_response, uid, slang, tlang):
         start_response("200 OK", [('Content-type', 'text/plain')])
         candidates = self.tmdb.translate_unit(uid, slang, tlang)
-        logging.debug("candidates: %s", six.text_type(candidates))
+        logging.debug("candidates: %s", str(candidates))
         response = json.dumps(candidates, indent=4).encode('utf-8')
         params = parse.parse_qs(environ.get('QUERY_STRING', ''))
         try:

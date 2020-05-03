@@ -21,7 +21,6 @@
 """
 
 import re
-import six
 
 from translate.filters import decoration
 from translate.misc import quote
@@ -35,7 +34,7 @@ def removekdecomments(str1):
 
       "_: comment\n"
     """
-    assert isinstance(str1, six.text_type)
+    assert isinstance(str1, str)
     iskdecomment = False
     lines = str1.split("\n")
     removelines = []
@@ -83,7 +82,7 @@ def filteraccelerators(accelmarker):
 
 
 def varname(variable, startmarker, endmarker):
-    u"""Variable filter that returns the variable name without the marking
+    r"""Variable filter that returns the variable name without the marking
     punctuation.
 
     .. note:: Currently this function simply returns *variable* unchanged, no
@@ -134,7 +133,7 @@ def filtervariables(startmarker, endmarker, varfilter):
         endmarkerlen = len(endmarker)
 
     def filtermarkedvariables(str1):
-        """Modifies the variables in *str1* marked with a given *\*marker*,
+        r"""Modifies the variables in *str1* marked with a given *\*marker*,
         using a given filter.
         """
         varlocs = decoration.findmarkedvariables(str1, startmarker, endmarker)
@@ -154,7 +153,7 @@ wordswithpunctuation = ["'n", "'t"]  # Afrikaans
 # map all the words to their non-punctified equivalent
 wordswithpunctuation = dict([(word, ''.join(filter(str.isalnum, word))) for word in wordswithpunctuation])
 
-word_with_apos_re = re.compile("(?u)\w+'\w+")
+word_with_apos_re = re.compile(r"(?u)\w+'\w+")
 
 
 def filterwordswithpunctuation(str1):
@@ -164,11 +163,11 @@ def filterwordswithpunctuation(str1):
     if u"'" not in str1:
         return str1
     occurrences = []
-    for word, replacement in six.iteritems(wordswithpunctuation):
+    for word, replacement in wordswithpunctuation.items():
         occurrences.extend([(pos, word, replacement) for pos in quote.find_all(str1, word)])
     for match in word_with_apos_re.finditer(str1):
         word = match.group()
-        replacement = ''.join(filter(six.text_type.isalnum, word))
+        replacement = ''.join(filter(str.isalnum, word))
         occurrences.append((match.start(), word, replacement))
     occurrences.sort()
     if occurrences:

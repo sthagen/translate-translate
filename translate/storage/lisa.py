@@ -19,7 +19,6 @@
 
 """Parent class for LISA standards (TMX, TBX, XLIFF)"""
 
-import six
 
 try:
     from lxml import etree
@@ -33,7 +32,6 @@ from translate.misc.deprecation import deprecated
 from translate.storage import base
 
 
-@six.python_2_unicode_compatible
 class LISAunit(base.TranslationUnit):
     """
     A single unit in the file.  Provisional work is done to make several
@@ -131,7 +129,6 @@ class LISAunit(base.TranslationUnit):
 
     def set_target_dom(self, dom_node, append=False):
         languageNodes = self.getlanguageNodes()
-        assert len(languageNodes) > 0
         if dom_node is not None:
             if append or len(languageNodes) == 0:
                 self.xmlelement.append(dom_node)

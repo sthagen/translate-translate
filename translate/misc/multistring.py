@@ -20,11 +20,9 @@
 """Supports a hybrid Unicode string that can also have a list of alternate
 strings in the strings attribute
 """
-from __future__ import unicode_literals
 
 import warnings
 
-import six
 
 from .deprecation import RemovedInTTK2Warning
 
@@ -35,18 +33,18 @@ def _create_text_type(newtype, string, encoding):
     """
     if string is None:
         string = ''
-    if isinstance(string, six.text_type):
-        return six.text_type.__new__(newtype, string)
+    if isinstance(string, str):
+        return str.__new__(newtype, string)
 
     warnings.warn(
         'Passing non-ASCII bytes as well as the `encoding` argument to '
         '`multistring` is deprecated. Always pass unicode characters instead.',
         RemovedInTTK2Warning, stacklevel=2,
     )
-    return six.text_type.__new__(newtype, string, encoding)
+    return str.__new__(newtype, string, encoding)
 
 
-class multistring(six.text_type):
+class multistring(str):
 
     def __new__(newtype, string=u"", *args, **kwargs):
         encoding = kwargs.pop('encoding', 'utf-8')
@@ -70,13 +68,13 @@ class multistring(six.text_type):
             # Python 3 compatible cmp() equivalent
             return (s1 > s2) - (s1 < s2)
         if isinstance(otherstring, multistring):
-            parentcompare = cmp_compat(six.text_type(self), otherstring)
+            parentcompare = cmp_compat(str(self), otherstring)
             if parentcompare:
                 return parentcompare
             else:
                 return cmp_compat(self.strings[1:], otherstring.strings[1:])
-        elif isinstance(otherstring, six.text_type):
-            return cmp_compat(six.text_type(self), otherstring)
+        elif isinstance(otherstring, str):
+            return cmp_compat(str(self), otherstring)
         elif isinstance(otherstring, bytes):
             return cmp_compat(self.encode('utf-8'), otherstring)
         elif isinstance(otherstring, list) and otherstring:
@@ -94,15 +92,9 @@ class multistring(six.text_type):
         return self.__cmp__(otherstring) == 0
 
     def __repr__(self):
-        _repr = u"multistring(%r)" % (
-            [six.text_type(item) for item in self.strings]
+        return u"multistring(%r)" % (
+            [str(item) for item in self.strings]
         )
-        return _repr.encode('utf-8') if six.PY2 else _repr
-
-    def __str__(self):
-        if six.PY2:
-            return self.encode('utf-8')
-        return super(multistring, self).__str__()
 
     def replace(self, old, new, count=None):
         if count is None:

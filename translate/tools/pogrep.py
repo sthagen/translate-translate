@@ -29,7 +29,6 @@ for examples and usage instructions.
 
 import locale
 import re
-import six
 
 from translate.lang import data
 from translate.misc import optrecurse
@@ -139,7 +138,7 @@ class GrepFilter:
                  useregexp=False, invertmatch=False, keeptranslations=False,
                  accelchar=None, encoding='utf-8', max_matches=0):
         """builds a checkfilter using the given checker"""
-        if isinstance(searchstring, six.text_type):
+        if isinstance(searchstring, str):
             self.searchstring = searchstring
         else:
             self.searchstring = searchstring.decode(encoding)

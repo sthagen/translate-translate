@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
 
 import json
 import os
@@ -11,9 +10,8 @@ from cheroot.wsgi import Server
 
 from pytest import mark
 
-from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 
-from translate.misc import selector, wsgi
 from translate.services.tmserver import TMServer
 
 

@@ -42,15 +42,10 @@ Format Implementation
 Encoding
     The files are UTF-8 encoded with no BOM and CR+LF line terminators.
 """
-from __future__ import unicode_literals
 
-import six
 import time
 
-if six.PY2:
-    from backports import csv
-else:
-    import csv
+import csv
 
 from translate.misc.deprecation import deprecated
 from translate.storage import base
@@ -89,7 +84,6 @@ class UtxHeader:
     """
 
 
-@six.python_2_unicode_compatible
 class UtxUnit(base.TranslationUnit):
     """A UTX dictionary unit"""
 
@@ -243,7 +237,7 @@ class UtxFile(base.TranslationStore):
             "date": self._header["date_created"],
         }
         items = []
-        for key, value in six.iteritems(self._header):
+        for key, value in self._header.items():
             if key in ["version", "source_language",
                        "target_language", "date_created"]:
                 continue

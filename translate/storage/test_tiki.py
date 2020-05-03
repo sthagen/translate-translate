@@ -4,7 +4,6 @@
 # Author: Wil Clouser <wclouser@mozilla.com>
 # Date: 2008-12-01
 
-import six
 
 from translate.storage import tiki
 
@@ -21,12 +20,12 @@ class TestTikiUnit:
     def test_to_unicode(self):
         unit = tiki.TikiUnit("one")
         unit.target = 'two'
-        assert six.text_type(unit) == '"one" => "two",\n'
+        assert str(unit) == '"one" => "two",\n'
 
         unit2 = tiki.TikiUnit("one")
         unit2.target = 'two'
         unit2.addlocation('untranslated')
-        assert six.text_type(unit2) == '// "one" => "two",\n'
+        assert str(unit2) == '// "one" => "two",\n'
 
 
 class TestTikiStore:

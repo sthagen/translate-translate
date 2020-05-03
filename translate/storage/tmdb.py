@@ -23,7 +23,6 @@
 import logging
 import math
 import re
-import six
 import threading
 import time
 from sqlite3 import dbapi2
@@ -32,7 +31,7 @@ from translate.lang import data
 from translate.search.lshtein import LevenshteinComparer
 
 
-STRIP_REGEXP = re.compile("\W", re.UNICODE)
+STRIP_REGEXP = re.compile(r"\W", re.UNICODE)
 
 
 class LanguageError(Exception):
@@ -54,8 +53,8 @@ class TMDB(object):
         self.min_similarity = min_similarity
         self.max_length = max_length
 
-        if not isinstance(db_file, six.text_type):
-            db_file = six.text_type(db_file)  # don't know which encoding
+        if not isinstance(db_file, str):
+            db_file = str(db_file)  # don't know which encoding
         self.db_file = db_file
         # share connections to same database file between different instances
         if db_file not in self._tm_dbs:
@@ -74,7 +73,7 @@ class TMDB(object):
     def _get_connection(self, index):
         current_thread = threading.currentThread()
         if current_thread not in self._tm_db:
-            connection = dbapi2.connect(self.db_file.encode('utf-8') if six.PY2 else self.db_file)
+            connection = dbapi2.connect(self.db_file)
             cursor = connection.cursor()
             self._tm_db[current_thread] = (connection, cursor)
         return self._tm_db[current_thread][index]
@@ -327,7 +326,7 @@ DROP TRIGGER IF EXISTS sources_delete_trig;
                 })
         results.sort(key=lambda match: match['quality'], reverse=True)
         results = results[:self.max_candidates]
-        logging.debug("results: %s", six.text_type(results))
+        logging.debug("results: %s", str(results))
         return results
 
 

@@ -18,7 +18,6 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 import re
-import six
 
 
 def reduce_tree(f, parent_unit_node, unit_node, get_children, *state):
@@ -60,7 +59,7 @@ def compose_mappings(left, right):
     return result_map
 
 
-tag_pattern = re.compile('({(?P<namespace>(\w|[-:./])*)})?(?P<tag>(\w|[-])*)')
+tag_pattern = re.compile(r'({(?P<namespace>(\w|[-:./])*)})?(?P<tag>(\w|[-])*)')
 
 
 def parse_tag(full_tag):
@@ -76,8 +75,8 @@ def parse_tag(full_tag):
         ret = []
         for k in ("namespace", "tag"):
             value = match.groupdict()[k] or ""
-            if not isinstance(value, six.text_type):
-                value = six.text_type(value, encoding="utf-8")
+            if not isinstance(value, str):
+                value = str(value, encoding="utf-8")
             ret.append(value)
         return ret[0], ret[1]
     else:

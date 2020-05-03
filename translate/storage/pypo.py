@@ -25,9 +25,7 @@ files (pofile).
 import copy
 import logging
 import re
-import six
 import textwrap
-from io import BytesIO
 from itertools import chain
 
 from translate.lang import data
@@ -205,7 +203,6 @@ def extractstr(string):
     return string[left:] + '"'
 
 
-@six.python_2_unicode_compatible
 class pounit(pocommon.pounit):
     # othercomments = []      #   # this is another comment
     # automaticcomments = []  #   #. comment extracted from the source code
@@ -333,7 +330,7 @@ class pounit(pocommon.pounit):
         if self.hasplural():
             if isinstance(target, multistring):
                 target = target.strings
-            elif isinstance(target, six.string_types):
+            elif isinstance(target, str):
                 target = [target]
         elif isinstance(target, (dict, list)):
             if len(target) == 1:
@@ -346,7 +343,7 @@ class pounit(pocommon.pounit):
         if isinstance(target, list):
             self.msgstr = dict([(i, self.quote(target[i])) for i in range(len(target))])
         elif isinstance(target, dict):
-            self.msgstr = dict([(i, self.quote(targetstring)) for i, targetstring in six.iteritems(target)])
+            self.msgstr = dict([(i, self.quote(targetstring)) for i, targetstring in target.items()])
         else:
             self.msgstr = self.quote(target)
 
@@ -430,7 +427,7 @@ class pounit(pocommon.pounit):
         # self.__shallow__
         shallow = set(self.__shallow__)
         # Make deep copies of all members which are not in shallow
-        for key, value in six.iteritems(self.__dict__):
+        for key, value in self.__dict__.items():
             if key not in shallow:
                 setattr(new_unit, key, copy.deepcopy(value))
         # Make shallow copies of all members which are in shallow
@@ -452,7 +449,7 @@ class pounit(pocommon.pounit):
 
     def _msgstrlen(self):
         if isinstance(self.msgstr, dict):
-            combinedstr = "\n".join(filter(None, [unquotefrompo(msgstr) for msgstr in six.itervalues(self.msgstr)]))
+            combinedstr = "\n".join(filter(None, [unquotefrompo(msgstr) for msgstr in self.msgstr.values()]))
             return len(combinedstr)
         return len(unquotefrompo(self.msgstr))
 
@@ -465,7 +462,7 @@ class pounit(pocommon.pounit):
 
         def mergelists(list1, list2, split=False):
             # Decode where necessary (either all bytestrings or all unicode)
-            if any(isinstance(item, six.text_type) for item in chain(list1, list2)):
+            if any(isinstance(item, str) for item in chain(list1, list2)):
                 for position, item in enumerate(list1):
                     if isinstance(item, bytes):
                         list1[position] = item.decode("utf-8")
@@ -909,7 +906,7 @@ class pofile(pocommon.pofile):
         """encode any unicode strings in lines in self.encoding"""
         newlines = []
         for line in lines:
-            if isinstance(line, six.text_type):
+            if isinstance(line, str):
                 line = line.encode(self.encoding)
             newlines.append(line)
         return newlines

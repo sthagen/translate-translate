@@ -22,7 +22,6 @@ import logging
 import optparse
 import os.path
 import re
-import six
 import sys
 import traceback
 from collections import OrderedDict
@@ -108,7 +107,7 @@ class StdoutWrapper(object):
         return getattr(self.out, name)
 
     def write(self, content):
-        if six.PY3 and isinstance(content, bytes):
+        if isinstance(content, bytes):
             try:
                 self.out.write(content.decode('utf-8'))
             except UnicodeDecodeError:
@@ -173,15 +172,15 @@ class RecursiveOptionParser(optparse.OptionParser, object):
         description_lines = self.description.split('\n\n')[1:]
         if description_lines:
             result.append('.SH DESCRIPTION\n')
-            result.append('\n\n'.join([re.sub('\.\. note::', 'Note:', l)
+            result.append('\n\n'.join([re.sub(r'\.\. note::', 'Note:', l)
                                        for l in description_lines]))
         result.append('.SH OPTIONS\n')
         ManHelpFormatter().store_option_strings(self)
         result.append('.PP\n')
         for option in self.option_list:
             result.append('.TP\n')
-            result.append('%s\n' % str(option).replace('-', '\-'))
-            result.append('%s\n' % option.help.replace('-', '\-'))
+            result.append('%s\n' % str(option).replace('-', r'\-'))
+            result.append('%s\n' % option.help.replace('-', r'\-'))
         return "".join(result)
 
     def print_manpage(self, file=None):
@@ -273,8 +272,8 @@ class RecursiveOptionParser(optparse.OptionParser, object):
         templateformats = []
         self.outputoptions = {}
         self.usetemplates = usetemplates
-        for formatgroup, outputoptions in six.iteritems(formats):
-            if isinstance(formatgroup, six.string_types) or formatgroup is None:
+        for formatgroup, outputoptions in formats.items():
+            if isinstance(formatgroup, str) or formatgroup is None:
                 formatgroup = (formatgroup, )
             if not isinstance(formatgroup, tuple):
                 raise ValueError("formatgroups must be tuples or None/str/unicode")

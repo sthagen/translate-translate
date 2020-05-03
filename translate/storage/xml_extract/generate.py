@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-import six
 import lxml.etree as etree
 
 from translate.storage.xml_extract import extract, misc
@@ -44,7 +43,7 @@ def _get_tag_arrays(dom_node):
 
 def apply_translations(dom_node, unit_node, do_translate):
     tag_array = _get_tag_arrays(dom_node)
-    for unit_child_index, unit_child in six.iteritems(unit_node.children):
+    for unit_child_index, unit_child in unit_node.children.items():
         tag, index = unit_child_index
         try:
             dom_child = tag_array[XmlNamer(dom_node).name(tag)][index]
@@ -83,7 +82,7 @@ def find_dom_root(parent_dom_node, dom_node):
 
 
 def find_placeable_dom_tree_roots(unit_node):
-    """For an inline placeable, find the root DOM node for the placeable in its
+    r"""For an inline placeable, find the root DOM node for the placeable in its
     parent.
 
     Consider the diagram. In this pseudo-ODF example, there is an inline span

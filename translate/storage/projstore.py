@@ -19,7 +19,6 @@
 
 import os
 
-import six
 from lxml import etree
 
 
@@ -128,7 +127,7 @@ class ProjectStore(object):
         if ftype not in self.TYPE_INFO['f_prefix']:
             raise ValueError('Invalid file type: %s' % (ftype))
 
-        if isinstance(afile, six.string_types) and os.path.isfile(afile) and not fname:
+        if isinstance(afile, str) and os.path.isfile(afile) and not fname:
             # Try and use afile as the file name
             fname, afile = afile, open(afile)
 
@@ -218,7 +217,7 @@ class ProjectStore(object):
             raise FileNotInProjectError(fname)
 
         rfile = self._files[fname]
-        if isinstance(rfile, six.string_types):
+        if isinstance(rfile, str):
             rfile = open(rfile, 'rb')
         # Check that the file is actually open
         if getattr(rfile, 'closed', False):
@@ -301,7 +300,7 @@ class ProjectStore(object):
         # Add conversion mappings
         if self.convert_map:
             conversions_el = etree.Element('conversions')
-            for in_fname, (out_fname, templ_fname) in six.iteritems(self.convert_map):
+            for in_fname, (out_fname, templ_fname) in self.convert_map.items():
                 if in_fname not in self._files or out_fname not in self._files:
                     continue
                 conv_el = etree.Element('conv')

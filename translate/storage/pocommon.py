@@ -18,8 +18,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 import re
-import six
-from six.moves.urllib import parse
+from urllib import parse
 
 from translate.storage import base, poheader
 from translate.storage.workflow import StateEnum as state
@@ -48,14 +47,8 @@ def quote_plus(text):
 def unquote_plus(text):
     """unquote('%7e/abc+def') -> '~/abc def'"""
     try:
-        if six.PY2 and isinstance(text, six.text_type):
-            text = text.encode('utf-8')
-        if six.PY2:
-            result = parse.unquote_plus(text).decode('utf-8')
-        else:
-            # Enforce utf-8 validation
-            result = parse.unquote_plus(text, errors="strict")
-        return result
+        # Enforce utf-8 validation
+        return parse.unquote_plus(text, errors="strict")
     except (UnicodeEncodeError, UnicodeDecodeError) as e:
         # for some reason there is a non-ascii character here. Let's assume it
         # is already unicode (because of originally decoding the file)

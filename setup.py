@@ -22,6 +22,7 @@ import re
 import sys
 from distutils.sysconfig import get_python_lib
 from os.path import dirname, isfile, join
+from setuptools import setup
 
 try:
     from sphinx.setup_command import BuildDoc
@@ -30,13 +31,6 @@ except ImportError:
     cmdclass = {}
 
 from translate import __doc__, __version__
-
-
-# Alias copied from six
-if sys.version_info[0] == 2:
-    string_types = basestring,
-else:
-    string_types = str,
 
 PRETTY_NAME = 'Translate Toolkit'
 translateversion = __version__.sver
@@ -170,7 +164,6 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Unix",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
@@ -297,7 +290,7 @@ else:
             """
             new_data_files = []
             for f in data_files:
-                if isinstance(f, string_types):
+                if isinstance(f, str):
                     f = map_data_file(f)
                 else:
                     datadir, files = f
@@ -333,7 +326,7 @@ else:
             # create the Installer, using the files py2exe has created.
             exe_files = self.windows_exe_files + self.console_exe_files
             install_scripts = self.install_script
-            if isinstance(install_scripts, string_types):
+            if isinstance(install_scripts, str):
                 install_scripts = [install_scripts]
             script = InnoScript(PRETTY_NAME, lib_dir, dist_dir, exe_files,
                                 self.lib_files,
@@ -487,7 +480,6 @@ def standardsetup(name, version, custompackages=[], customdatafiles=[]):
 
 
 def dosetup(name, version, packages, datafiles, scripts, ext_modules=[]):
-    from setuptools import setup
     description, long_description = __doc__.split("\n", 1)
     kwargs = {}
     if py2exe:
@@ -496,6 +488,7 @@ def dosetup(name, version, packages, datafiles, scripts, ext_modules=[]):
     setup(
         name=name,
         version=version,
+        python_requires=">=3.5",
         license="GNU General Public License (GPL)",
         description=description,
         long_description=long_description,

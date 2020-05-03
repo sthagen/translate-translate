@@ -54,14 +54,12 @@ implemented as outlined in the PHP documentation for the
 `String type <http://www.php.net/language.types.string>`_.
 """
 
-from __future__ import unicode_literals
 
 import re
 
-import six
 
 from phply.phpparse import make_parser
-from phply.phplex import lexer, FilteredLexer, full_lexer, unparsed
+from phply.phplex import FilteredLexer, full_lexer
 from phply.phpast import (Array, ArrayElement, ArrayOffset, Assignment,
                           BinaryOp, FunctionCall, InlineHTML, Node, Return,
                           Variable)
@@ -189,7 +187,7 @@ def phpencode(text, quotechar="'"):
 def phpdecode(text, quotechar="'"):
     """Convert PHP escaped string to a Python string."""
 
-    escape_encoding = "string_escape" if six.PY2 else "unicode_escape"
+    escape_encoding = "unicode_escape"
 
     def decode_octal_hex(match):
         r"""decode Octal \NNN and Hex values"""
@@ -218,7 +216,6 @@ def phpdecode(text, quotechar="'"):
         return text.replace("\\'", "'").replace("\\\\", "\\")
 
 
-@six.python_2_unicode_compatible
 class phpunit(base.TranslationUnit):
     """A unit of a PHP file: a name, a value, and any comments associated."""
 
@@ -416,7 +413,7 @@ class phpfile(base.TranslationStore):
                     name = '{0}->{1}'.format(prefix, name)
                 if isinstance(item.value, Array):
                     handle_array(name, item.value.nodes, lexer)
-                elif isinstance(item.value, six.string_types):
+                elif isinstance(item.value, str):
                     self.create_and_add_unit(
                         name,
                         item.value,
@@ -425,7 +422,7 @@ class phpfile(base.TranslationStore):
                     )
 
         def concatenate(item):
-            if isinstance(item, six.string_types):
+            if isinstance(item, str):
                 return item
             elif isinstance(item, Variable):
                 return item.name
@@ -452,7 +449,7 @@ class phpfile(base.TranslationStore):
             elif isinstance(item, Assignment):
                 if isinstance(item.node, ArrayOffset):
                     name = lexer.extract_name('EQUALS', *item.lexpositions)
-                    if isinstance(item.expr, six.string_types):
+                    if isinstance(item.expr, str):
                         self.create_and_add_unit(
                             name,
                             item.expr,
@@ -470,7 +467,7 @@ class phpfile(base.TranslationStore):
                     name = lexer.extract_name('EQUALS', *item.lexpositions)
                     if isinstance(item.expr, Array):
                         handle_array(name, item.expr.nodes, lexer)
-                    elif isinstance(item.expr, six.string_types):
+                    elif isinstance(item.expr, str):
                         self.create_and_add_unit(
                             name,
                             item.expr,
