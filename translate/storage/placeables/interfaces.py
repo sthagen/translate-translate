@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Zuza Software Foundation
 #
@@ -47,9 +46,9 @@ class SubflowPlaceable(BasePlaceable):
     pass
 
 
-class Delimiter(object):
+class Delimiter:
     pass
 
 
-class PairedDelimiter(object):
+class PairedDelimiter:
     pass

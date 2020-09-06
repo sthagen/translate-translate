@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Zuza Software Foundation
 #
@@ -38,10 +37,9 @@ Encoding
     the .tab extension.
 """
 
-import locale
 import csv
+import locale
 
-from translate.misc.deprecation import deprecated
 from translate.storage import base
 
 
@@ -69,7 +67,7 @@ class OmegaTUnit(base.TranslationUnit):
         self._dict = {}
         if source:
             self.source = source
-        super(OmegaTUnit, self).__init__(source)
+        super().__init__(source)
 
     def getdict(self):
         """Get the dictionary of values for a OmegaT line"""
@@ -104,13 +102,13 @@ class OmegaTUnit(base.TranslationUnit):
 
     def addnote(self, text, origin=None, position="append"):
         currentnote = self._get_field('comment')
-        if position == "append" and currentnote is not None and currentnote != u'':
+        if position == "append" and currentnote is not None and currentnote != '':
             self._set_field('comment', currentnote + '\n' + text)
         else:
             self._set_field('comment', text)
 
     def removenotes(self, origin=None):
-        self._set_field('comment', u'')
+        self._set_field('comment', '')
 
     @property
     def source(self):
@@ -121,11 +119,6 @@ class OmegaTUnit(base.TranslationUnit):
         self._rich_source = None
         self._set_field('source', source)
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
-
     @property
     def target(self):
         return self._get_field('target')
@@ -134,11 +127,6 @@ class OmegaTUnit(base.TranslationUnit):
     def target(self, target):
         self._rich_target = None
         self._set_field('target', target)
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
 
     def settargetlang(self, newlang):
         self._dict['target-lang'] = newlang
@@ -162,7 +150,7 @@ class OmegaTFile(base.TranslationStore):
     def __init__(self, inputfile=None, **kwargs):
         """Construct an OmegaT glossary, optionally reading in from inputfile.
         """
-        super(OmegaTFile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         self.extension = ''
         if inputfile is not None:

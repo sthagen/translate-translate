@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2005, 2006 Zuza Software Foundation
 #
@@ -30,7 +29,7 @@ from translate.misc import wStringIO
 from translate.storage import po, tmx
 
 
-class po2tmx(object):
+class po2tmx:
 
     def cleancomments(self, comments, comment_type=None):
         """Removes the comment marks from the PO strings."""
@@ -73,7 +72,7 @@ def convertpo(inputfile, outputfile, templatefile, sourcelanguage='en',
     return 1
 
 
-class tmxmultifile(object):
+class tmxmultifile:
 
     def __init__(self, filename, mode=None):
         """initialises tmxmultifile from a seekable inputfile or writable outputfile"""
@@ -105,7 +104,7 @@ class TmxOptionParser(convert.ArchiveConvertOptionParser):
     def recursiveprocess(self, options):
         if not options.targetlanguage:
             raise ValueError("You must specify the target language")
-        super(TmxOptionParser, self).recursiveprocess(options)
+        super().recursiveprocess(options)
         with open(options.output, 'wb') as self.output:
             self.outputarchive.tmxfile.setsourcelanguage(options.sourcelanguage)
             self.outputarchive.tmxfile.serialize(self.output)

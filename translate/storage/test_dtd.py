@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2013 Zuza Software Foundation
 #
@@ -18,8 +17,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 from io import BytesIO
-from pytest import mark
 
+from pytest import mark
 
 from translate.storage import dtd, test_monolingual
 
@@ -126,7 +125,7 @@ def test_unquotefromdtd():
     assert dtd.unquotefromdtd('"A &#x0022;thing&#x0022;"') == "A \"thing\""
     assert dtd.unquotefromdtd("'<a href=\"http'") == "<a href=\"http"
     # other chars
-    assert dtd.unquotefromdtd('"&#187;"') == u"»"
+    assert dtd.unquotefromdtd('"&#187;"') == "»"
 
 
 def test_android_roundtrip_quoting():

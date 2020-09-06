@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006-2013 Zuza Software Foundation
 #
@@ -22,7 +21,11 @@ import re
 import sys
 from distutils.sysconfig import get_python_lib
 from os.path import dirname, isfile, join
+
 from setuptools import setup
+
+from translate import __doc__, __version__
+
 
 try:
     from sphinx.setup_command import BuildDoc
@@ -30,7 +33,6 @@ try:
 except ImportError:
     cmdclass = {}
 
-from translate import __doc__, __version__
 
 PRETTY_NAME = 'Translate Toolkit'
 translateversion = __version__.sver
@@ -41,6 +43,15 @@ sitepackages = packagesdir.replace(sys.prefix + os.sep, '')
 infofiles = [(join(sitepackages, 'translate'),
              [filename for filename in ('COPYING', 'README.rst')])]
 initfiles = [(join(sitepackages, 'translate'), [join('translate', '__init__.py')])]
+testfiles = [
+    (
+        join(sitepackages, 'translate', 'convert'),
+        [
+            join('translate', 'convert', 'test.odt'),
+            join('translate', 'convert', 'test.idml'),
+        ]
+    )
+]
 
 subpackages = [
     "convert",
@@ -52,7 +63,6 @@ subpackages = [
     join("storage", "versioncontrol"),
     join("storage", "xml_extract"),
     "search",
-    join("search", "indexing"),
     "services",
     "tools",
 ]
@@ -72,7 +82,6 @@ translatescripts = [
         ('idml2po', 'translate.convert.idml2po:main'),
         ('ini2po', 'translate.convert.ini2po:main'),
         ('json2po', 'translate.convert.json2po:main'),
-        ('l20n2po', 'translate.convert.l20n2po:main'),
         ('moz2po', 'translate.convert.moz2po:main'),
         ('mozlang2po', 'translate.convert.mozlang2po:main'),
         ('odf2xliff', 'translate.convert.odf2xliff:main'),
@@ -86,7 +95,6 @@ translatescripts = [
         ('po2idml', 'translate.convert.po2idml:main'),
         ('po2ini', 'translate.convert.po2ini:main'),
         ('po2json', 'translate.convert.po2json:main'),
-        ('po2l20n', 'translate.convert.po2l20n:main'),
         ('po2moz', 'translate.convert.po2moz:main'),
         ('po2mozlang', 'translate.convert.po2mozlang:main'),
         ('po2oo', 'translate.convert.po2oo:main'),
@@ -173,6 +181,26 @@ classifiers = [
 ]
 
 
+# Generate extras requires
+def parse_extra_requires(filename):
+    extras_require = {"all": []}
+    with open(filename) as requirements:
+        for line in requirements:
+            line = line.strip()
+            # Skip comments, inclusion or blank lines
+            if not line or line.startswith("-r") or line.startswith("#"):
+                continue
+            dependency, section = line.split("#")
+            dependency = dependency.strip()
+            section = section.strip()
+            if section not in extras_require:
+                extras_require[section] = [dependency]
+            else:
+                extras_require[section].append(dependency)
+            extras_require["all"].append(dependency)
+    return extras_require
+
+
 # py2exe-specific stuff
 try:
     import py2exe
@@ -182,7 +210,7 @@ else:
     BuildCommand = py2exe.build_exe.py2exe
     Distribution = py2exe.Distribution
 
-    class InnoScript(object):
+    class InnoScript:
         """class that builds an InnoSetup script"""
 
         def __init__(self, name, lib_dir, dist_dir, exe_files=[],
@@ -348,7 +376,7 @@ else:
             py2exeoptions["packages"] = ["translate", "encodings"]
             py2exeoptions["compressed"] = True
             py2exeoptions["excludes"] = [
-                "PyLucene", "Tkconstants", "Tkinter", "tcl",
+                "Tkconstants", "Tkinter", "tcl",
                 "enchant",  # Need to do more to support spell checking on Windows
                 # strange things unnecessarily included with some versions of pyenchant:
                 "win32ui", "_win32sysloader", "win32pipe", "py2exe", "win32com",
@@ -375,7 +403,7 @@ else:
                 options["innosetup"] = py2exeoptions.copy()
                 options["innosetup"]["install_script"] = []
             baseattrs.update(attrs)
-            Distribution.__init__(self, baseattrs)
+            super().__init__(baseattrs)
 
     def map_data_file(data_file):
         """remaps a data_file (could be a directory) to a different location
@@ -419,7 +447,7 @@ def parse_requirements(file_name):
 
 
 def getdatafiles():
-    datafiles = initfiles + infofiles
+    datafiles = initfiles + infofiles + testfiles
 
     def listfiles(srcdir):
         return (
@@ -502,6 +530,7 @@ def dosetup(name, version, packages, datafiles, scripts, ext_modules=[]):
         },
         platforms=["any"],
         classifiers=classifiers,
+        extras_require=parse_extra_requires("requirements/optional.txt"),
         packages=packages,
         data_files=datafiles,
         entry_points={

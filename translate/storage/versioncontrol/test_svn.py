@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 
 import os.path
 
-from translate.storage.versioncontrol import (get_versioned_object, run_command,
-                                              svn)
+from translate.storage.versioncontrol import (get_versioned_object,
+                                              run_command, svn)
 from translate.storage.versioncontrol.test_helper import HelperTest
 
 

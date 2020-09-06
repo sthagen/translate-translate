@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 
+from io import BytesIO
 
 from pytest import mark, raises
 
-from translate.misc import wStringIO
 from translate.misc.multistring import multistring
 from translate.storage import po, pypo, test_base
 
@@ -56,14 +55,14 @@ class TestPOUnit(test_base.TestTranslationUnit):
         locations_helper("key")
         locations_helper("file.c:100")
         locations_helper("I am a key")
-        locations_helper(u"unicoḓe key")
+        locations_helper("unicoḓe key")
 
     def test_nongettext_location(self):
         """test that we correctly handle a non-gettext (file:linenumber) location"""
-        u = self.UnitClass(u"")
-        u.addlocation(u"programming/C/programming.xml:44(para)")
+        u = self.UnitClass("")
+        u.addlocation("programming/C/programming.xml:44(para)")
         assert "programming/C/programming.xml:44(para)" in str(u)
-        assert u"programming/C/programming.xml:44(para)" in u.getlocations()
+        assert "programming/C/programming.xml:44(para)" in u.getlocations()
 
     def test_adding_empty_note(self):
         unit = self.UnitClass("bla")
@@ -129,7 +128,7 @@ class TestPOUnit(test_base.TestTranslationUnit):
         # test of msgid with no plural and msgstr with plural
         unit = self.UnitClass("Tree")
         with raises(ValueError):
-            unit.target = [u"ki", u"ni ki"]
+            unit.target = ["ki", "ni ki"]
         assert not unit.hasplural()
 
     def test_wrapping_bug(self):
@@ -154,7 +153,7 @@ class TestPOUnit(test_base.TestTranslationUnit):
         assert unit.isheader()
         unit.source = "Some English string"
         assert not unit.isheader()
-        unit.source = u"Goeiemôre"
+        unit.source = "Goeiemôre"
         assert not unit.isheader()
 
     def test_buildfromunit(self):
@@ -173,7 +172,7 @@ class TestPOUnit(test_base.TestTranslationUnit):
 #     def test_rich_source(self):
 #         unit = self.unit
 #         unit.rich_source = [['a', X('42'), 'c']]
-#         assert unit.rich_source == [[u'a\ufffcc']]
+#         assert unit.rich_source == [['a\ufffcc']]
 
 #     def test_rich_target(self):
 #         unit = self.unit
@@ -186,7 +185,7 @@ class TestPOFile(test_base.TestTranslationStore):
 
     def poparse(self, posource):
         """helper that parses po source without requiring files"""
-        dummyfile = wStringIO.StringIO(posource)
+        dummyfile = BytesIO(posource.encode() if isinstance(posource, str) else posource)
         pofile = self.StoreClass(dummyfile)
         return pofile
 
@@ -318,7 +317,7 @@ msgstr[1] "Kóeie"
         locations = u.getlocations()
         print(locations)
         assert len(locations) == 1
-        assert locations[0] == u"programming/C/programming.xml:44(para)"
+        assert locations[0] == "programming/C/programming.xml:44(para)"
         assert isinstance(locations[0], str)
 
     def test_percent_location(self):
@@ -431,7 +430,7 @@ msgstr "POT-Creation-Date: 2006-03-08 17:30+0200\n"
         pofile = self.poparse(posource)
         assert len(pofile.units) == 2
         print(repr(pofile.units[0].source))
-        assert pofile.units[0].source == u"thing"
+        assert pofile.units[0].source == "thing"
 
     def test_malformed_obsolete_units(self):
         """Test that we handle malformed obsolete units reasonably."""
@@ -806,10 +805,10 @@ msgid "a"
 msgstr "b"
 '''
         pofile = self.poparse(posource)
-        assert u"Tránslátór" in pofile.units[0].target
+        assert "Tránslátór" in pofile.units[0].target
         header_dict = pofile.parseheader()
-        assert u"Last-Translator" in header_dict
-        assert header_dict[u"Last-Translator"] == u"Tránslátór"
+        assert "Last-Translator" in header_dict
+        assert header_dict["Last-Translator"] == "Tránslátór"
 
         # let's test the same with latin-1:
         posource = r'''
@@ -827,10 +826,10 @@ msgstr "b"
 '''.encode('ISO-8859-1')
 
         pofile = self.poparse(posource)
-        assert u"Tránslátór" in pofile.units[0].target
+        assert "Tránslátór" in pofile.units[0].target
         header_dict = pofile.parseheader()
-        assert u"Last-Translator" in header_dict
-        assert header_dict[u"Last-Translator"] == u"Tránslátór"
+        assert "Last-Translator" in header_dict
+        assert header_dict["Last-Translator"] == "Tránslátór"
 
     def test_final_slash(self):
         """Test that \\ as last character is correcly interpreted (bug 960)."""
@@ -845,7 +844,7 @@ msgstr "プロジェクトが見つかりませんでした"
 '''
         pofile1 = self.poparse(posource)
         print(pofile1.units[1].source)
-        assert pofile1.units[1].source == u"I cannot locate the project\\"
+        assert pofile1.units[1].source == "I cannot locate the project\\"
         pofile2 = self.poparse(bytes(pofile1))
         print(bytes(pofile2))
         assert bytes(pofile1) == bytes(pofile2)
@@ -864,9 +863,9 @@ msgstr "start thing dingis fish"
 '''
         pofile1 = self.poparse(posource)
         print(repr(pofile1.units[1].target))
-        assert pofile1.units[1].target == u"start thing dingis fish"
+        assert pofile1.units[1].target == "start thing dingis fish"
         pofile2 = self.poparse(bytes(pofile1))
-        assert pofile2.units[1].target == u"start thing dingis fish"
+        assert pofile2.units[1].target == "start thing dingis fish"
         print(bytes(pofile2))
         assert bytes(pofile1) == bytes(pofile2)
 
@@ -885,7 +884,7 @@ msgstr "d"
         posource = posource.encode('utf-8')
         pofile = self.poparse(posource)
         unit = pofile.units[1]
-        unit.target = u"ḓ"
+        unit.target = "ḓ"
         contents = bytes(pofile)
         assert b'msgstr "\xe1\xb8\x93"' in contents
         assert b'charset=UTF-8' in contents
@@ -999,6 +998,39 @@ msgstr ""
 "\\"
 '''
 
+    def test_wrap_gettext(self):
+        posource = r"""# Test
+msgid ""
+msgstr ""
+"Project-Id-Version: kmail\n"
+"POT-Creation-Date: 2020-05-11 04:03+0200\n"
+"PO-Revision-Date: 2020-05-12 14:13+0000\n"
+"Last-Translator: Roman Savochenko <roman@oscada.org>\n"
+"Language-Team: Ukrainian <https://mirror.git.trinitydesktop.org/weblate/"
+"projects/tdepim/kmail/uk/>\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 4.0.4\n"
+
+#: configuredialog.cpp:4580
+msgid ""
+"x: to be continued with \"do not loop\", \"loop in current folder\", and "
+"\"loop in all folders\".\n"
+"When trying to find unread messages:"
+msgstr "При спробі знайти не прочитані повідомлення:"
+
+msgid ""
+"You can get a copy of your Recovery Key by going to &syncBrand.shortName."
+"label; Options on your other device, and selecting  \"My Recovery Key\" "
+"under \"Manage Account\"."
+msgstr ""
+"""
+        assert self.poreflow(posource) == posource
+
     def test_msgidcomments(self):
         posource = r'''
 msgid ""
@@ -1017,10 +1049,10 @@ msgstr ""
 '''
         pofile = self.poparse(posource)
         unit = pofile.units[1]
-        assert unit.source == u'The actual source text'
-        assert unit.target.startswith(u'_: ')
+        assert unit.source == 'The actual source text'
+        assert unit.target.startswith('_: ')
 
-    def test_unicode(self):
+    def test_unicode_ids(self):
         posource = b'''
 msgid ""
 msgstr ""
@@ -1034,6 +1066,6 @@ msgstr ""
 '''
         pofile = self.poparse(posource)
         unit = pofile.units[2]
-        assert unit.source == u'Raphaël2'
+        assert unit.source == 'Raphaël2'
         unit = pofile.units[1]
-        assert unit.source == u'Raphaël'
+        assert unit.source == 'Raphaël'

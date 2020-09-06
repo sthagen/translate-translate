@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Zuza Software Foundation
 #
@@ -30,12 +29,12 @@ def identity(x):
     return x
 
 
-class ParseState(object):
+class ParseState:
 
     def __init__(self, f, charset, read_hook=identity):
         self.f = f
         self.charset = charset
-        self.current_line = u''
+        self.current_line = ''
         self.read_hook = read_hook
         self.read_line()
 

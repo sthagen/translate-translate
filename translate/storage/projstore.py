@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2010 Zuza Software Foundation
 #
@@ -33,7 +32,7 @@ class FileNotInProjectError(Exception):
     pass
 
 
-class ProjectStore(object):
+class ProjectStore:
     """Basic project file container."""
 
     # INITIALIZERS #

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008-2009 Zuza Software Foundation
 #
@@ -22,7 +21,11 @@ Contains base placeable classes with names based on XLIFF placeables. See the
 XLIFF standard for more information about what the names mean.
 """
 
-from translate.storage.placeables.interfaces import *
+from translate.storage.placeables.interfaces import (Delimiter,
+                                                     MaskingPlaceable,
+                                                     PairedDelimiter,
+                                                     ReplacementPlaceable,
+                                                     SubflowPlaceable)
 from translate.storage.placeables.strelem import StringElem
 
 

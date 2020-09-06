@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2015 Zuza Software Foundation
 # Copyright 2015 Sarah Hale
@@ -28,10 +27,11 @@ import logging
 
 from translate.storage import po
 
+
 logger = logging.getLogger(__name__)
 
 
-class resx2po(object):
+class resx2po:
     """Convert a RESX file to a PO file for handling translation"""
 
     def convert_store(self, input_store, duplicatestyle="msgctxt"):

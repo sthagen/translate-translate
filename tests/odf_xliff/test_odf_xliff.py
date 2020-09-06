@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007 Zuza Software Foundation
 #
@@ -26,6 +25,7 @@ import zipfile
 
 from lxml import etree
 
+
 # get directory of this test
 dir = os.path.dirname(os.path.abspath(__file__))
 # get top-level directory (moral equivalent of ../..)
@@ -33,8 +33,8 @@ dir = os.path.dirname(os.path.dirname(dir))
 # load python modules from top-level
 sys.path.insert(0, dir)
 
-from translate.convert import odf2xliff, xliff2odf
-from translate.storage import factory, xliff
+from translate.convert import odf2xliff, xliff2odf  # isort:skip
+from translate.storage import factory, xliff  # isort:skip
 
 
 def setup_module(module):
@@ -43,13 +43,13 @@ def setup_module(module):
 
 def args(src, tgt, **kwargs):
     arg_list = []
-    arg_list.extend([u'--errorlevel=traceback', src, tgt])
+    arg_list.extend(['--errorlevel=traceback', src, tgt])
     for flag, value in kwargs.items():
         value = str(value)
         if len(flag) == 1:
-            arg_list.append(u'-%s' % flag)
+            arg_list.append('-%s' % flag)
         else:
-            arg_list.append(u'--%s' % flag)
+            arg_list.append('--%s' % flag)
         if value is not None:
             arg_list.append(value)
     return arg_list
@@ -69,18 +69,18 @@ def print_diff(store1, store2):
         print(line)
 
 
-SOURCE_ODF = u'test_2.odt'
-REFERENCE_XLF = u'test_2-test_odf2xliff-reference.xlf'
-GENERATED_XLF_ITOOLS = u'test_2-test_odf2xliff-itools.xlf'
-GENERATED_XLF_TOOLKIT = u'test_2-test_odf2xliff-toolkit.xlf'
+SOURCE_ODF = 'test_2.odt'
+REFERENCE_XLF = 'test_2-test_odf2xliff-reference.xlf'
+GENERATED_XLF_ITOOLS = 'test_2-test_odf2xliff-itools.xlf'
+GENERATED_XLF_TOOLKIT = 'test_2-test_odf2xliff-toolkit.xlf'
 
-TARGET_XLF = u'test_2-test_roundtrip.xlf'
-REFERENCE_ODF = u'test_2.odt'
-GENERATED_ODF = u'test_2-test_roundtrip-generated.odt'
+TARGET_XLF = 'test_2-test_roundtrip.xlf'
+REFERENCE_ODF = 'test_2.odt'
+GENERATED_ODF = 'test_2-test_roundtrip-generated.odt'
 
-SOURCE_ODF_INLINE = u'test_inline.odt'
-REFERENCE_XLF_INLINE = u'test_inline-test_odf2xliff_inline-reference.xlf'
-GENERATED_XLF_TOOLKIT_INLINE = u'test_inline-test_odf2xliff_inline-toolkit.xlf'
+SOURCE_ODF_INLINE = 'test_inline.odt'
+REFERENCE_XLF_INLINE = 'test_inline-test_odf2xliff_inline-reference.xlf'
+GENERATED_XLF_TOOLKIT_INLINE = 'test_inline-test_odf2xliff_inline-toolkit.xlf'
 
 
 def test_odf2xliff():
@@ -98,10 +98,10 @@ def test_odf2xliff():
 
 
 def is_content_file(filename):
-    return filename in (u'content.xml', u'meta.xml', u'styles.xml')
+    return filename in ('content.xml', 'meta.xml', 'styles.xml')
 
 
-class ODF(object):
+class ODF:
 
     encoding = 'utf-8'
 

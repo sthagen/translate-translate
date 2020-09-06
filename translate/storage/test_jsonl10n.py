@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
 
 from io import BytesIO
+
 from pytest import raises
+
 from translate.misc.multistring import multistring
 from translate.storage import base, jsonl10n, test_monolingual
 
@@ -30,12 +31,61 @@ JSON_I18NEXT_PLURAL = b"""{
     "keyPluralMultipleEgArabic": "Nazdar"
 }
 """
+JSON_I18NEXT_NESTED_ARRAY = """{
+    "apps": [
+        {
+            "title": "app1",
+            "description": "test description"
+        },
+        {
+            "title": "app2",
+            "description": "test description 2"
+        }
+    ]
+}
+"""
 JSON_ARRAY = b"""{
     "key": [
         "One",
         "Two",
         "Three"
     ]
+}
+"""
+JSON_GOI18N = b"""[
+    {
+        "id": "tag",
+        "description": "a piece or strip of strong paper, plastic, metal, leather, etc., for attaching by one end to something as a mark or label",
+        "translation": {
+            "one": "{{.count}} tag",
+            "other": "{{.count}} tags"
+        }
+    },
+    {
+        "id": "table",
+        "description": "an article of furniture consisting of a flat, slablike top supported on one or more legs or other supports",
+        "translation": "Table"
+    }
+]
+"""
+
+JSON_ARB = b"""{
+  "@@last_modified": "2019-11-06T22:41:37.002648",
+  "Back": "Back",
+  "@Back": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "Next": "Next",
+  "@Next": {
+    "type": "text",
+    "placeholders": {}
+  },
+  "Done": "Done",
+  "@Done": {
+    "type": "text",
+    "placeholders": {}
+  }
 }
 """
 
@@ -253,6 +303,18 @@ class TestI18NextStore(test_monolingual.TestMonolingualStore):
 
         assert out.getvalue() == JSON_I18NEXT
 
+    def test_nested_array(self):
+        store = self.StoreClass()
+        store.parse(JSON_I18NEXT_NESTED_ARRAY)
+
+        assert len(store.units) == 4
+        assert store.units[0].getid() == ".apps[0].title"
+        assert store.units[1].getid() == ".apps[0].description"
+        assert store.units[2].getid() == ".apps[1].title"
+        assert store.units[3].getid() == ".apps[1].description"
+
+        assert bytes(store).decode() == JSON_I18NEXT_NESTED_ARRAY
+
     def test_new_plural(self):
         EXPECTED = b'''{
     "simple": "the singular",
@@ -293,3 +355,41 @@ class TestI18NextStore(test_monolingual.TestMonolingualStore):
         store.serialize(out)
 
         assert out.getvalue() == EXPECTED
+
+
+class TestGoI18NJsonFile(test_monolingual.TestMonolingualStore):
+    StoreClass = jsonl10n.GoI18NJsonFile
+
+    def test_plurals(self):
+        store = self.StoreClass()
+        store.parse(JSON_GOI18N)
+
+        assert len(store.units) == 2
+        assert store.units[0].target == multistring(["{{.count}} tag", "{{.count}} tags"])
+        assert store.units[1].target == "Table"
+
+        assert bytes(store).decode() == JSON_GOI18N.decode()
+
+    def test_plurals_missing(self):
+        store = self.StoreClass()
+        store.parse(JSON_GOI18N)
+
+        store.units[0].target = multistring(["{{.count}} tag"])
+
+        assert '"other": ""' in bytes(store).decode()
+
+
+class TestARBJsonFile(test_monolingual.TestMonolingualStore):
+    StoreClass = jsonl10n.ARBJsonFile
+
+    def test_roundtrip(self):
+        store = self.StoreClass()
+        store.parse(JSON_ARB)
+
+        assert len(store.units) == 4
+        assert store.units[0].isheader()
+        assert store.units[1].target == "Back"
+        assert store.units[2].target == "Next"
+        assert store.units[3].target == "Done"
+
+        assert bytes(store).decode() == JSON_ARB.decode()

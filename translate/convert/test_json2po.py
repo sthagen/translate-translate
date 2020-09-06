@@ -1,13 +1,14 @@
+from io import BytesIO
+
 from translate.convert import json2po, test_convert
-from translate.misc import wStringIO
 from translate.storage import jsonl10n
 
 
-class TestJson2PO(object):
+class TestJson2PO:
 
     def json2po(self, jsonsource, template=None, filter=None):
         """helper that converts json source to po source without requiring files"""
-        inputfile = wStringIO.StringIO(jsonsource)
+        inputfile = BytesIO(jsonsource.encode())
         inputjson = jsonl10n.JsonFile(inputfile, filter=filter)
         convertor = json2po.json2po()
         outputpo = convertor.convert_store(inputjson)

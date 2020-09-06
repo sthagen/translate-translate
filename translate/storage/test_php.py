@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 
-from pytest import mark
+from io import BytesIO
 
-from translate.misc import wStringIO
+from translate.misc.multistring import multistring
 from translate.storage import php, test_monolingual
 
 
@@ -93,7 +92,7 @@ class TestPhpFile(test_monolingual.TestMonolingualStore):
 
     def phpparse(self, phpsource):
         """helper that parses php source without requiring files"""
-        dummyfile = wStringIO.StringIO(phpsource)
+        dummyfile = BytesIO(phpsource.encode())
         phpfile = php.phpfile(dummyfile)
         return phpfile
 
@@ -484,57 +483,78 @@ $month_mar = 'Mar';"""
 
     def test_parsing_arrays_with_no_keys(self):
         """Parse an array with no keys."""
-        phpsource = """$days = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');"""
+        phpsource = """<?php
+$days = array(
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    "Saturday",
+);
+"""
         phpfile = self.phpparse(phpsource)
         assert len(phpfile.units) == 7
         phpunit = phpfile.units[0]
-        assert phpunit.name == "$days->'None'"
+        assert phpunit.name == "$days->[]"
         assert phpunit.source == "Sunday"
         phpunit = phpfile.units[1]
-        assert phpunit.name == "$days->'None'"
+        assert phpunit.name == "$days->[]"
         assert phpunit.source == "Monday"
         phpunit = phpfile.units[2]
-        assert phpunit.name == "$days->'None'"
+        assert phpunit.name == "$days->[]"
         assert phpunit.source == "Tuesday"
         phpunit = phpfile.units[3]
-        assert phpunit.name == "$days->'None'"
+        assert phpunit.name == "$days->[]"
         assert phpunit.source == "Wednesday"
         phpunit = phpfile.units[4]
-        assert phpunit.name == "$days->'None'"
+        assert phpunit.name == "$days->[]"
         assert phpunit.source == "Thursday"
         phpunit = phpfile.units[5]
-        assert phpunit.name == "$days->'None'"
+        assert phpunit.name == "$days->[]"
         assert phpunit.source == "Friday"
         phpunit = phpfile.units[6]
-        assert phpunit.name == "$days->'None'"
+        assert phpunit.name == "$days->[]"
         assert phpunit.source == "Saturday"
+        assert bytes(phpfile).decode() == phpsource
 
-    @mark.xfail
     def test_parsing_arrays_with_no_keys_assigned_to_array(self):
         """Parse an array with no keys assigned to another array."""
-        phpsource = """$messages['days_short'] = array('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');"""
+        phpsource = """<?php
+$messages['days_short'] = array(
+    'Sun',
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    "Fri",
+    'Sat',
+);
+"""
         phpfile = self.phpparse(phpsource)
+        assert bytes(phpfile).decode() == phpsource
         assert len(phpfile.units) == 7
         phpunit = phpfile.units[0]
-        assert phpunit.name == "$messages->'days_short'->'None'"
+        assert phpunit.name == "$messages['days_short']->[]"
         assert phpunit.source == "Sun"
         phpunit = phpfile.units[1]
-        assert phpunit.name == "$messages->'days_short'->'None'"
+        assert phpunit.name == "$messages['days_short']->[]"
         assert phpunit.source == "Mon"
         phpunit = phpfile.units[2]
-        assert phpunit.name == "$messages->'days_short'->'None'"
+        assert phpunit.name == "$messages['days_short']->[]"
         assert phpunit.source == "Tue"
         phpunit = phpfile.units[3]
-        assert phpunit.name == "$messages->'days_short'->'None'"
+        assert phpunit.name == "$messages['days_short']->[]"
         assert phpunit.source == "Wed"
         phpunit = phpfile.units[4]
-        assert phpunit.name == "$messages->'days_short'->'None'"
+        assert phpunit.name == "$messages['days_short']->[]"
         assert phpunit.source == "Thu"
         phpunit = phpfile.units[5]
-        assert phpunit.name == "$messages->'days_short'->'None'"
+        assert phpunit.name == "$messages['days_short']->[]"
         assert phpunit.source == "Fri"
         phpunit = phpfile.units[6]
-        assert phpunit.name == "$messages->'days_short'->'None'"
+        assert phpunit.name == "$messages['days_short']->[]"
         assert phpunit.source == "Sat"
 
     def test_parsing_nested_arrays_with_no_keys(self):
@@ -543,7 +563,7 @@ $month_mar = 'Mar';"""
         phpfile = self.phpparse(phpsource)
         assert len(phpfile.units) == 1
         phpunit = phpfile.units[0]
-        assert phpunit.name == "$lang->'None'->'key'"
+        assert phpunit.name == "$lang->[]->'key'"
         assert phpunit.source == "value"
 
     def test_assignment_in_line_where_multiline_comment_ends(self):
@@ -563,7 +583,7 @@ $month_mar = 'Mar';"""
     def test_parsing_arrays_using_short_array_syntax(self):
         """parse short array syntax.
         Bug #3626"""
-        phpsource = b'''<?php
+        phpsource = '''<?php
 $lang = [
     'item1' => 'value1',
     'item2' => 'value2',
@@ -577,7 +597,7 @@ $lang = [
         phpunit = phpfile.units[1]
         assert phpunit.name == "$lang[]->'item2'"
         assert phpunit.source == "value2"
-        assert phpfile.__bytes__() == phpsource
+        assert bytes(phpfile).decode() == phpsource
 
     def test_parsing_nested_arrays(self):
         """parse the nested array syntax. Bug #2240"""
@@ -734,26 +754,31 @@ $lang = [
 
     def test_parsing_nested_arrays_with_blank_entries(self):
         """parse the nested array syntax with blank entries. Bug #2648"""
-        phpsource = '''$lang = array(
-            'item1' => 'value1',
-            'newsletter_frequency_dom' =>
-                array(
-                    '' => '',
-                    'Weekly' => 'Weekly',
-                ),
-            'item2' => 'value2',
-        );'''
+        phpsource = '''<?php
+$lang = array(
+    'item1' => 'value1',
+    'newsletter_frequency_dom' => array(
+        '' => '',
+        'Weekly' => 'Weekly',
+    ),
+    'item2' => 'value2',
+);
+'''
         phpfile = self.phpparse(phpsource)
-        assert len(phpfile.units) == 3
+        assert len(phpfile.units) == 4
         phpunit = phpfile.units[0]
         assert phpunit.name == "$lang->'item1'"
         assert phpunit.source == "value1"
         phpunit = phpfile.units[1]
+        assert phpunit.name == "$lang->'newsletter_frequency_dom'->''"
+        assert phpunit.source == ""
+        phpunit = phpfile.units[2]
         assert phpunit.name == "$lang->'newsletter_frequency_dom'->'Weekly'"
         assert phpunit.source == "Weekly"
-        phpunit = phpfile.units[2]
+        phpunit = phpfile.units[3]
         assert phpunit.name == "$lang->'item2'"
         assert phpunit.source == "value2"
+        assert bytes(phpfile).decode() == phpsource
 
     def test_slashstar_in_string(self):
         """ignore the /* comment delimiter when it is part of a string.
@@ -825,11 +850,11 @@ $lang['mediaselect'] = 'Bestand selectie';"""
         assert phpunit.source == "Bestand selectie"
 
     def test_quotes(self):
-        phpsource = b'''<?php
+        phpsource = '''<?php
 $txt[\'DISPLAYEDINFOS\'] = "<a href=\\"__PARAM2__\\">Modificar...</a>";
 '''
         phpfile = self.phpparse(phpsource)
-        assert phpfile.__bytes__() == phpsource
+        assert bytes(phpfile).decode() == phpsource
 
     def test_concatenation(self):
         """Check that concatenating strings and variables is parsed correctly."""
@@ -851,7 +876,7 @@ $messages['greeting'] = 'Hi ' . $name;
         assert phpunit.source == "Hi $name"
 
     def test_serialize(self):
-        phpsource = b"""<?php
+        phpsource = """<?php
 # Comment 1
 define("_FINISH", 'Rematar');
 // Comment 2
@@ -870,7 +895,7 @@ $texts = array(
 );
 """
         phpfile = self.phpparse(phpsource)
-        assert phpfile.__bytes__() == phpsource
+        assert bytes(phpfile).decode() == phpsource
 
     def test_space_before_comma(self):
         """check that spacing before comma or semicolon doesn't break parser
@@ -934,7 +959,7 @@ spanning multiple lines
 using nowdoc syntax.'''
         assert phpfile.units[0].name == '$str'
 
-    def test_concatenation(self):
+    def test_plain_concatenation(self):
         """check parsing concatenated strings"""
         phpsource = """$str = 'Concatenated' . ' ' . 'string';
         $arr['x'] = 'Concatenated' . ' ' . 'string';
@@ -974,7 +999,7 @@ using nowdoc syntax.'''
         assert phpunit.source == "Bestand selectie"
 
     def test_return_array(self):
-        phpsource = b"""<?php
+        phpsource = """<?php
 return array(
     'peach' => 'pesca',
 );
@@ -984,10 +1009,10 @@ return array(
         phpunit = phpfile.units[0]
         assert phpunit.name == "return->'peach'"
         assert phpunit.source == "pesca"
-        assert phpfile.__bytes__() == phpsource
+        assert bytes(phpfile).decode() == phpsource
 
     def test_return_array_short(self):
-        phpsource = b"""<?php
+        phpsource = """<?php
 return [
     'peach' => 'pesca',
 ];
@@ -997,4 +1022,59 @@ return [
         phpunit = phpfile.units[0]
         assert phpunit.name == "return[]->'peach'"
         assert phpunit.source == "pesca"
-        assert phpfile.__bytes__() == phpsource
+        assert bytes(phpfile).decode() == phpsource
+        phpunit.source = "ryba"
+        assert bytes(phpfile).decode() != phpsource
+        phpunit.source = "pesca"
+        assert bytes(phpfile).decode() == phpsource
+
+    def test_return_array_short_quotes(self):
+        phpsource = r"""<?php
+return [
+    'peach' => "foo \"pesca\"",
+];
+"""
+        phpfile = self.phpparse(phpsource)
+        assert len(phpfile.units) == 1
+        phpunit = phpfile.units[0]
+        assert phpunit.escape_type == '"'
+        assert phpunit.name == "return[]->'peach'"
+        assert phpunit.source == "foo \"pesca\""
+        assert bytes(phpfile).decode() == phpsource
+        phpunit.source = "ryba"
+        assert bytes(phpfile) != phpsource
+        phpunit.source = "foo \"pesca\""
+        assert bytes(phpfile).decode() == phpsource
+
+
+class TestLaravelPhpUnit(test_monolingual.TestMonolingualUnit):
+    UnitClass = php.LaravelPHPUnit
+
+
+class TestLaravelPhpFile(test_monolingual.TestMonolingualStore):
+    StoreClass = php.LaravelPHPFile
+
+    def phpparse(self, phpsource):
+        """helper that parses php source without requiring files"""
+        dummyfile = BytesIO(phpsource.encode())
+        phpfile = self.StoreClass(dummyfile)
+        return phpfile
+
+    def test_plurals(self):
+        phpsource = r"""<?php
+return [
+    'welcome' => 'Welcome to our application',
+    'apples' => 'There is one apple|There are many apples',
+];
+"""
+        phpfile = self.phpparse(phpsource)
+        assert len(phpfile.units) == 2
+        phpunit = phpfile.units[0]
+        assert phpunit.name == "return[]->'welcome'"
+        assert phpunit.source == "Welcome to our application"
+        phpunit = phpfile.units[1]
+        assert phpunit.name == "return[]->'apples'"
+        assert phpunit.source == multistring(['There is one apple', 'There are many apples'])
+        assert bytes(phpfile).decode() == phpsource
+        phpunit.source = multistring(['There is an apple', 'There are many apples'])
+        assert bytes(phpfile).decode() == phpsource.replace("one apple", "an apple")

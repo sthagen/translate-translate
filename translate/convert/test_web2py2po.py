@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 from translate.convert import web2py2po
 from translate.storage import po
 from translate.storage.test_base import first_translatable, headerless_len
 
 
-class TestWEB2PY2PO(object):
+class TestWEB2PY2PO:
 
     def web2py2po(self, web2py_source):
         """helper that converts po source to web2py source without requiring files"""

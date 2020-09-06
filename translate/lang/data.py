@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007-2011 Zuza Software Foundation
 #
@@ -24,6 +23,7 @@ import gettext
 import locale
 import os
 import re
+
 
 try:
     import pycountry
@@ -602,7 +602,7 @@ def get_country_iso_name(country_code):
             return country.common_name
         return country.name
     except (KeyError, AttributeError):
-        return u""
+        return ""
 
 
 def get_language_iso_name(language_code):
@@ -616,7 +616,7 @@ def get_language_iso_name(language_code):
             return language.common_name
         return language.name
     except (KeyError, AttributeError):
-        return u""
+        return ""
 
 
 def get_language_iso_fullname(language_code):
@@ -629,15 +629,15 @@ def get_language_iso_fullname(language_code):
         language_code = language_code.replace("_", "-").replace("@", "-")
         language_code = "-".join(language_code.split("-")[:2])
         if "-" not in language_code:
-            return u""
+            return ""
         language_code, country_code = language_code.split("-")
         language_name = get_language_iso_name(language_code)
         if not language_name:
-            return u""
+            return ""
         country_name = get_country_iso_name(country_code)
         if not country_name:
-            return u""
-        return u"%s (%s)" % (language_name, country_name)
+            return ""
+        return "%s (%s)" % (language_name, country_name)
     return get_language_iso_name(language_code)
 
 
@@ -660,7 +660,7 @@ def tr_lang(langcode=None):
             language, country = match.groups()
             if country != "macrolanguage":
                 return (
-                    u"%s (%s)"
+                    "%s (%s)"
                     % (_fix_language_name(langfunc(language)),
                        countryfunc(country)))
         return _fix_language_name(langfunc(name))
@@ -767,7 +767,7 @@ def normalize_code(code):
 __normalised_languages = set(normalize_code(key) for key in languages.keys())
 
 
-def simplify_to_common(language_code, languages=languages):
+def simplify_to_common(language_code):
     """Simplify language code to the most commonly used form for the language,
     stripping country information for languages that tend not to be localized
     differently for different countries

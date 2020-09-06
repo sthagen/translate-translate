@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2011 Zuza Software Foundation
 #
@@ -33,7 +32,6 @@ import logging
 import re
 
 from translate.lang import data
-from translate.misc.deprecation import deprecated
 from translate.misc.multistring import multistring
 from translate.storage import base, cpo, pocommon
 
@@ -59,7 +57,7 @@ class pounit(pocommon.pounit):
     # prev_msgid = []         #
     # prev_msgid_plural = []  #
     # typecomments = []       #   #, fuzzy
-    # msgidcomment = u""      #   _: within msgid
+    # msgidcomment = ""      #   _: within msgid
     # msgctxt
     # msgid = []
     # msgstr = []
@@ -69,11 +67,11 @@ class pounit(pocommon.pounit):
     __shallow__ = ['_store']
 
     def __init__(self, source=None, **kwargs):
-        pocommon.pounit.__init__(self, source)
+        super().__init__(source)
         self._initallcomments(blankall=True)
-        self._msgctxt = u""
+        self._msgctxt = ""
 
-        self.target = u""
+        self.target = ""
 
     def _initallcomments(self, blankall=False):
         """Initialises allcomments"""
@@ -82,7 +80,7 @@ class pounit(pocommon.pounit):
             self.automaticcomments = []
             self.sourcecomments = []
             self.typecomments = []
-            self.msgidcomment = u""
+            self.msgidcomment = ""
 
     @property
     def source(self):
@@ -91,19 +89,14 @@ class pounit(pocommon.pounit):
     @source.setter
     def source(self, source):
         self._rich_source = None
-        source = data.forceunicode(source or u"")
-        source = source or u""
+        source = data.forceunicode(source or "")
+        source = source or ""
         if isinstance(source, multistring):
             self._source = source
         elif isinstance(source, str):
             self._source = source
         else:  # If it is unicode, list or dict.
             self._source = multistring(source)
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
 
     @property
     def target(self):
@@ -128,20 +121,15 @@ class pounit(pocommon.pounit):
         else:
             self._target = target
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
-
     def getnotes(self, origin=None):
         """Return comments based on origin value (programmer, developer, source code and translator)"""
         if origin is None:
-            comments = u"\n".join(self.othercomments)
-            comments += u"\n".join(self.automaticcomments)
+            comments = "\n".join(self.othercomments)
+            comments += "\n".join(self.automaticcomments)
         elif origin == "translator":
-            comments = u"\n".join(self.othercomments)
+            comments = "\n".join(self.othercomments)
         elif origin in ["programmer", "developer", "source code"]:
-            comments = u"\n".join(self.automaticcomments)
+            comments = "\n".join(self.automaticcomments)
         else:
             raise ValueError("Comment type not valid")
         return comments
@@ -157,9 +145,9 @@ class pounit(pocommon.pounit):
         if origin in ["programmer", "developer", "source code"]:
             autocomments = True
             commentlist = self.automaticcomments
-        if text.endswith(u'\n'):
+        if text.endswith('\n'):
             text = text[:-1]
-        newcomments = text.split(u"\n")
+        newcomments = text.split("\n")
         if position == "append":
             newcomments = commentlist + newcomments
         elif position == "prepend":
@@ -253,7 +241,7 @@ class pounit(pocommon.pounit):
                             list1.append(item)
 
         if not isinstance(otherpo, pounit):
-            super(pounit, self).merge(otherpo, overwrite, comments)
+            super().merge(otherpo, overwrite, comments)
             return
         if comments:
             mergelists(self.othercomments, otherpo.othercomments)
@@ -315,7 +303,7 @@ class pounit(pocommon.pounit):
                 self.typecomments = filter(lambda tcline: tcline.strip() != "#,", typecomments)
 
     def istranslated(self):
-        return super(pounit, self).istranslated() and not self.isobsolete()
+        return super().istranslated() and not self.isobsolete()
 
     def istranslatable(self):
         return not (self.isheader() or self.isblank() or self.isobsolete())
@@ -330,7 +318,7 @@ class pounit(pocommon.pounit):
         """Makes this unit obsolete"""
         self.sourcecomments = []
         self.automaticcomments = []
-        super(pounit, self).makeobsolete()
+        super().makeobsolete()
 
     def hasplural(self):
         """returns whether this pounit contains plural strings..."""
@@ -376,7 +364,7 @@ class pounit(pocommon.pounit):
         return self._msgctxt + self.msgidcomment
 
     def setcontext(self, context):
-        context = data.forceunicode(context or u"")
+        context = data.forceunicode(context or "")
         self._msgctxt = context
 
     def getid(self):
@@ -389,9 +377,9 @@ class pounit(pocommon.pounit):
 #        id = '\0'.join(self.source.strings)
         id = self.source
         if self.msgidcomment:
-            id = u"_: %s\n%s" % (context, id)
+            id = "_: %s\n%s" % (context, id)
         elif context:
-            id = u"%s\04%s" % (context, id)
+            id = "%s\04%s" % (context, id)
         return id
 
     @classmethod
@@ -508,7 +496,7 @@ class pofile(pocommon.pofile):
                     if not thepo._msgctxt == id_dict[id]._msgctxt:
                         uniqueunits.append(thepo)
                     else:
-                        logger.warn(
+                        logger.warning(
                             "Duplicate unit found with msgctx of '%s' and source '%s'",
                             thepo._msgctxt,
                             thepo.source)
@@ -517,7 +505,7 @@ class pofile(pocommon.pofile):
                     if duplicatestyle == "merge":
                         addcomment(thepo)
                     else:
-                        thepo._msgctxt += u" ".join(thepo.getlocations())
+                        thepo._msgctxt += " ".join(thepo.getlocations())
                 id_dict[id] = thepo
                 uniqueunits.append(thepo)
         self.units = uniqueunits
@@ -527,7 +515,7 @@ class pofile(pocommon.pofile):
         self._cpo_store = cpo.pofile(encoding=self.encoding, noheader=True)
         try:
             self._build_cpo_from_self()
-        except UnicodeEncodeError as e:
+        except UnicodeEncodeError:
             self.encoding = "utf-8"
             self.updateheader(add=True, Content_Type="text/plain; charset=UTF-8")
             self._build_cpo_from_self()

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2011 Zuza Software Foundation
 # Copyright 2013 F Wolff
@@ -37,7 +36,7 @@ from translate.storage import factory
 from translate.storage.poheader import poheader
 
 
-class GrepMatch(object):
+class GrepMatch:
     """Just a small data structure that represents a search match."""
 
     # INITIALIZERS #
@@ -213,7 +212,7 @@ class GrepFilter:
             if self.matches(unit.getnotes()):
                 return True
         if self.search_locations:
-            if self.matches(u" ".join(unit.getlocations())):
+            if self.matches(" ".join(unit.getlocations())):
                 return True
         return False
 
@@ -241,7 +240,7 @@ class GrepFilter:
             flags |= re.IGNORECASE
         if not self.useregexp:
             searchstring = re.escape(searchstring)
-        self.re_search = re.compile(u'(%s)' % (searchstring), flags)
+        self.re_search = re.compile('(%s)' % (searchstring), flags)
 
         matches = []
         indexes = []
@@ -313,7 +312,7 @@ class GrepOptionParser(optrecurse.RecursiveOptionParser):
         if usage is None:
             self.usage = "%prog searchstring " + " ".join([self.getusagestring(option) for option in self.option_list])
         else:
-            super(GrepOptionParser, self).set_usage(usage)
+            super().set_usage(usage)
 
     def run(self):
         """parses the arguments, and runs recursiveprocess with the resulting options"""

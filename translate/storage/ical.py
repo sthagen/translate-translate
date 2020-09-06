@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007-2008 Zuza Software Foundation
 #
@@ -69,7 +68,7 @@ class icalunit(base.TranslationUnit):
         self.location = ""
         if source:
             self.source = source
-        super(icalunit, self).__init__(source)
+        super().__init__(source)
 
     def addlocation(self, location):
         self.location = location
@@ -85,7 +84,7 @@ class icalfile(base.TranslationStore):
 
     def __init__(self, inputfile=None, **kwargs):
         """construct an ical file, optionally reading in from inputfile."""
-        super(icalfile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         self._icalfile = None
         if inputfile is not None:

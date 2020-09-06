@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2016 Michal Čihař
 #
@@ -20,26 +19,24 @@
 r"""Class that manages YAML data files for translation
 """
 
-
 import uuid
 
 from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.comments import CommentedMap
 
 from translate.lang.data import cldr_plural_categories, plural_tags
-from translate.misc.deprecation import deprecated
 from translate.misc.multistring import multistring
 from translate.storage import base
 
 
-class YAMLUnit(base.TranslationUnit):
+class YAMLUnit(base.DictUnit):
     """A YAML entry"""
 
     def __init__(self, source=None, **kwargs):
         self._id = None
         if source:
             self.source = source
-        super(YAMLUnit, self).__init__(source)
+        super().__init__(source)
 
     @property
     def source(self):
@@ -48,11 +45,6 @@ class YAMLUnit(base.TranslationUnit):
     @source.setter
     def source(self, source):
         self.target = source
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
 
     def setid(self, value):
         self._id = value
@@ -66,15 +58,32 @@ class YAMLUnit(base.TranslationUnit):
     def getlocations(self):
         return [self.getid()]
 
+    def getkey(self):
+        return self.getid().split('->')
 
-class YAMLFile(base.TranslationStore):
+    def convert_target(self):
+        return self.target
+
+    def getvalue(self):
+        ret = self.convert_target()
+        for k in reversed(self.getkey()):
+            if '[' in k and k[-1] == ']':
+                k, pos = k[:-1].split('[')
+                ret = (int(pos), ret)
+                if not k:
+                    continue
+            ret = {k: ret}
+        return ret
+
+
+class YAMLFile(base.DictStore):
     """A YAML file"""
 
     UnitClass = YAMLUnit
 
     def __init__(self, inputfile=None, **kwargs):
         """construct a YAML file, optionally reading in from inputfile."""
-        super(YAMLFile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         self._original = self.get_root_node()
         self.dump_args = {
@@ -88,9 +97,6 @@ class YAMLFile(base.TranslationStore):
         """Returns root node for serialize"""
         return CommentedMap()
 
-    def serialize_value(self, value):
-        return value
-
     @property
     def yaml(self):
         yaml = YAML()
@@ -99,36 +105,12 @@ class YAMLFile(base.TranslationStore):
         return yaml
 
     def serialize(self, out):
-        def nested_set(target, path, value):
-            value = self.serialize_value(value)
-            if len(path) > 1:
-                if len(path) >= 2 and path[1] and path[1][0] == '[' and path[1][-1] == ']' and path[1][1:-1].isdigit():
-                    if path[0] not in target:
-                        target[path[0]] = []
-                    if len(path) > 2:
-                        value = nested_set(CommentedMap(), path[2:], value)
-                    pos = int(path[1][1:-1])
-                    if len(target[path[0]]) < pos + 1:
-                        target[path[0]].append(value)
-                    else:
-                        target[path[0]][pos] = value
-                else:
-                    # Add empty dict in case there is value and we
-                    # expect dict
-                    if path[0] not in target or not isinstance(target[path[0]], dict):
-                        target[path[0]] = CommentedMap()
-                    nested_set(target[path[0]], path[1:], value)
-            else:
-                target[path[0]] = value
-            return target
-
         # Always start with valid root even if original file was empty
         if self._original is None:
             self._original = self.get_root_node()
 
         units = self.preprocess(self._original)
-        for unit in self.unit_iter():
-            nested_set(units, unit.getid().split('->'), unit.target)
+        self.serialize_units(units)
         self.yaml.dump(self._original, out)
 
     def _parse_dict(self, data, prev):
@@ -198,8 +180,27 @@ class YAMLFile(base.TranslationStore):
             self.addunit(unit)
 
 
+class RubyYAMLUnit(YAMLUnit):
+    def convert_target(self):
+        if not isinstance(self.target, multistring):
+            return self.target
+
+        tags = plural_tags.get(self._store.targetlanguage, plural_tags['en'])
+
+        strings = [str(s) for s in self.target.strings]
+
+        # Sync plural_strings elements to plural_tags count.
+        if len(strings) < len(tags):
+            strings += [''] * (len(tags) - len(strings))
+        strings = strings[:len(tags)]
+
+        return CommentedMap(zip(tags, strings))
+
+
 class RubyYAMLFile(YAMLFile):
     """Ruby YAML file, it has language code as first node."""
+
+    UnitClass = RubyYAMLUnit
 
     def preprocess(self, data):
         if isinstance(data, CommentedMap) and len(data) == 1:
@@ -225,20 +226,5 @@ class RubyYAMLFile(YAMLFile):
             return
 
         # Handle normal dict
-        for x in super(RubyYAMLFile, self)._parse_dict(data, prev):
+        for x in super()._parse_dict(data, prev):
             yield x
-
-    def serialize_value(self, value):
-        if not isinstance(value, multistring):
-            return value
-
-        tags = plural_tags.get(self.targetlanguage, plural_tags['en'])
-
-        strings = [str(s) for s in value.strings]
-
-        # Sync plural_strings elements to plural_tags count.
-        if len(strings) < len(tags):
-            strings += [''] * (len(tags) - len(strings))
-        strings = strings[:len(tags)]
-
-        return CommentedMap(zip(tags, strings))

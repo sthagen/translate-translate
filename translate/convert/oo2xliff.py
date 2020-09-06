@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2003-2008 Zuza Software Foundation
 #
@@ -25,8 +24,6 @@ for examples and usage instructions.
 """
 
 import logging
-from urllib import parse
-
 
 from translate.storage import oo, xliff
 
@@ -36,7 +33,7 @@ from translate.storage import oo, xliff
 logger = logging.getLogger(__name__)
 
 
-class oo2xliff(object):
+class oo2xliff:
 
     def __init__(self, sourcelanguage, targetlanguage, blankmsgstr=False, long_keys=False):
         """construct an oo2xliff converter for the specified languages"""
@@ -98,16 +95,6 @@ class oo2xliff(object):
         thetargetfile = xliff.xlifffile()
         thetargetfile.setsourcelanguage(self.sourcelanguage)
         thetargetfile.settargetlanguage(self.targetlanguage)
-        # create a header for the file
-        bug_url = 'http://qa.openoffice.org/issues/enter_bug.cgi?%s' % \
-                  parse.urlencode({
-                      "subcomponent": "ui",
-                      "comment": "",
-                      "short_desc": "Localization issue in file: %s" %
-                                    theoofile.filename,
-                      "component": "l10n",
-                      "form_name": "enter_issue",
-                  })
         # go through the oo and convert each element
         for theoo in theoofile.units:
             unitlist = self.convertelement(theoo)
@@ -159,12 +146,12 @@ def convertoo(inputfile, outputfile, templates, pot=False, sourcelanguage=None, 
 
 def main(argv=None):
     from translate.convert import convert
-    formats = {
-        "oo": ("xlf", convertoo),
-        "sdf": ("xlf", convertoo),
-        "oo": ("xliff", convertoo),
-        "sdf": ("xliff", convertoo),
-    }
+    formats = (
+        ("oo", ("xlf", convertoo)),
+        ("sdf", ("xlf", convertoo)),
+        ("oo", ("xliff", convertoo)),
+        ("sdf", ("xliff", convertoo)),
+    )
     # always treat the input as an archive unless it is a directory
     archiveformats = {(None, "input"): oo.oomultifile}
     parser = convert.ArchiveConvertOptionParser(formats, usepots=False,

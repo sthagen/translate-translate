@@ -82,19 +82,27 @@ software.
 Requirements
 ------------
 
+There are several extra requirements which you might to install to get full
+feature set. This cal be easily specified during pip installation::
+
+    # Install with XML support
+    pip install translate-toolkit[XML]
+
+    # Install all optional dependencies
+    pip install translate-toolkit[all]
+
 .. note:: Please check ``requirements/*.txt``::
 
-       pip install -r requirements/recommended.txt
+       pip install -r requirements/optional.txt
 
-   Will install all recommended requirements, while ``optional.txt`` will also
-   install support for all other formats.
+   Will install all optional dependencies convering support for many other
+   formats.
 
 The Toolkit requires Python 3.5 or newer.
 
-The package lxml is needed for XML file processing. You should install version
-3.5.0 or later. <http://lxml.de/> Depending on your platform, the easiest way
-to install might be through your system's package management. Alternatively you
-can try ::
+The package lxml is required. You should install version 4.0.0 or later.
+<http://lxml.de/> Depending on your platform, the easiest way to install might
+be through your system's package management. Alternatively you can try ::
 
     pip install lxml
 

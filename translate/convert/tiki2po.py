@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Mozilla Corporation, Zuza Software Foundation
 #
@@ -27,7 +26,7 @@ from translate.convert import convert
 from translate.storage import po, tiki
 
 
-class tiki2po(object):
+class tiki2po:
     """Convert one or two TikiWiki's language.php files to a single PO file."""
 
     SourceStoreClass = tiki.TikiStore

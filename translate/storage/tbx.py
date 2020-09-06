@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006-2010 Zuza Software Foundation
 #
@@ -21,7 +20,7 @@
 
 from lxml import etree
 
-from translate.misc.xml_helpers import setXMLlang, getXMLspace
+from translate.misc.xml_helpers import getXMLspace, setXMLlang
 from translate.storage import lisa
 
 

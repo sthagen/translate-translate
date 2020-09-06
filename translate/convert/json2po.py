@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007, 2010 Zuza Software Foundation
 #
@@ -31,7 +30,7 @@ from translate.storage import po
 logger = logging.getLogger(__name__)
 
 
-class json2po(object):
+class json2po:
     """Convert a JSON file to a PO file"""
 
     def convert_store(self, input_store, duplicatestyle="msgctxt"):

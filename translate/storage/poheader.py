@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2011 Zuza Software Foundation
 #
@@ -102,7 +101,7 @@ def update(existing, add=False, **kwargs):
     return headerargs
 
 
-class poheader(object):
+class poheader:
     """This class implements functionality for manipulation of po file headers.
     This class is a mix-in class and useless on its own. It must be used from
     all classes which represent a po file
@@ -380,7 +379,7 @@ class poheader(object):
         outcontrib = False
         for line in header.getnotes("translator").split('\n'):
             line = line.strip()
-            if line == u"FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.":
+            if line == "FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.":
                 incontrib = True
                 continue
             if author_re.match(line):

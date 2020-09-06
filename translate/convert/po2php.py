@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2008 Zuza Software Foundation
 #
@@ -33,7 +32,7 @@ from translate.storage import php, po
 eol = "\n"
 
 
-class rephp(object):
+class rephp:
 
     def __init__(self, templatefile, inputstore):
         self.templatefile = templatefile

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Mozilla Corporation, Zuza Software Foundation
 #
@@ -53,8 +52,8 @@ As far as I know no detailed documentation exists for the tiki language.php file
 
 import datetime
 import re
+from io import BytesIO
 
-from translate.misc import wStringIO
 from translate.storage import base
 
 
@@ -63,13 +62,13 @@ class TikiUnit(base.TranslationUnit):
 
     def __init__(self, source=None, **kwargs):
         self.location = []
-        super(TikiUnit, self).__init__(source)
+        super().__init__(source)
 
     def __str__(self):
         """Returns a string formatted to be inserted into a tiki language.php file."""
-        ret = u'"%s" => "%s",' % (self.source, self.target)
+        ret = '"%s" => "%s",' % (self.source, self.target)
         if self.location == ["untranslated"]:
-            ret = u'// ' + ret
+            ret = '// ' + ret
         return ret + "\n"
 
     def addlocation(self, location):
@@ -96,7 +95,7 @@ class TikiStore(base.TranslationStore):
 
         :param inputfile: Either a string or a filehandle of the source file
         """
-        super(TikiStore, self).__init__()
+        super().__init__()
         self.filename = getattr(inputfile, 'name', '')
         if inputfile is not None:
             self.parse(inputfile)
@@ -140,11 +139,11 @@ class TikiStore(base.TranslationStore):
 
     def _tiki_header(self):
         """Returns a tiki-file header string."""
-        return u"<?php // -*- coding:utf-8 -*-\n// Generated from po2tiki on %s\n\n$lang=Array(\n" % datetime.datetime.now()
+        return "<?php // -*- coding:utf-8 -*-\n// Generated from po2tiki on %s\n\n$lang=Array(\n" % datetime.datetime.now()
 
     def _tiki_footer(self):
         """Returns a tiki-file footer string."""
-        return u'"###end###"=>"###end###");\n?>'
+        return '"###end###"=>"###end###");\n?>'
 
     def parse(self, input):
         """Parse the given input into source units.
@@ -155,7 +154,7 @@ class TikiStore(base.TranslationStore):
             self.filename = input.name
 
         if isinstance(input, bytes):
-            input = wStringIO.StringIO(input)
+            input = BytesIO(input)
 
         _split_regex = re.compile(r"^(?:// )?\"(.*)\" => \"(.*)\",$", re.UNICODE)
 

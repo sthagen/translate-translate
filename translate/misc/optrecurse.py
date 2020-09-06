@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2006 Zuza Software Foundation
 #
@@ -31,7 +30,7 @@ from translate import __version__
 from translate.misc import progressbar
 
 
-class ProgressBar(object):
+class ProgressBar:
     progress_types = OrderedDict([
         ("dots", progressbar.DotsProgressBar),
         ("none", progressbar.NoProgressBar),
@@ -70,16 +69,14 @@ class ManPageOption(optparse.Option, object):
         if action == "manpage":
             parser.print_manpage()
             sys.exit(0)
-        return super(ManPageOption, self).take_action(action, dest, opt, value,
-                                                      values, parser)
+        return super().take_action(action, dest, opt, value, values, parser)
 
 
 class ManHelpFormatter(optparse.HelpFormatter):
 
     def __init__(self, indent_increment=0, max_help_position=0, width=80,
                  short_first=1):
-        optparse.HelpFormatter.__init__(
-            self, indent_increment, max_help_position, width, short_first)
+        super().__init__(indent_increment, max_help_position, width, short_first)
 
     def format_option_strings(self, option):
         """Return a comma-separated list of option strings & metavariables."""
@@ -100,7 +97,7 @@ class ManHelpFormatter(optparse.HelpFormatter):
         return '\\fB%s\\fP' % ("\\fR, \\fP".join(opts))
 
 
-class StdoutWrapper(object):
+class StdoutWrapper:
     out = sys.stdout
 
     def __getattr__(self, name):
@@ -116,7 +113,7 @@ class StdoutWrapper(object):
             self.out.write(content)
 
 
-class RecursiveOptionParser(optparse.OptionParser, object):
+class RecursiveOptionParser(optparse.OptionParser):
     """A specialized Option Parser for recursing through directories."""
 
     def __init__(self, formats, usetemplates=False, allowmissingtemplate=False,
@@ -128,8 +125,7 @@ class RecursiveOptionParser(optparse.OptionParser, object):
         for an explanation of the formats parameter.
         """
 
-        optparse.OptionParser.__init__(self, version="%prog " + __version__.sver,
-                                       description=description)
+        super().__init__(version="%prog " + __version__.sver, description=description)
         self.setmanpageoption()
         self.setprogressoptions()
         self.seterrorleveloptions()
@@ -196,7 +192,7 @@ class RecursiveOptionParser(optparse.OptionParser, object):
         if usage is None:
             self.usage = "%prog " + " ".join([self.getusagestring(option) for option in self.option_list])
         else:
-            super(RecursiveOptionParser, self).set_usage(usage)
+            super().set_usage(usage)
 
     def warning(self, msg, options=None, exc_info=None):
         """Print a warning message incorporating 'msg' to stderr and exit."""
@@ -253,7 +249,7 @@ class RecursiveOptionParser(optparse.OptionParser, object):
     def setformats(self, formats, usetemplates):
         """Sets the format options using the given format dictionary.
 
-        :type formats: Dictionary
+        :type formats: Dictionary or iterable
         :param formats: The dictionary *keys* should be:
 
                         - Single strings (or 1-tuples) containing an
@@ -272,7 +268,9 @@ class RecursiveOptionParser(optparse.OptionParser, object):
         templateformats = []
         self.outputoptions = {}
         self.usetemplates = usetemplates
-        for formatgroup, outputoptions in formats.items():
+        if isinstance(formats, dict):
+            formats = formats.items()
+        for formatgroup, outputoptions in formats:
             if isinstance(formatgroup, str) or formatgroup is None:
                 formatgroup = (formatgroup, )
             if not isinstance(formatgroup, tuple):
@@ -365,7 +363,7 @@ class RecursiveOptionParser(optparse.OptionParser, object):
         """Parses the command line options, handling implicit input/output
         args.
         """
-        (options, args) = super(RecursiveOptionParser, self).parse_args(args, values)
+        (options, args) = super().parse_args(args, values)
         # some intelligent as to what reasonable people might give on the
         # command line
         if args and not options.input:
@@ -489,7 +487,7 @@ class RecursiveOptionParser(optparse.OptionParser, object):
                 try:
                     self.warning("Output directory does not exist. Attempting to create")
                     os.mkdir(options.output)
-                except IOError as e:
+                except IOError:
                     self.error(optparse.OptionValueError("Output directory does not exist, attempt to create failed"))
             if isinstance(options.input, list):
                 inputfiles = self.recurseinputfilelist(options)

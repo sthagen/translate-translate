@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
+
+from io import BytesIO
 
 from translate.convert import test_convert, ts2po
-from translate.misc import wStringIO
 
 
-class TestTS2PO(object):
+class TestTS2PO:
 
     def ts2po(self, tssource):
         converter = ts2po.ts2po()
-        tsfile = wStringIO.StringIO(tssource)
+        tsfile = BytesIO(tssource.encode())
         outputpo = converter.convertfile(tsfile)
         print("The generated po:")
         print(bytes(outputpo))
@@ -48,7 +48,7 @@ class TestTS2PO(object):
         pofile = self.ts2po(tssource)
         assert len(pofile.units) == 2
         assert pofile.units[1].source == "&About"
-        assert pofile.units[1].target == u"&Giới thiệu"
+        assert pofile.units[1].target == "&Giới thiệu"
         assert pofile.units[1].getlocations()[0].startswith("AboutDialog")
 
     def test_unfinished(self):

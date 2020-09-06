@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007 Zuza Software Foundation
 #
@@ -108,7 +107,7 @@ class mounit(base.TranslationUnit):
     def __init__(self, source=None, **kwargs):
         self.msgctxt = []
         self.msgidcomments = []
-        super(mounit, self).__init__(source)
+        super().__init__(source)
 
     def getcontext(self):
         """Get the message context"""
@@ -122,7 +121,7 @@ class mounit(base.TranslationUnit):
 
     def isheader(self):
         """Is this a header entry?"""
-        return self.source == u""
+        return self.source == ""
 
     def istranslatable(self):
         """Is this message translateable?"""
@@ -139,7 +138,7 @@ class mofile(poheader.poheader, base.TranslationStore):
     _binary = True
 
     def __init__(self, inputfile=None, **kwargs):
-        super(mofile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         if inputfile is not None:
             self.parsestring(inputfile)

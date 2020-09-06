@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Zuza Software Foundation
 #
@@ -30,7 +29,7 @@ from translate.misc.file_discovery import get_abs_data_filename
 from translate.storage.base import TranslationStore
 
 
-class LanguageIdentifier(object):
+class LanguageIdentifier:
     MODEL_DIR = get_abs_data_filename('langmodels')
     """The directory containing the ngram language model files."""
     CONF_FILE = 'fpdb.conf'
@@ -101,7 +100,7 @@ class LanguageIdentifier(object):
         if not isinstance(instore, (TranslationStore, list, tuple)):
             return None
 
-        text = u' '.join(unit.source for unit in instore[:50] if unit.istranslatable() and unit.source)
+        text = ' '.join(unit.source for unit in instore[:50] if unit.istranslatable() and unit.source)
         if not text:
             return None
         return self.identify_lang(text)
@@ -119,7 +118,7 @@ class LanguageIdentifier(object):
         if not isinstance(instore, (TranslationStore, list, tuple)):
             return None
 
-        text = u' '.join(unit.target for unit in instore[:200] if unit.istranslatable() and unit.target)
+        text = ' '.join(unit.target for unit in instore[:200] if unit.istranslatable() and unit.target)
         if not text:
             return None
         return self.identify_lang(text)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2004-2008 Zuza Software Foundation
 #
@@ -54,17 +53,15 @@ implemented as outlined in the PHP documentation for the
 `String type <http://www.php.net/language.types.string>`_.
 """
 
-
 import re
 
-
-from phply.phpparse import make_parser
-from phply.phplex import FilteredLexer, full_lexer
 from phply.phpast import (Array, ArrayElement, ArrayOffset, Assignment,
                           BinaryOp, FunctionCall, InlineHTML, Node, Return,
                           Variable)
+from phply.phplex import FilteredLexer, full_lexer
+from phply.phpparse import make_parser
 
-from translate.misc.deprecation import deprecated
+from translate.misc.multistring import multistring
 from translate.storage import base
 
 
@@ -85,7 +82,7 @@ def wrap_production(func):
 
 class PHPLexer(FilteredLexer):
     def __init__(self):
-        super(PHPLexer, self).__init__(full_lexer.clone())
+        super().__init__(full_lexer.clone())
         self.tokens = []
         self.pos = 0
         self.codepos = 0
@@ -149,6 +146,7 @@ class PHPLexer(FilteredLexer):
         pos = max(self.pos, self.codepos)
         while self.tokens[pos].type not in ('ARRAY', 'LBRACKET'):
             pos += 1
+        self.codepos = pos
         if self.tokens[pos].type == 'ARRAY':
             return ''
         return '[]'
@@ -222,7 +220,7 @@ class phpunit(base.TranslationUnit):
     def __init__(self, source=""):
         """Construct a blank phpunit."""
         self.escape_type = '\''
-        super(phpunit, self).__init__(source)
+        super().__init__(source)
         self.name = "$TTK_PLACEHOLDER"
         self.value = ""
         self.translation = ""
@@ -231,40 +229,35 @@ class phpunit(base.TranslationUnit):
 
     @property
     def source(self):
-        return phpdecode(self.value, self.escape_type)
+        return self.value
 
     @source.setter
     def source(self, source):
         """Set the source AND the target to be equal."""
         self._rich_source = None
-        self.value = phpencode(source, self.escape_type)
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
+        self.value = source
 
     @property
     def target(self):
-        return phpdecode(self.translation, self.escape_type)
+        return self.translation
 
     @target.setter
     def target(self, target):
         self._rich_target = None
-        self.translation = phpencode(target, self.escape_type)
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
+        self.translation = target
 
     def __str__(self):
         """Convert to a string."""
         return self.getoutput()
 
+    def get_raw_value(self):
+        return self.translation or self.value
+
     def getoutput(self, indent='', name=None):
         """Convert the unit back into formatted lines for a php file."""
-        if '->' in self.name:
+        if '->' in self.name and name == "[]":
+            fmt = "{1}{2}{1},\n"
+        elif '->' in self.name:
             fmt = '{0} => {1}{2}{1},\n'
         elif self.name.startswith('define'):
             fmt = '{0}, {1}{2}{1});\n'
@@ -273,7 +266,7 @@ class phpunit(base.TranslationUnit):
         out = fmt.format(
             name if name else self.name,
             self.escape_type,
-            self.translation or self.value
+            phpencode(self.get_raw_value(), self.escape_type),
         )
         joiner = '\n' + indent
         return indent + joiner.join(self._comments + [out])
@@ -291,14 +284,13 @@ class phpunit(base.TranslationUnit):
             else:
                 self._comments = [text]
         else:
-            return super(phpunit, self).addnote(text, origin=origin,
-                                                position=position)
+            return super().addnote(text, origin=origin, position=position)
 
     def getnotes(self, origin=None):
         if origin in ['programmer', 'developer', 'source code', None]:
             return '\n'.join(self._comments)
         else:
-            return super(phpunit, self).getnotes(origin)
+            return super().getnotes(origin)
 
     def removenotes(self, origin=None):
         self._comments = []
@@ -321,7 +313,7 @@ class phpfile(base.TranslationStore):
 
     def __init__(self, inputfile=None, **kwargs):
         """Construct a phpfile, optionally reading in from inputfile."""
-        super(phpfile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = getattr(inputfile, 'name', '')
         if inputfile is not None:
             phpsrc = inputfile.read()
@@ -400,15 +392,17 @@ class phpfile(base.TranslationStore):
             prefix += lexer.extract_array()
             for item in nodes:
                 assert isinstance(item, ArrayElement)
-                # Skip empty keys
-                if item.key == '':
-                    continue
-                if isinstance(item.key, BinaryOp):
-                    name = '\'{0}\''.format(concatenate(item.key))
-                elif isinstance(item.key, (int, float)):
-                    name = '{0}'.format(item.key)
+                if item.key is None:
+                    name = []
                 else:
-                    name = '\'{0}\''.format(item.key)
+                    # To update lexer current position
+                    lexer.extract_name('DOUBLE_ARROW', *item.lexpositions)
+                    if isinstance(item.key, BinaryOp):
+                        name = '\'{0}\''.format(concatenate(item.key))
+                    elif isinstance(item.key, (int, float)):
+                        name = '{0}'.format(item.key)
+                    else:
+                        name = '\'{0}\''.format(item.key)
                 if prefix:
                     name = '{0}->{1}'.format(prefix, name)
                 if isinstance(item.value, Array):
@@ -449,7 +443,9 @@ class phpfile(base.TranslationStore):
             elif isinstance(item, Assignment):
                 if isinstance(item.node, ArrayOffset):
                     name = lexer.extract_name('EQUALS', *item.lexpositions)
-                    if isinstance(item.expr, str):
+                    if isinstance(item.expr, Array):
+                        handle_array(name, item.expr.nodes, lexer)
+                    elif isinstance(item.expr, str):
                         self.create_and_add_unit(
                             name,
                             item.expr,
@@ -483,4 +479,23 @@ class phpfile(base.TranslationStore):
                         )
             elif isinstance(item, Return):
                 if isinstance(item.node, Array):
+                    # Adjustextractor position
+                    lexer.extract_name('RETURN', *item.lexpositions)
                     handle_array('return', item.node.nodes, lexer)
+
+
+class LaravelPHPUnit(phpunit):
+    def get_raw_value(self):
+        result = self.translation or self.value
+        if isinstance(result, multistring):
+            return '|'.join(result.strings)
+        return result
+
+
+class LaravelPHPFile(phpfile):
+    UnitClass = LaravelPHPUnit
+
+    def create_and_add_unit(self, name, value, escape_type, comments):
+        if '|' in value:
+            value = multistring(value.split('|'))
+        super().create_and_add_unit(name, value, escape_type, comments)

@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
+
+from io import BytesIO
 
 from translate.convert import csv2po, test_convert
-from translate.misc import wStringIO
 from translate.storage import csvl10n, po
 from translate.storage.test_base import first_translatable, headerless_len
 
@@ -13,14 +13,14 @@ def test_replacestrings():
                                  ("two", "twee")) == "Test een twee three"
 
 
-class TestCSV2PO(object):
+class TestCSV2PO:
 
     def csv2po(self, csvsource, template=None):
         """helper that converts csv source to po source without requiring files"""
-        inputfile = wStringIO.StringIO(csvsource)
+        inputfile = BytesIO(csvsource.encode())
         inputcsv = csvl10n.csvfile(inputfile)
         if template:
-            templatefile = wStringIO.StringIO(template)
+            templatefile = BytesIO(template.encode())
             inputpot = po.pofile(templatefile)
         else:
             inputpot = None
@@ -89,7 +89,7 @@ wat lank aanhou"
         minicsv = r''',"Hello ""Everyone""","Good day ""All"""
 ,"Use \"".","Gebruik \""."'''
         print(minicsv)
-        csvfile = csvl10n.csvfile(wStringIO.StringIO(minicsv))
+        csvfile = csvl10n.csvfile(BytesIO(minicsv.encode()))
         print(bytes(csvfile))
         pofile = self.csv2po(minicsv)
         unit = first_translatable(pofile)
@@ -125,8 +125,8 @@ msgstr ""
         assert pounit.source == "Source"
         assert pounit.target == "Target"
 
-    def test_newlines(self):
-        """Tests that things keep working with empty entries"""
+    def test_escaped_newlines(self):
+        """Tests that things keep working with escaped newlines"""
         minicsv = '"source","target"\r\n"yellow pencil","żółty\\nołówek"'
         pofile = self.csv2po(minicsv)
         assert pofile.findunit("yellow pencil") is not None

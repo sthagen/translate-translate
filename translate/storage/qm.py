@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007-2010 Zuza Software Foundation
 #
@@ -81,7 +80,7 @@ class qmunit(base.TranslationUnit):
     """A class representing a .qm translation message."""
 
     def __init__(self, source=None):
-        super(qmunit, self).__init__(source)
+        super().__init__(source)
 
 
 class qmfile(base.TranslationStore):
@@ -94,7 +93,7 @@ class qmfile(base.TranslationStore):
     _binary = True
 
     def __init__(self, inputfile=None, **kwargs):
-        super(qmfile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         if inputfile is not None:
             self.parsestring(inputfile)
@@ -129,22 +128,18 @@ class qmfile(base.TranslationStore):
             section_type, length = struct.unpack(">BL", input[startsection:startsection + sectionheader])
             if section_type == 0x42:
                 #section_debug("Hash", section_type, startsection, length)
-                hashash = True
                 hash_start = startsection + sectionheader
                 hash_data = struct.unpack(">%db" % length, input[startsection + sectionheader:startsection + sectionheader + length])
             elif section_type == 0x69:
                 #section_debug("Messages", section_type, startsection, length)
-                hasmessages = True
                 messages_start = startsection + sectionheader
                 messages_data = struct.unpack(">%db" % length, input[startsection + sectionheader:startsection + sectionheader + length])
             elif section_type == 0x2f:
                 #section_debug("Contexts", section_type, startsection, length)
-                hascontexts = True
                 contexts_start = startsection + sectionheader
                 contexts_data = struct.unpack(">%db" % length, input[startsection + sectionheader:startsection + sectionheader + length])
             elif section_type == 0x88:
                 #section_debug("NumerusRules", section_type, startsection, length)
-                hasnumerusrules = True
                 numerusrules_start = startsection + sectionheader
                 numerusrules_data = struct.unpack(">%db" % length, input[startsection + sectionheader:startsection + sectionheader + length])
             else:
@@ -176,7 +171,7 @@ class qmfile(base.TranslationStore):
                         target = multistring(string)
                     pos = pos + 4 + length
                 else:
-                    target = u""
+                    target = ""
                     pos = pos + 4
             elif subsection == 0x06:  # SourceText
                 source = input[pos + 4:pos + 4 + length].decode('iso-8859-1')

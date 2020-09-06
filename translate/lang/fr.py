@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007-2009 Zuza Software Foundation
 #
@@ -40,15 +39,15 @@ def guillemets(text):
 
     # Check that there is an even number of double quotes, otherwise it is
     # probably not safe to convert them.
-    if text.count(u'"') % 2 == 0:
+    if text.count('"') % 2 == 0:
         text = re.sub('(.|^)"([^"]+)"', convertquotation, text)
     singlecount = text.count("'")
     if singlecount:
-        if singlecount == text.count(u'`'):
+        if singlecount == text.count('`'):
             text = re.sub("(.|^)`([^']+)'", convertquotation, text)
         elif singlecount % 2 == 0:
             text = re.sub("(.|^)'([^']+)'", convertquotation, text)
-    text = re.sub(u'(.|^)“([^”]+)”', convertquotation, text)
+    text = re.sub('(.|^)“([^”]+)”', convertquotation, text)
     return text
 
 
@@ -78,7 +77,7 @@ class fr(common.Common):
             - % and $ are not touched yet for fear of variables
             - Double spaces might be introduced
         """
-        text = super(cls, cls).punctranslate(text)
+        text = super().punctranslate(text)
         # We might get problems where we got a space in URIs such as
         # http ://
         text = text.replace("\u00a0://", "://")

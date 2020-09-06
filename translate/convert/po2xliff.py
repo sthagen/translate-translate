@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2005, 2006 Zuza Software Foundation
 #
@@ -26,7 +25,7 @@ for examples and usage instructions.
 from translate.storage import po, poxliff
 
 
-class po2xliff(object):
+class po2xliff:
 
     def convertunit(self, outputstore, inputunit, filename):
         """creates a transunit node"""
@@ -85,7 +84,7 @@ class po2xliff(object):
         for inputunit in inputstore.units:
             if inputunit.isblank():
                 continue
-            transunitnode = self.convertunit(outputstore, inputunit, filename)
+            self.convertunit(outputstore, inputunit, filename)
         return bytes(outputstore)
 
 
@@ -102,12 +101,12 @@ def convertpo(inputfile, outputfile, templatefile):
 
 def main(argv=None):
     from translate.convert import convert
-    formats = {
-        "po": ("xlf", convertpo),
-        ("po", "xlf"): ("xlf", convertpo),
-        "po": ("xliff", convertpo),
-        ("po", "xliff"): ("xliff", convertpo),
-    }
+    formats = (
+        ("po", ("xlf", convertpo)),
+        (("po", "xlf"), ("xlf", convertpo)),
+        ("po", ("xliff", convertpo)),
+        (("po", "xliff"), ("xliff", convertpo)),
+    )
     parser = convert.ConvertOptionParser(formats, usetemplates=True,
                                          description=__doc__)
     parser.run(argv)

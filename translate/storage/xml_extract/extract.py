@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008-2014 Zuza Software Foundation
 #
@@ -25,7 +24,7 @@ from translate.storage.placeables import StringElem, xliff
 from translate.storage.xml_extract import misc, xpath_breadcrumb
 
 
-class Translatable(object):
+class Translatable:
     """A node corresponds to a translatable element. A node may have children,
     which correspond to placeables.
     """
@@ -50,7 +49,7 @@ class Translatable(object):
         If not, then there's nothing to translate.
         """
         for chunk in self.source:
-            if isinstance(chunk, str) and chunk.strip() != u"":
+            if isinstance(chunk, str) and chunk.strip() != "":
                 return True
         return False
 
@@ -60,7 +59,7 @@ def reduce_unit_tree(f, unit_node, *state):
                             lambda unit_node: unit_node.placeables, *state)
 
 
-class ParseState(object):
+class ParseState:
     """Maintain constants and variables used during the walking of a DOM tree
     (via the function apply).
     """
@@ -71,7 +70,7 @@ class ParseState(object):
         self.inline_elements = inline_elements
         self.is_inline = False
         self.xpath_breadcrumb = xpath_breadcrumb.XPathBreadcrumb()
-        self.placeable_name = u"<top-level>"
+        self.placeable_name = "<top-level>"
         self.nsmap = nsmap
 
 
@@ -88,7 +87,7 @@ def _process_placeable(dom_node, state):
     if len(placeable) == 0:
         # There are no recognized child tags and thus no Translatable object is
         # returned. So create a Translatable with the name "placeable".
-        return Translatable(u"placeable", state.xpath_breadcrumb.xpath,
+        return Translatable("placeable", state.xpath_breadcrumb.xpath,
                             dom_node, [])
     elif len(placeable) == 1:
         # The ideal situation: we got exactly one Translatable back when
@@ -104,13 +103,13 @@ def process_translatable(dom_node, state):
 
     Any translatable content present in a child node is treated as a placeable.
     """
-    source = [str(dom_node.text or u"")]
+    source = [str(dom_node.text or "")]
 
     # Append Translatable objects and unicode strings for the translatable
     # content for all the children.
     for child in dom_node:
         source.append(_process_placeable(child, state))
-        source.append(str(child.tail or u""))
+        source.append(str(child.tail or ""))
 
     translatable = Translatable(state.placeable_name,
                                 state.xpath_breadcrumb.xpath, dom_node, source,
@@ -150,7 +149,7 @@ def _retrieve_idml_placeables(dom_node, state):
 
         if isinstance(child, etree._ProcessingInstruction):
             #TODO this probably won't be using the right xpath.
-            source.append(Translatable(u"placeable",
+            source.append(Translatable("placeable",
                                        state.xpath_breadcrumb.xpath, child, [],
                                        False))
 
@@ -173,7 +172,7 @@ def _retrieve_idml_placeables(dom_node, state):
 
             nested_stuff.extend(_retrieve_idml_placeables(child, state))
 
-            source.append(Translatable(u"placeable",
+            source.append(Translatable("placeable",
                                        state.xpath_breadcrumb.xpath, child,
                                        nested_stuff, state.is_inline))
 
@@ -219,9 +218,9 @@ def _process_children(dom_node, state, process_func):
 
 def compact_tag(nsmap, namespace, tag):
     if namespace in nsmap:
-        return u'%s:%s' % (nsmap[namespace], tag)
+        return '%s:%s' % (nsmap[namespace], tag)
     else:
-        return u'{%s}%s' % (namespace, tag)
+        return '{%s}%s' % (namespace, tag)
 
 
 @contextmanager
@@ -265,7 +264,7 @@ def find_translatable_dom_nodes(dom_node, state,
             return _process_children(dom_node, state, process_func)
 
 
-class IdMaker(object):
+class IdMaker:
 
     def __init__(self):
         self._max_id = 0
@@ -310,7 +309,7 @@ def _make_store_adder(store):
         """Construct a new translation unit, set its source and location
         information and add it to 'store'.
         """
-        unit = store.UnitClass(u'')
+        unit = store.UnitClass('')
         unit.rich_source = [StringElem(_to_placeables(parent_translatable,
                                                       translatable, id_maker))]
         unit.addlocation(translatable.xpath)
@@ -330,13 +329,13 @@ def make_postore_adder(store, id_maker, filename):
         """Construct a new translation unit, set its source and location
         information and add it to 'store'.
         """
-        xliff_unit = xliffunit(u'')
+        xliff_unit = xliffunit('')
         placeables = _to_placeables(parent_translatable, translatable, id_maker)
         xliff_unit.rich_source = [StringElem(placeables)]
 
         # Get the plain text for the unit source. The output is enclosed within
         # XLIFF source tags we don't want, so strip them.
-        unit_source = etree.tostring(xliff_unit.source_dom)
+        unit_source = etree.tostring(xliff_unit.source_dom).decode()
         unit_source = unit_source[unit_source.find(">", 1) + 1:]
         unit_source = unit_source[:unit_source.rfind("<", 1)]
 

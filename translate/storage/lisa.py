@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006-2011 Zuza Software Foundation
 #
@@ -19,16 +18,11 @@
 
 """Parent class for LISA standards (TMX, TBX, XLIFF)"""
 
-
-try:
-    from lxml import etree
-    from translate.misc.xml_helpers import (getText, getXMLlang, getXMLspace,
-                                            namespaced)
-except ImportError as e:
-    raise ImportError("lxml is not installed. It might be possible to continue without support for XML formats.")
+from lxml import etree
 
 from translate.lang import data
-from translate.misc.deprecation import deprecated
+from translate.misc.xml_helpers import (getText, getXMLlang, getXMLspace,
+                                        namespaced)
 from translate.storage import base
 
 
@@ -62,12 +56,12 @@ class LISAunit(base.TranslationUnit):
             return
         self.xmlelement = etree.Element(self.namespaced(self.rootNode))
         #add descrip, note, etc.
-        super(LISAunit, self).__init__(source)
+        super().__init__(source)
 
     def __eq__(self, other):
         """Compares two units"""
         if not isinstance(other, LISAunit):
-            return super(LISAunit, self).__eq__(other)
+            return super().__eq__(other)
         languageNodes = self.getlanguageNodes()
         otherlanguageNodes = other.getlanguageNodes()
         if len(languageNodes) != len(otherlanguageNodes):
@@ -116,11 +110,6 @@ class LISAunit(base.TranslationUnit):
     @source.setter
     def source(self, source):
         self.setsource(source, sourcelang='en')
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
 
     def setsource(self, text, sourcelang='en'):
         self._rich_source = None
@@ -175,7 +164,7 @@ class LISAunit(base.TranslationUnit):
                     terms = languageNode.iter(self.namespaced(self.textNode))
                     try:
                         languageNode = next(terms)
-                    except StopIteration as e:
+                    except StopIteration:
                         pass
                 languageNode.text = target
         else:
@@ -268,7 +257,7 @@ class LISAfile(base.TranslationStore):
 
     def __init__(self, inputfile=None, sourcelanguage='en',
                  targetlanguage=None, **kwargs):
-        super(LISAfile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if inputfile is not None:
             self.parse(inputfile)
             assert self.document.getroot().tag == self.namespaced(self.rootNode)
@@ -311,7 +300,7 @@ class LISAfile(base.TranslationStore):
 
     def addunit(self, unit, new=True):
         unit.namespace = self.namespace
-        super(LISAfile, self).addunit(unit)
+        super().addunit(unit)
         if new:
             self.body.append(unit.xmlelement)
 

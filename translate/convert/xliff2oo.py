@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2004-2008,2010-2011 Zuza Software Foundation
 #
@@ -34,7 +33,7 @@ from translate.storage import factory, oo
 logger = logging.getLogger(__name__)
 
 
-class reoo(object):
+class reoo:
 
     def __init__(self, templatefile, languages=None, timestamp=None, includefuzzy=False, long_keys=False, filteraction="exclude"):
         """construct a reoo converter for the specified languages (timestamp=0 means leave unchanged)"""
@@ -115,7 +114,6 @@ class reoo(object):
                 makecopy = True
         if makecopy:
             part2 = oo.ooline(part1.getparts())
-        unquotedid = unit.source
         unquotedstr = unit.target
         # If there is no translation, we don't want to add a line
         if len(unquotedstr.strip()) == 0:
@@ -172,7 +170,7 @@ class oocheckfilter(pofilter.pocheckfilter):
         return True
 
 
-class oofilteroptions(object):
+class oofilteroptions:
     error = ['variables', 'xmltags', 'escapes']
     warning = ['blank']
     #To only issue warnings for tests listed in warning, change the following to False:

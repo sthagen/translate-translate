@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2006 Zuza Software Foundation
 #
@@ -40,7 +39,7 @@ class csvunit(base.TranslationUnit):
     spreadsheetescapes = [("+", "\\+"), ("-", "\\-"), ("=", "\\="), ("'", "\\'")]
 
     def __init__(self, source=None):
-        super(csvunit, self).__init__(source)
+        super().__init__(source)
         self.location = ""
         self.source = source or ""
         self.target = ""
@@ -57,7 +56,7 @@ class csvunit(base.TranslationUnit):
         result = self.source
         context = self.context
         if context:
-            result = u"%s\04%s" % (context, result)
+            result = "%s\04%s" % (context, result)
 
         return result
 
@@ -110,7 +109,7 @@ class csvunit(base.TranslationUnit):
                 self.translator_comments = text
 
     def removenotes(self, origin=None):
-        self.translator_comments = u''
+        self.translator_comments = ''
 
     def isfuzzy(self):
         if self.fuzzy.lower() in ('1', 'x', 'true', 'yes', 'fuzzy'):
@@ -272,7 +271,7 @@ class csvfile(base.TranslationStore):
     Extensions = ["csv"]
 
     def __init__(self, inputfile=None, fieldnames=None, encoding='auto'):
-        super(csvfile, self).__init__(encoding=encoding)
+        super().__init__(encoding=encoding)
         if not fieldnames:
             self.fieldnames = ['location', 'source', 'target', 'id', 'fuzzy', 'context', 'translator_comments', 'developer_comments']
         else:

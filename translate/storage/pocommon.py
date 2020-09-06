@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2011 Zuza Software Foundation
 #
@@ -36,7 +35,7 @@ def extract_msgid_comment(text):
     msgidcomment = msgid_comment_re.match(text)
     if msgidcomment:
         return msgidcomment.group(1)
-    return u""
+    return ""
 
 
 def quote_plus(text):
@@ -49,7 +48,7 @@ def unquote_plus(text):
     try:
         # Enforce utf-8 validation
         return parse.unquote_plus(text, errors="strict")
-    except (UnicodeEncodeError, UnicodeDecodeError) as e:
+    except (UnicodeEncodeError, UnicodeDecodeError):
         # for some reason there is a non-ascii character here. Let's assume it
         # is already unicode (because of originally decoding the file)
         return text
@@ -72,7 +71,7 @@ class pounit(base.TranslationUnit):
 
     def adderror(self, errorname, errortext):
         """Adds an error message to this unit."""
-        text = u'(pofilter) %s: %s' % (errorname, errortext)
+        text = '(pofilter) %s: %s' % (errorname, errortext)
         # Don't add the same error twice:
         if text not in self.getnotes(origin='translator'):
             self.addnote(text, origin="translator")
@@ -108,7 +107,7 @@ class pounit(base.TranslationUnit):
             self.addnote(newnotes, origin="translator")
 
     def istranslated(self):
-        return super(pounit, self).istranslated() and not self.isobsolete() and not self.isheader()
+        return super().istranslated() and not self.isobsolete() and not self.isheader()
 
     def istranslatable(self):
         return not (self.isheader() or self.isblank() or self.isobsolete())
@@ -148,7 +147,7 @@ class pounit(base.TranslationUnit):
         raise NotImplementedError()
 
     def get_state_n(self):
-        value = super(pounit, self).get_state_n()
+        value = super().get_state_n()
         if value <= self.S_OBSOLETE:
             return value
         if self.target:
@@ -160,7 +159,7 @@ class pounit(base.TranslationUnit):
             return self.S_UNTRANSLATED
 
     def set_state_n(self, value):
-        super(pounit, self).set_state_n(value)
+        super().set_state_n(value)
         has_target = False
         if self.hasplural():
             for string in self.target.strings:
@@ -174,7 +173,7 @@ class pounit(base.TranslationUnit):
                 self.STATE[self.S_FUZZY_OBSOLETE][0] <= value < self.STATE[self.S_FUZZY_OBSOLETE][1]
             self._domarkfuzzy(isfuzzy)  # Implementation specific fuzzy-marking
         else:
-            super(pounit, self).set_state_n(self.S_UNTRANSLATED)
+            super().set_state_n(self.S_UNTRANSLATED)
             self._domarkfuzzy(False)
 
 
@@ -186,7 +185,7 @@ class pofile(poheader.poheader, base.TranslationStore):
     _binary = True
 
     def __init__(self, inputfile=None, **kwargs):
-        super(pofile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         if inputfile is not None:
             self.parse(inputfile)

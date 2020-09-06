@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007-2010 Zuza Software Foundation
 #
@@ -79,11 +78,9 @@ Extended Attributes
     These are left as is and are not directly managed byour implemenation.
 """
 
+import csv
 import time
 
-import csv
-
-from translate.misc.deprecation import deprecated
 from translate.storage import base
 
 
@@ -120,43 +117,43 @@ WF_FIELDNAMES_HEADER_DEFAULTS = {
 # For now these look correct and have been taken from Windows CP1252 and
 # Macintosh code points found for the respective character sets on Linux.
 WF_ESCAPE_MAP = (
-    ("&'26;", u"\u0026"),  # & - Ampersand (must be first to prevent
-                           #     escaping of escapes)
-    ("&'82;", u"\u201A"),  # ‚ - Single low-9 quotation mark
-    ("&'85;", u"\u2026"),  # … - Elippsis
-    ("&'91;", u"\u2018"),  # ‘ - left single quotation mark
-    ("&'92;", u"\u2019"),  # ’ - right single quotation mark
-    ("&'93;", u"\u201C"),  # “ - left double quotation mark
-    ("&'94;", u"\u201D"),  # ” - right double quotation mark
-    ("&'96;", u"\u2013"),  # – - en dash (validate)
-    ("&'97;", u"\u2014"),  # — - em dash (validate)
-    ("&'99;", u"\u2122"),  # ™ - Trade mark
+    ("&'26;", "\u0026"),  # & - Ampersand (must be first to prevent
+                          #     escaping of escapes)
+    ("&'82;", "\u201A"),  # ‚ - Single low-9 quotation mark
+    ("&'85;", "\u2026"),  # … - Elippsis
+    ("&'91;", "\u2018"),  # ‘ - left single quotation mark
+    ("&'92;", "\u2019"),  # ’ - right single quotation mark
+    ("&'93;", "\u201C"),  # “ - left double quotation mark
+    ("&'94;", "\u201D"),  # ” - right double quotation mark
+    ("&'96;", "\u2013"),  # – - en dash (validate)
+    ("&'97;", "\u2014"),  # — - em dash (validate)
+    ("&'99;", "\u2122"),  # ™ - Trade mark
     # Windows only
-    ("&'A0;", u"\u00A0"),  #   - Non breaking space
-    ("&'A9;", u"\u00A9"),  # © - Copyright
-    ("&'AE;", u"\u00AE"),  # ® - Registered
-    ("&'BC;", u"\u00BC"),  # ¼
-    ("&'BD;", u"\u00BD"),  # ½
-    ("&'BE;", u"\u00BE"),  # ¾
+    ("&'A0;", "\u00A0"),  #   - Non breaking space
+    ("&'A9;", "\u00A9"),  # © - Copyright
+    ("&'AE;", "\u00AE"),  # ® - Registered
+    ("&'BC;", "\u00BC"),  # ¼
+    ("&'BD;", "\u00BD"),  # ½
+    ("&'BE;", "\u00BE"),  # ¾
     # Mac only
-    ("&'A8;", u"\u00AE"),  # ® - Registered
-    ("&'AA;", u"\u2122"),  # ™ - Trade mark
-    ("&'C7;", u"\u00AB"),  # « - Left-pointing double angle quotation mark
-    ("&'C8;", u"\u00BB"),  # » - Right-pointing double angle quotation mark
-    ("&'C9;", u"\u2026"),  # … - Horizontal Elippsis
-    ("&'CA;", u"\u00A0"),  #   - Non breaking space
-    ("&'D0;", u"\u2013"),  # – - en dash (validate)
-    ("&'D1;", u"\u2014"),  # — - em dash (validate)
-    ("&'D2;", u"\u201C"),  # “ - left double quotation mark
-    ("&'D3;", u"\u201D"),  # ” - right double quotation mark
-    ("&'D4;", u"\u2018"),  # ‘ - left single quotation mark
-    ("&'D5;", u"\u2019"),  # ’ - right single quotation mark
-    ("&'E2;", u"\u201A"),  # ‚ - Single low-9 quotation mark
-    ("&'E3;", u"\u201E"),  # „ - Double low-9 quotation mark
+    ("&'A8;", "\u00AE"),  # ® - Registered
+    ("&'AA;", "\u2122"),  # ™ - Trade mark
+    ("&'C7;", "\u00AB"),  # « - Left-pointing double angle quotation mark
+    ("&'C8;", "\u00BB"),  # » - Right-pointing double angle quotation mark
+    ("&'C9;", "\u2026"),  # … - Horizontal Elippsis
+    ("&'CA;", "\u00A0"),  #   - Non breaking space
+    ("&'D0;", "\u2013"),  # – - en dash (validate)
+    ("&'D1;", "\u2014"),  # — - em dash (validate)
+    ("&'D2;", "\u201C"),  # “ - left double quotation mark
+    ("&'D3;", "\u201D"),  # ” - right double quotation mark
+    ("&'D4;", "\u2018"),  # ‘ - left single quotation mark
+    ("&'D5;", "\u2019"),  # ’ - right single quotation mark
+    ("&'E2;", "\u201A"),  # ‚ - Single low-9 quotation mark
+    ("&'E3;", "\u201E"),  # „ - Double low-9 quotation mark
     # Other markers
     # Soft-break - XXX creates a problem with roundtripping could
     # also be represented by \u2028
-    #("&'B;", u"\n"),
+    #("&'B;", "\n"),
 )
 """Mapping of Wordfast &'XX; escapes to correct Unicode characters"""
 
@@ -199,7 +196,7 @@ class WordfastDialect(csv.Dialect):
 csv.register_dialect("wordfast", WordfastDialect)
 
 
-class WordfastTime(object):
+class WordfastTime:
     """Manages time stamps in the Wordfast format of YYYYMMDD~hhmmss"""
 
     def __init__(self, newtime=None):
@@ -250,7 +247,7 @@ class WordfastTime(object):
             return self.timestring
 
 
-class WordfastHeader(object):
+class WordfastHeader:
     """A wordfast translation memory header"""
 
     def __init__(self, header=None):
@@ -292,7 +289,7 @@ class WordfastUnit(base.TranslationUnit):
         self._dict = {}
         if source:
             self.source = source
-        super(WordfastUnit, self).__init__(source)
+        super().__init__(source)
 
     def _update_timestamp(self):
         """Refresh the timestamp for the unit"""
@@ -337,11 +334,6 @@ class WordfastUnit(base.TranslationUnit):
         self._rich_source = None
         self._set_source_or_target('source', source)
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
-
     @property
     def target(self):
         return self._get_source_or_target('target')
@@ -350,11 +342,6 @@ class WordfastUnit(base.TranslationUnit):
     def target(self, target):
         self._rich_target = None
         self._set_source_or_target('target', target)
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
 
     def settargetlang(self, newlang):
         self._dict['target-lang'] = newlang
@@ -380,7 +367,7 @@ class WordfastTMFile(base.TranslationStore):
 
     def __init__(self, inputfile=None, **kwargs):
         """construct a Wordfast TM, optionally reading in from inputfile."""
-        super(WordfastTMFile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         self.header = WordfastHeader()
         if inputfile is not None:

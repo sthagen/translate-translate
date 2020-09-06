@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2006 Zuza Software Foundation
 #
@@ -30,7 +29,7 @@ from translate.misc import quote
 from translate.storage import po, properties
 
 
-eol = u"\n"
+eol = "\n"
 
 
 def applytranslation(key, propunit, inunit, mixedkeys):
@@ -65,7 +64,7 @@ def applytranslation(key, propunit, inunit, mixedkeys):
     return value
 
 
-class reprop(object):
+class reprop:
 
     def __init__(self, templatefile, inputstore, personality, encoding=None,
                  remove_untranslated=False):
@@ -86,13 +85,15 @@ class reprop(object):
         self.inputstore.makeindex()
         if self.personality.name == "gaia":
             self._explode_gaia_plurals()
+        if self.personality.name == "gwt":
+            self._explode_gwt_plurals()
         outputlines = []
         # Readlines doesn't work for UTF-16, we read() and splitlines(keepends) instead
         content = self.templatefile.read().decode(self.encoding)
         for line in content.splitlines(True):
             outputstr = self.convertline(line)
             outputlines.append(outputstr)
-        return u"".join(outputlines).encode(self.encoding)
+        return "".join(outputlines).encode(self.encoding)
 
     def _handle_accesskeys(self, inunit, currkey):
         value = inunit.target
@@ -124,7 +125,7 @@ class reprop(object):
                 if category == 'zero':
                     # [zero] cases are translated as separate units
                     continue
-                new_unit = self.inputstore.addsourceunit(u"fish")  # not used
+                new_unit = self.inputstore.addsourceunit("fish")  # not used
                 new_location = '%s[%s]' % (location, category)
                 new_unit.addlocation(new_location)
                 new_unit.target = text
@@ -133,8 +134,39 @@ class reprop(object):
             # We don't want the plural marker to be translated:
             del self.inputstore.locationindex[location]
 
+    def _explode_gwt_plurals(self):
+        """Explode the gwt plurals."""
+        # cldr names to GWT variants
+        cldr2gwt = {
+            'zero': 'none',
+            'one': 'one',
+            'two': 'two',
+            'few': 'few',
+            'many': 'many',
+            'other': '',
+        }
+        from translate.lang import data
+        for unit in self.inputstore.units:
+            if not unit.hasplural():
+                continue
+            if unit.isfuzzy() and not self.includefuzzy or not unit.istranslated():
+                continue
+
+            names = data.cldr_plural_categories
+            names = [cldr2gwt.get(name) for name in names]
+            location = unit.getlocations()[0]
+            for category, text in zip(names, unit.target.strings):
+                new_unit = self.inputstore.addsourceunit("fish")  # not used
+                if category != '':
+                    new_location = '%s[%s]' % (location, category)
+                else:
+                    new_location = '%s' % (location)
+                new_unit.addlocation(new_location)
+                new_unit.target = text
+                self.inputstore.locationindex[new_location] = new_unit
+
     def convertline(self, line):
-        returnline = u""
+        returnline = ""
         # handle multiline msgid if we're in one
         if self.inmultilinemsgid:
             msgid = quote.rstripeol(line).strip()
@@ -165,7 +197,7 @@ class reprop(object):
             if key in self.inputstore.locationindex:
                 unit = self.inputstore.locationindex[key]
                 if unit is None or not unit.istranslated() and bool(unit.source) and self.remove_untranslated:
-                    returnline = u""
+                    returnline = ""
                     self.inecho = False
                 else:
                     if unit.isfuzzy() and not self.includefuzzy or len(unit.target) == 0:
@@ -178,7 +210,7 @@ class reprop(object):
                         "key": "%s%s%s" % (self.personality.key_wrap_char,
                                            key,
                                            self.personality.key_wrap_char),
-                        "del": delimiter,
+                        "del": delimiter if delimiter_pos != -1 or value else "",
                         "value": "%s%s%s" % (self.personality.value_wrap_char,
                                              self.personality.encode(value),
                                              self.personality.value_wrap_char),

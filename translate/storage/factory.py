@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006-2010 Zuza Software Foundation
 #
@@ -20,6 +19,11 @@
 """factory methods to build real storage objects that conform to base.py"""
 
 import os
+from functools import lru_cache
+from importlib import import_module
+
+from translate.storage.base import TranslationStore
+from translate.storage.directory import Directory
 
 
 #TODO: Monolingual formats (with template?)
@@ -48,9 +52,6 @@ _classes_str = {
     "ts": ("ts2", "tsfile"),
     "xliff": ("xliff", "xlifffile"), "xlf": ("xliff", "xlifffile"),
     "sdlxliff": ("xliff", "xlifffile"),
-
-    # Monolingual formats
-    "ftl": ("l20n", "l20nfile"),
 }
 ###  XXX:  if you add anything here, you must also add it to translate.storage.
 
@@ -133,6 +134,14 @@ def _getname(storefile):
     return storefilename
 
 
+@lru_cache(maxsize=128)
+def import_class(module_name, class_name, prefix=None):
+    if prefix:
+        module_name = "{}.{}".format(prefix, module_name)
+    module = import_module(module_name)
+    return getattr(module, class_name)
+
+
 def getclass(storefile, localfiletype=None, ignore=None, classes=None,
              classes_str=None, hiddenclasses=None):
     """Factory that returns the applicable class for the type of file
@@ -158,9 +167,7 @@ def getclass(storefile, localfiletype=None, ignore=None, classes=None,
         if ext in hiddenclasses:
             guesserfn = hiddenclasses[ext]
             if decomp:
-                _module, _class = decompressclass[decomp]
-                module = __import__(_module, globals(), {}, [])
-                _file = getattr(module, _class)
+                _file = import_class(*decompressclass[decomp])
                 ext = guesserfn(_file(storefile))
             else:
                 ext = guesserfn(storefile)
@@ -169,9 +176,7 @@ def getclass(storefile, localfiletype=None, ignore=None, classes=None,
         if classes:
             storeclass = classes[ext]
         else:
-            _module, _class = classes_str[ext]
-            module = __import__("translate.storage.%s" % _module, globals(), {}, _module)
-            storeclass = getattr(module, _class)
+            storeclass = import_class(*classes_str[ext], "translate.storage")
     except KeyError:
         raise ValueError("Unknown filetype (%s)" % storefilename)
     return storeclass
@@ -181,19 +186,20 @@ def getobject(storefile, localfiletype=None, ignore=None, classes=None,
               classes_str=None, hiddenclasses=None):
     """Factory that returns a usable object for the type of file presented.
 
-    :type storefile: file or str
+    :type storefile: file or str or TranslationStore
     :param storefile: File object or file name.
 
     Specify ignore to ignore some part at the back of the name (like .gz).
     """
+    if isinstance(storefile, TranslationStore):
+        return storefile
     if classes_str is None:
         classes_str = _classes_str
     if hiddenclasses is None:
         hiddenclasses = _hiddenclasses
     if isinstance(storefile, str):
         if os.path.isdir(storefile) or storefile.endswith(os.path.sep):
-            from translate.storage import directory
-            return directory.Directory(storefile)
+            return Directory(storefile)
     storefilename = _getname(storefile)
     storeclass = getclass(storefile, localfiletype, ignore, classes=classes,
                           classes_str=classes_str, hiddenclasses=hiddenclasses)
@@ -201,9 +207,7 @@ def getobject(storefile, localfiletype=None, ignore=None, classes=None,
         name, ext = os.path.splitext(storefilename)
         ext = ext[len(os.path.extsep):].lower()
         if ext in decompressclass:
-            _module, _class = decompressclass[ext]
-            module = __import__(_module, globals(), {}, [])
-            _file = getattr(module, _class)
+            _file = import_class(*decompressclass[ext])
             storefile = _file(storefilename)
         store = storeclass.parsefile(storefile)
     else:

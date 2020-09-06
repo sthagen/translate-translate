@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008-2009 Zuza Software Foundation
 #
@@ -23,7 +22,7 @@ based "rich" string element trees.
 """
 
 
-from translate.storage.placeables import StringElem
+from translate.storage.placeables.strelem import StringElem
 
 
 def parse(tree, parse_funcs):

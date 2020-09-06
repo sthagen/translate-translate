@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2009,2012 Zuza Software Foundation
 #
@@ -72,7 +71,7 @@ def applytranslation(entity, dtdunit, inputunit, mixedentities):
     dtdunit.source = unquotedstr
 
 
-class redtd(object):
+class redtd:
     """this is a convertor class that creates a new dtd based on a template using translations in a po"""
 
     def __init__(self, dtdfile, android=False, remove_untranslated=False):
@@ -101,7 +100,7 @@ class redtd(object):
                     applytranslation(entity, dtdunit, inunit, mixedentities)
 
 
-class po2dtd(object):
+class po2dtd:
     """this is a convertor class that creates a new dtd file based on a po file without a template"""
 
     def __init__(self, android=False, remove_untranslated=False):
@@ -173,7 +172,7 @@ def convertdtd(inputfile, outputfile, templatefile, includefuzzy=False,
     # identify them seems to be on their file path in the tree (based on code
     # in compare-locales).
     android_dtd = False
-    header_comment = u""
+    header_comment = ""
     input_header = inputstore.header()
     if input_header:
         header_comment = input_header.getnotes("developer")

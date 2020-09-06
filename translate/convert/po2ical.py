@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2006 Zuza Software Foundation
 #
@@ -27,7 +26,7 @@ from translate.convert import convert
 from translate.storage import ical, po
 
 
-class po2ical(object):
+class po2ical:
     """Convert a PO file and a template iCalendar file to a iCalendar file."""
 
     SourceStoreClass = po.pofile

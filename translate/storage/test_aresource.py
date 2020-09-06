@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 
-
+import pytest
 from lxml import etree
 
-from translate.storage import aresource, test_monolingual
 from translate.misc.multistring import multistring
+from translate.storage import aresource, test_monolingual
 from translate.storage.base import TranslationStore
 
 
@@ -178,13 +177,13 @@ class TestAndroidResourceUnit(test_monolingual.TestMonolingualUnit):
 
     def test_escape_html_double_space(self):
         string = '<b>html code \'to  escape\'</b> some \'here\''
-        xml = ('<string name="teststring"><b>"html code \\\'to  escape\\\'"</b> some \\\'here\\\''
+        xml = ('<string name="teststring"><b>html code \\\'to \\u0020escape\\\'</b> some \\\'here\\\''
                '</string>\n')
         self.__check_escape(string, xml)
 
     def test_escape_html_deep_double_space(self):
         string = '<b>html code \'to  <i>escape</i>\'</b> some \'here\''
-        xml = ('<string name="teststring"><b>"html code \\\'to  "<i>escape</i>\\\'</b> some \\\'here\\\''
+        xml = ('<string name="teststring"><b>html code \\\'to \\u0020<i>escape</i>\\\'</b> some \\\'here\\\''
                '</string>\n')
         self.__check_escape(string, xml)
 
@@ -195,6 +194,15 @@ class TestAndroidResourceUnit(test_monolingual.TestMonolingualUnit):
                '</string>\n')
         self.__check_escape(string, xml)
 
+    def test_escape_quoted_newlines(self):
+        self.__check_escape(
+            "\n\nstring with newlines",
+            r"""<string name="teststring">"
+\n
+\nstring with newlines"</string>
+"""
+        )
+
     ############################ Check string parse ###########################
 
     def test_parse_message_with_newline(self):
@@ -203,7 +211,7 @@ class TestAndroidResourceUnit(test_monolingual.TestMonolingualUnit):
         self.__check_parse(string, xml)
 
     def test_parse_message_with_newline_in_xml(self):
-        string = 'message \nwith\n newline\n in xml'
+        string = 'message\nwith\n newline\n in xml'
         xml = ('<string name="teststring">message\n\\nwith\\n\nnewline\\n\nin xml'
                '</string>\n')
         self.__check_parse(string, xml)
@@ -232,6 +240,15 @@ class TestAndroidResourceUnit(test_monolingual.TestMonolingualUnit):
         string = ' leading space'
         xml = '<string name="teststring">" leading space"</string>\n'
         self.__check_parse(string, xml)
+
+    def test_parse_quoted_newlines(self):
+        self.__check_parse(
+            "\n\nstring with newlines",
+            r"""<string name="teststring">"
+\n
+\nstring with newlines"</string>
+"""
+        )
 
     def test_parse_xml_entities(self):
         string = '>xml&entities'
@@ -373,7 +390,7 @@ class TestAndroidResourceUnit(test_monolingual.TestMonolingualUnit):
 
     def test_parse_html_double_space_quoted(self):
         string = '<b>html code \'to  escape\'</b> some \'here\''
-        xml = ('<string name="teststring"><b>"html code \'to  escape\'"</b>" some \'here\'"'
+        xml = ('<string name="teststring"><b>html code \'to \\u0020escape\'</b> some \'here\''
                '</string>\n')
         self.__check_parse(string, xml)
 
@@ -389,6 +406,11 @@ class TestAndroidResourceUnit(test_monolingual.TestMonolingualUnit):
                '<g:test xmlns:g="ttt" g:somevalue="aaaa  &quot;  aaa">value</g:test> outer &amp; text'
                '</string>\n')
         self.__check_parse(string, xml)
+
+    def test_parse_unicode(self):
+        with pytest.raises(ValueError):
+            self.__check_parse('', r'<string name="test">\utest</string>')
+        self.__check_parse('\u0230', r'<string name="test">\u0230</string>')
 
 
 class TestAndroidResourceFile(test_monolingual.TestMonolingualStore):
@@ -593,3 +615,16 @@ class TestAndroidResourceFile(test_monolingual.TestMonolingualStore):
             '<xliff:g xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" id="count">%d</xliff:g> dnu',
         ])
         assert bytes(store) == content
+
+    def test_markup_quotes_set(self):
+        template = '''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="id">Test</string>
+</resources>'''
+        content = template.encode()
+        newcontent = template.replace('>Test<', '>Test <b>string</b> with \\u0020space<')
+        store = self.StoreClass()
+        store.parse(content)
+        assert bytes(store) == content
+        store.units[0].target = 'Test <b>string</b> with  space'
+        assert bytes(store).decode() == newcontent

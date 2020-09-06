@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2009, 2013 Zuza Software Foundation
 # Copyright 2013 F Wolff
@@ -43,7 +42,7 @@ class LanguageError(Exception):
         return str(self.value)
 
 
-class TMDB(object):
+class TMDB:
     _tm_dbs = {}
 
     def __init__(self, db_file, max_candidates=3, min_similarity=75,

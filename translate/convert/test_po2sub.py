@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
+from io import BytesIO
 
 from pytest import importorskip
 
 from translate.convert import po2sub, test_convert
-from translate.misc import wStringIO
 from translate.storage import po
 
 
@@ -11,12 +10,12 @@ from translate.storage import po
 importorskip("aeidon")
 
 
-class TestPO2Sub(object):
+class TestPO2Sub:
 
     def po2sub(self, posource):
         """helper that converts po source to subtitle source without requiring
         files"""
-        inputfile = wStringIO.StringIO(posource)
+        inputfile = BytesIO(posource.encode())
         inputpo = po.pofile(inputfile)
         convertor = po2sub.po2sub()
         outputsub = convertor.convert_store(inputpo)
@@ -25,9 +24,9 @@ class TestPO2Sub(object):
     def merge2sub(self, subsource, posource):
         """helper that merges po translations to subtitle source without
         requiring files"""
-        inputfile = wStringIO.StringIO(posource)
+        inputfile = BytesIO(posource.encode())
         inputpo = po.pofile(inputfile)
-        templatefile = wStringIO.StringIO(subsource)
+        templatefile = BytesIO(subsource.encode())
         convertor = po2sub.po2sub(templatefile, inputpo)
         outputsub = convertor.convert_store()
         print(outputsub)
@@ -35,7 +34,7 @@ class TestPO2Sub(object):
 
     def test_subrip(self):
         """test SubRip or .srt files."""
-        posource = u'''#: 00:00:20.000-->00:00:24.400
+        posource = '''#: 00:00:20.000-->00:00:24.400
 msgid "Altocumulus clouds occur between six thousand"
 msgstr "Blah blah blah blah"
 

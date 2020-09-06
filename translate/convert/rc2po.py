@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007-2009 Zuza Software Foundation
 #
@@ -31,7 +30,7 @@ from translate.storage import po, rc
 logger = logging.getLogger(__name__)
 
 
-class rc2po(object):
+class rc2po:
     """Convert a .rc file to a .po file for handling the translation."""
 
     def convert_store(self, input_store, duplicatestyle="msgctxt"):
@@ -116,11 +115,11 @@ def main(argv=None):
     parser.add_option(
         "", "--charset", dest="charset", default=DEFAULTCHARSET,
         help="charset to use to decode the RC files (default: %s)" % DEFAULTCHARSET, metavar="CHARSET")
-    DEFAULTLANG = "LANG_ENGLISH"
+    DEFAULTLANG = None
     parser.add_option(
         "-l", "--lang", dest="lang", default=DEFAULTLANG,
         help="LANG entry (default: %s)" % DEFAULTLANG, metavar="LANG")
-    DEFAULTSUBLANG = "SUBLANG_DEFAULT"
+    DEFAULTSUBLANG = None
     parser.add_option(
         "", "--sublang", dest="sublang", default=DEFAULTSUBLANG,
         help="SUBLANG entry (default: %s)" % DEFAULTSUBLANG, metavar="SUBLANG")

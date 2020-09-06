@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2006 Zuza Software Foundation
 #
@@ -27,7 +26,7 @@ from translate.convert import convert
 from translate.storage import factory, jsonl10n
 
 
-class rejson(object):
+class rejson:
 
     def __init__(self, templatefile, inputstore):
         self.templatefile = templatefile
@@ -48,10 +47,22 @@ class rejson(object):
             if skip_unit:
                 continue
             if inputunit is not None:
-                if inputunit.isfuzzy() and not self.includefuzzy:
-                    unit.target = unit.source
+                if inputunit.isfuzzy():
+                    if self.includefuzzy:
+                        # inputunit.istranslated() is always False now,
+                        # because inputunit.isfuzzy() is True.
+                        # So we need to check if inputunit.target is truthy.
+                        if inputunit.target:
+                            unit.target = inputunit.target
+                        else:
+                            unit.target = unit.source
+                    else:
+                        unit.target = unit.source
                 else:
-                    unit.target = inputunit.target
+                    if inputunit.istranslated():
+                        unit.target = inputunit.target
+                    else:
+                        unit.target = unit.source
             else:
                 unit.target = unit.source
             self.ouputstore.addunit(unit)

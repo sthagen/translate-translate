@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2015 Zuza Software Foundation
 # Copyright 2015 Sarah Hale
@@ -23,8 +22,7 @@
 from lxml import etree
 
 from translate.lang import data
-from translate.misc.deprecation import deprecated
-from translate.misc.xml_helpers import setXMLspace, reindent
+from translate.misc.xml_helpers import reindent, setXMLspace
 from translate.storage import lisa
 from translate.storage.placeables import general
 
@@ -53,18 +51,13 @@ class RESXUnit(lisa.LISAunit):
     def source(self):
         return self.target
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
-
     @property
     def target(self):
         targetnode = self._gettargetnode()
         if targetnode is None:
             etree.SubElement(self.xmlelement, self.namespaced("value"))
             return None
-        return data.forceunicode(targetnode.text) or u""
+        return data.forceunicode(targetnode.text) or ""
 
     @target.setter
     def target(self, target):
@@ -75,17 +68,7 @@ class RESXUnit(lisa.LISAunit):
             return
         targetnode = self._gettargetnode()
         targetnode.clear()
-        targetnode.text = data.forceunicode(target) or u""
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def settarget(self, target):
-        self.target = target
+        targetnode.text = data.forceunicode(target) or ""
 
     def addnote(self, text, origin=None, position="append"):
         """Add a note specifically in the appropriate "comment" tag"""
@@ -106,7 +89,7 @@ class RESXUnit(lisa.LISAunit):
         if note.text:
             # Correct the indent of <comment> by updating the tail of
             # the preceding <value> element
-            targetnode = self._gettargetnode()
+            self._gettargetnode()
 
     def getnotes(self, origin=None):
         comments = []
@@ -133,7 +116,7 @@ class RESXUnit(lisa.LISAunit):
         return [self.getid()]
 
     def merge(self, otherunit, overwrite=False, comments=True, authoritative=False):
-        super(RESXUnit, self).merge(otherunit, overwrite, comments)
+        super().merge(otherunit, overwrite, comments)
         if otherunit.isfuzzy():
             self.markfuzzy()
 
@@ -213,7 +196,7 @@ class RESXFile(lisa.LISAfile):
     namespace = ''
 
     def __init__(self, *args, **kwargs):
-        lisa.LISAfile.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._messagenum = 0
 
     def initbody(self):
@@ -224,11 +207,11 @@ class RESXFile(lisa.LISAfile):
 
     def addunit(self, unit, new=True):
         """Adds the given unit to the body node."""
-        super(RESXFile, self).addunit(unit, new)
+        super().addunit(unit, new)
         setXMLspace(unit.xmlelement, "preserve")
         if unit.getid() is None:
             self._messagenum += 1
-            unit.setid(u"%s" % unit.source.strip(' '))
+            unit.setid("%s" % unit.source.strip(' '))
         # adjust the current and previous elements for new ones;
         # otherwise they will not be indented correctly.
         if new:
@@ -237,9 +220,9 @@ class RESXFile(lisa.LISAfile):
                 # this is the first element; adjust root.
                 # should not happen in a ResX file prepared by Visual Studio
                 # since it includes an inline XSD plus resheader at all times.
-                self.body.text = u"\n  "
+                self.body.text = "\n  "
             # adjust the indent of the following <value> element
-            unit.xmlelement.text = u"\n    "
+            unit.xmlelement.text = "\n    "
         return unit
 
     def serialize(self, out=None):

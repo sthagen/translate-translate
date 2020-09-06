@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2005, 2006 Zuza Software Foundation
 #
@@ -49,7 +48,7 @@ class SplitOptionParser(optrecurse.RecursiveOptionParser):
                          "\n  " + \
                          "input directory is searched for PO files with (poconflicts) comments, all entries are written to files in a directory structure for pomerge"
         else:
-            super(SplitOptionParser, self).set_usage(usage)
+            super().set_usage(usage)
 
     def recursiveprocess(self, options):
         """recurse through directories and process files"""

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2010 Zuza Software Foundation
 #
@@ -18,7 +17,6 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 import os
-
 
 from translate.convert import factory as convert_factory
 from translate.storage.projstore import ProjectStore
@@ -53,7 +51,7 @@ def split_extensions(filename):
     return os.extsep.join(filename_parts[:-len(extensions)]), os.extsep.join(extensions)
 
 
-class Project(object):
+class Project:
     """Manages a project store as well as the processes involved in a project
     workflow.
     """

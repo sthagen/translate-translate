@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008-2011 Zuza Software Foundation
 #
@@ -35,7 +34,6 @@ both.
 from lxml import etree
 
 from translate.lang import data
-from translate.misc.deprecation import deprecated
 from translate.misc.multistring import multistring
 from translate.misc.xml_helpers import reindent
 from translate.storage import lisa
@@ -113,19 +111,14 @@ class tsunit(lisa.LISAunit):
             return multistring([text])
         return text
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
-
     @property
     def target(self):
         targetnode = self._gettargetnode()
         if self.hasplural():
             numerus_nodes = targetnode.findall(self.namespaced("numerusform"))
-            return multistring([data.forceunicode(node.text) or u"" for node in numerus_nodes])
+            return multistring([data.forceunicode(node.text) or "" for node in numerus_nodes])
         else:
-            return data.forceunicode(targetnode.text) or u""
+            return data.forceunicode(targetnode.text) or ""
 
     @target.setter
     def target(self, target):
@@ -154,14 +147,9 @@ class tsunit(lisa.LISAunit):
             self.xmlelement.set("numerus", "yes")
             for string in strings:
                 numerus = etree.SubElement(targetnode, self.namespaced("numerusform"))
-                numerus.text = data.forceunicode(string) or u""
+                numerus.text = data.forceunicode(string) or ""
         else:
-            targetnode.text = data.forceunicode(target) or u""
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
+            targetnode.text = data.forceunicode(target) or ""
 
     def hasplural(self):
         return self.xmlelement.get("numerus") == "yes"
@@ -318,7 +306,7 @@ class tsunit(lisa.LISAunit):
         return locations
 
     def merge(self, otherunit, overwrite=False, comments=True, authoritative=False):
-        super(tsunit, self).merge(otherunit, overwrite, comments)
+        super().merge(otherunit, overwrite, comments)
         # TODO: check if this is necessary:
         if otherunit.isfuzzy():
             self.markfuzzy()
@@ -370,7 +358,7 @@ class tsfile(lisa.LISAfile):
 
     def __init__(self, *args, **kwargs):
         self._contextname = None
-        lisa.LISAfile.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def initbody(self):
         """Initialises self.body."""
@@ -456,7 +444,7 @@ class tsfile(lisa.LISAfile):
         if self._contextname != contextname:
             if not self._switchcontext(contextname, comment, createifmissing):
                 return None
-        super(tsfile, self).addunit(unit, new)
+        super().addunit(unit, new)
 #        lisa.setXMLspace(unit.xmlelement, "preserve")
         return unit
 

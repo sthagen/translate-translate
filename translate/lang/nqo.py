@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2013 Zuza Software Foundation
 #
@@ -52,5 +51,5 @@ class nqo(common.Common):
 
     @classmethod
     def punctranslate(cls, text):
-        text = super(cls, cls).punctranslate(text)
+        text = super().punctranslate(text)
         return reverse_quotes(text)

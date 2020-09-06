@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006 Zuza Software Foundation
 #
@@ -21,45 +20,22 @@
 strings in the strings attribute
 """
 
-import warnings
-
-
-from .deprecation import RemovedInTTK2Warning
-
-
-def _create_text_type(newtype, string, encoding):
-    """Helper to construct a text type out of characters or bytes. Required to
-    temporarily preserve backwards compatibility. Must be removed in TTK2.
-    """
-    if string is None:
-        string = ''
-    if isinstance(string, str):
-        return str.__new__(newtype, string)
-
-    warnings.warn(
-        'Passing non-ASCII bytes as well as the `encoding` argument to '
-        '`multistring` is deprecated. Always pass unicode characters instead.',
-        RemovedInTTK2Warning, stacklevel=2,
-    )
-    return str.__new__(newtype, string, encoding)
-
 
 class multistring(str):
 
-    def __new__(newtype, string=u"", *args, **kwargs):
-        encoding = kwargs.pop('encoding', 'utf-8')
+    def __new__(newtype, string=""):
         if isinstance(string, list):
             if not string:
                 raise ValueError("multistring must contain at least one string")
-            newstring = _create_text_type(newtype, string[0], encoding)
+            newstring = str.__new__(newtype, string[0])
             newstring.strings = [newstring] + [multistring.__new__(newtype, altstring) for altstring in string[1:]]
         else:
-            newstring = _create_text_type(newtype, string, encoding)
+            newstring = str.__new__(newtype, string)
             newstring.strings = [newstring]
         return newstring
 
     def __init__(self, *args, **kwargs):
-        super(multistring, self).__init__()
+        super().__init__()
         if not hasattr(self, "strings"):
             self.strings = []
 
@@ -92,15 +68,15 @@ class multistring(str):
         return self.__cmp__(otherstring) == 0
 
     def __repr__(self):
-        return u"multistring(%r)" % (
+        return "multistring(%r)" % (
             [str(item) for item in self.strings]
         )
 
     def replace(self, old, new, count=None):
         if count is None:
-            newstr = multistring(super(multistring, self).replace(old, new))
+            newstr = multistring(super().replace(old, new))
         else:
-            newstr = multistring(super(multistring, self).replace(old, new, count))
+            newstr = multistring(super().replace(old, new, count))
         for s in self.strings[1:]:
             if count is None:
                 newstr.strings.append(s.replace(old, new))

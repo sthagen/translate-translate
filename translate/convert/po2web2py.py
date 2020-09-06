@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2009-2010 Zuza Software Foundation
 #
@@ -30,7 +29,7 @@ from translate.convert import convert
 from translate.storage import factory
 
 
-class po2pydict(object):
+class po2pydict:
 
     def __init__(self):
         return
@@ -47,11 +46,11 @@ class po2pydict(object):
             else:
                 mydict[unit.source] = unit.source.replace('@markmin\x01', '')
 
-        str_obj.write(u'# -*- coding: utf-8 -*-\n')
-        str_obj.write(u'{\n')
+        str_obj.write('# -*- coding: utf-8 -*-\n')
+        str_obj.write('{\n')
         for source_str, trans_str in sorted(mydict.items()):
-            str_obj.write(u"%s: %s,\n" % (repr(source_str), repr(trans_str)))
-        str_obj.write(u'}\n')
+            str_obj.write("%s: %s,\n" % (repr(source_str), repr(trans_str)))
+        str_obj.write('}\n')
         str_obj.seek(0)
         return str_obj
 

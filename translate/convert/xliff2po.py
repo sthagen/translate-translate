@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2009 Zuza Software Foundation
 #
@@ -26,7 +25,7 @@ for examples and usage instructions.
 from translate.storage import po, xliff
 
 
-class xliff2po(object):
+class xliff2po:
 
     def converttransunit(self, transunit):
         """makes a pounit from the given transunit"""

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2012 Michal Čihař
 # Copyright 2014 Luca De Petrillo
@@ -27,10 +26,10 @@ import re
 from lxml import etree
 
 from translate.lang import data
-from translate.misc.deprecation import deprecated
+from translate.misc.multistring import multistring
 from translate.misc.xml_helpers import reindent
 from translate.storage import base, lisa
-from translate.misc.multistring import multistring
+
 
 EOF = None
 WHITESPACE = ' \n\t'  # Whitespace that we collapse.
@@ -58,7 +57,7 @@ class AndroidResourceUnit(base.TranslationUnit):
                 self.xmlelement = etree.Element("string")
         if source is not None:
             self.setid(source)
-        super(AndroidResourceUnit, self).__init__(source)
+        super().__init__(source)
 
     def istranslatable(self):
         return (
@@ -95,7 +94,6 @@ class AndroidResourceUnit(base.TranslationUnit):
         active_quote = False
         active_percent = False
         active_escape = False
-        formatted = False
         i = 0
         text = list(text) + [EOF]
         while i < len(text):
@@ -145,7 +143,6 @@ class AndroidResourceUnit(base.TranslationUnit):
             if c == '%' and not active_escape:
                 active_percent = not active_percent
             elif not active_escape and active_percent:
-                formatted = True
                 active_percent = False
 
             # Handle escapes
@@ -169,8 +166,14 @@ class AndroidResourceUnit(base.TranslationUnit):
                         # in the clauses below without issue.
                         pass
                     elif c == 'n' or c == 'N':
-                        text[i-1:i+1] = '\n'  # an actual newline
-                        i -= 1
+                        # Remove whitespace just before newline. Most likely this is result of
+                        # having real newline in the XML in front of \n.
+                        if i >= 2 and text[i-2] == " ":
+                            offset = 2
+                        else:
+                            offset = 1
+                        text[i - offset:i + 1] = '\n'  # an actual newline
+                        i -= offset
                     elif c == 't' or c == 'T':
                         text[i-1:i+1] = '\t'  # an actual tab
                         i -= 1
@@ -194,7 +197,7 @@ class AndroidResourceUnit(base.TranslationUnit):
                         max_slice = min(i+5, len(text)-1)
                         codepoint_str = "".join(text[i+1:max_slice])
                         if len(codepoint_str) < 4:
-                            codepoint_str = u"0" * (4-len(codepoint_str)) + codepoint_str
+                            codepoint_str = "0" * (4-len(codepoint_str)) + codepoint_str
                         try:
                             # We can't trust int() to raise a ValueError,
                             # it will ignore leading/trailing whitespace.
@@ -216,6 +219,9 @@ class AndroidResourceUnit(base.TranslationUnit):
 
         # Join the string together again, but w/o EOF marker
         return "".join(text[:-1])
+
+    def xml_escape_space(self, matchobj):
+        return matchobj.group(0).replace('  ', r' \u0020')
 
     def escape(self, text, quote_wrapping_whitespaces=True):
         """Escape all the characters which need to be escaped in an Android XML
@@ -243,21 +249,20 @@ class AndroidResourceUnit(base.TranslationUnit):
         if text.startswith('@'):
             text = '\\@' + text[1:]
         # Quote strings with more whitespace
-        if ((quote_wrapping_whitespaces and (text[0] in WHITESPACE or text[-1] in WHITESPACE))
-                or len(MULTIWHITESPACE.findall(text))) > 0:
+        multispace = MULTIWHITESPACE.findall(text)
+        if (quote_wrapping_whitespaces and (text[0] in WHITESPACE or text[-1] in WHITESPACE or multispace)):
             return '"%s"' % text
+        # In xml multispace
+        if not quote_wrapping_whitespaces and multispace:
+            return MULTIWHITESPACE.sub(self.xml_escape_space, text)
+
         return text
 
     @base.TranslationUnit.source.getter
     def source(self):
-        if super(AndroidResourceUnit, self).source is None:
+        if super().source is None:
             return self.target
-        return super(AndroidResourceUnit, self).source
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
+        return super().source
 
     def get_xml_text_value(self, xmltarget):
         if len(xmltarget) == 0:
@@ -282,11 +287,11 @@ class AndroidResourceUnit(base.TranslationUnit):
                 tmp_element.text = cloned_target.text
                 target = data.forceunicode(etree.tostring(tmp_element, encoding='utf-8')[3:-4])
             else:
-                target = u''
+                target = ''
 
             # Include markup as well
-            target += u''.join([data.forceunicode(etree.tostring(child, encoding='utf-8'))
-                                for child in cloned_target.iterchildren()])
+            target += ''.join([data.forceunicode(etree.tostring(child, encoding='utf-8'))
+                               for child in cloned_target.iterchildren()])
             return target
 
     def set_xml_text_value(self, target, xmltarget):
@@ -397,11 +402,6 @@ class AndroidResourceUnit(base.TranslationUnit):
         self._rich_target = None
         self._target = target
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
-
     def getlanguageNode(self, lang=None, index=None):
         return self.xmlelement
 
@@ -410,9 +410,7 @@ class AndroidResourceUnit(base.TranslationUnit):
         if origin in ['programmer', 'developer', 'source code', None]:
             self.xmlelement.addprevious(etree.Comment(text))
         else:
-            return super(AndroidResourceUnit, self).addnote(text,
-                                                            origin=origin,
-                                                            position=position)
+            return super().addnote(text, origin=origin, position=position)
 
     def getnotes(self, origin=None):
         if origin in ['programmer', 'developer', 'source code', None]:
@@ -423,9 +421,9 @@ class AndroidResourceUnit(base.TranslationUnit):
                     comments.insert(0, prevSibling.text)
                     prevSibling = prevSibling.getprevious()
 
-            return u'\n'.join(comments)
+            return '\n'.join(comments)
         else:
-            return super(AndroidResourceUnit, self).getnotes(origin)
+            return super().getnotes(origin)
 
     def removenotes(self, origin=None):
         if ((self.xmlelement is not None) and (self.xmlelement.getparent is not None)):
@@ -434,7 +432,7 @@ class AndroidResourceUnit(base.TranslationUnit):
                 prevSibling.getparent().remove(prevSibling)
                 prevSibling = self.xmlelement.getprevious()
 
-        super(AndroidResourceUnit, self).removenotes()
+        super().removenotes()
 
     def __str__(self):
         return etree.tostring(self.xmlelement, pretty_print=True,
@@ -498,7 +496,7 @@ class AndroidResourceFile(lisa.LISAfile):
                 self.addunit(term, new=False)
 
     def gettargetlanguage(self):
-        target_lang = super(AndroidResourceFile, self).gettargetlanguage()
+        target_lang = super().gettargetlanguage()
 
         # If targetlanguage isn't set, we try to extract it from the filename path (if any).
         if target_lang is None and hasattr(self, 'filename') and self.filename:
@@ -547,7 +545,7 @@ class AndroidResourceFile(lisa.LISAfile):
                     cloned_doc, xml_declaration=False, encoding='unicode'
                 ).rsplit('\n', 1)[0]
 
-        super(AndroidResourceFile, self).addunit(unit, new)
+        super().addunit(unit, new)
         # Move aliased namespaces to the <resources> tag
         # The top_nsmap was introduced in LXML 3.5.0
         if do_cleanup:

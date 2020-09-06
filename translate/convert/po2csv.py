@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2003-2006 Zuza Software Foundation
 #
@@ -26,7 +25,7 @@ for examples and usage instructions.
 from translate.storage import csvl10n, po
 
 
-class po2csv(object):
+class po2csv:
 
     def convertcomments(self, inputunit):
         return " ".join(inputunit.getlocations())

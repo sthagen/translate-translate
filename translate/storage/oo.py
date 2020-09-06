@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2008 Zuza Software Foundation
 #
@@ -33,9 +32,9 @@ comments.
 
 import os
 import re
+import struct
 import warnings
 from io import BytesIO
-import struct
 
 from translate.misc import quote, wStringIO
 
@@ -60,7 +59,7 @@ class unormalizechar(dict):
             self.normalchars[ord(char)] = char
 
     def __getitem__(self, key):
-        return self.normalchars.get(key, u"_")
+        return self.normalchars.get(key, "_")
 
 
 unormalizetable = unormalizechar(normalfilenamechars.decode("ascii"))
@@ -163,7 +162,7 @@ def unescape_help_text(text):
     return text.replace(r"\<", "<").replace(r"\>", ">").replace(r'\"', '"').replace(r"\\", "\\")
 
 
-class ooline(object):
+class ooline:
     """this represents one line, one translation in an .oo file"""
 
     def __init__(self, parts=None):
@@ -406,7 +405,7 @@ class oomultifile:
     def openinputfile(self, subfile):
         """returns a pseudo-file object for the given subfile"""
         subfilesrc = self.getsubfilesrc(subfile)
-        inputfile = wStringIO.StringIO(subfilesrc)
+        inputfile = BytesIO(subfilesrc.encode())
         inputfile.filename = subfile
         return inputfile
 

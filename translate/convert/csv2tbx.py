@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006-2007 Zuza Software Foundation
 #
@@ -27,7 +26,7 @@ for examples and usage instructions
 from translate.storage import csvl10n, tbx
 
 
-class csv2tbx(object):
+class csv2tbx:
     """a class that takes translations from a .csv file and puts them in a .tbx
     file
     """

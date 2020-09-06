@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008-2010 Zuza Software Foundation
 #
@@ -31,7 +30,7 @@ from translate.misc import selector, wsgi
 from translate.storage import base, tmdb
 
 
-class TMServer(object):
+class TMServer:
     """A RESTful JSON TM server."""
 
     def __init__(self, tmdbfile, tmfiles, max_candidates=3, min_similarity=75,
@@ -111,7 +110,7 @@ class TMServer(object):
         start_response("200 OK", [('Content-type', 'text/plain')])
         #uid = unicode(urllib.unquote_plus(uid), "utf-8")
 
-        return [response]
+        return ["FIXME"]
 
     @selector.opliant
     def get_store_stats(self, environ, start_response, sid):
@@ -119,7 +118,7 @@ class TMServer(object):
         start_response("200 OK", [('Content-type', 'text/plain')])
         #sid = unicode(urllib.unquote_plus(sid), "utf-8")
 
-        return [response]
+        return ["FIXME"]
 
     @selector.opliant
     def upload_store(self, environ, start_response, sid, slang, tlang):
@@ -148,7 +147,7 @@ class TMServer(object):
         start_response("200 OK", [('Content-type', 'text/plain')])
         #sid = unicode(urllib.unquote_plus(sid), "utf-8")
 
-        return [response]
+        return ["FIXME"]
 
 
 def main():

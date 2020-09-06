@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006-2009 Zuza Software Foundation
 #
@@ -107,7 +106,7 @@ MULTIWHITESPACE_RE = re.compile(MULTIWHITESPACE_PATTERN, re.MULTILINE)
 def normalize_space(text):
     """Normalize the given text for implementation of ``xml:space="default"``.
     """
-    text = MULTIWHITESPACE_RE.sub(u" ", text)
+    text = MULTIWHITESPACE_RE.sub(" ", text)
     return text
 
 
@@ -120,10 +119,10 @@ def normalize_xml_space(node, xml_space, remove_start=False):
         return
     if node.text:
         node.text = normalize_space(node.text)
-        if remove_start and node.text[0] == u" ":
+        if remove_start and node.text[0] == " ":
             node.text = node.text.lstrip()
             remove_start = False
-        if len(node.text) > 0 and node.text.endswith(u" "):
+        if len(node.text) > 0 and node.text.endswith(" "):
             remove_start = True
         if len(node) == 0:
             node.text = node.text.rstrip()

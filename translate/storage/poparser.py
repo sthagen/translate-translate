@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2007 Zuza Software Foundation
 # Copyright 2016 F Wolff
@@ -43,7 +42,7 @@ append = list.append
 decode = bytes.decode
 
 
-class ParseState(object):
+class ParseState:
 
     def __init__(self, input_iterator, UnitClass, encoding=SINGLE_BYTE_ENCODING):
         # A single-byte encoding is first defined to be able to read the header
@@ -74,7 +73,7 @@ class ParseState(object):
                 self.next_line = next(self._input_iterator)
                 self.lineno += 1
         except StopIteration:
-            self.next_line = u''
+            self.next_line = ''
             self.eof = True
         else:
             if isinstance(self.next_line, bytes) and self.encoding is not None:

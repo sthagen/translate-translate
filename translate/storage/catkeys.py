@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2010 Zuza Software Foundation
 #
@@ -52,7 +51,6 @@ Escaping
 import csv
 
 from translate.lang import data
-from translate.misc.deprecation import deprecated
 from translate.storage import base
 
 
@@ -100,7 +98,7 @@ class CatkeysDialect(csv.Dialect):
 csv.register_dialect("catkeys", CatkeysDialect)
 
 
-class CatkeysHeader(object):
+class CatkeysHeader:
     """A catkeys translation memory header"""
 
     def __init__(self, header=None):
@@ -141,7 +139,7 @@ class CatkeysUnit(base.TranslationUnit):
         self._dict = {}
         if source:
             self.source = source
-        super(CatkeysUnit, self).__init__(source)
+        super().__init__(source)
 
     def getdict(self):
         """Get the dictionary of values for a catkeys line"""
@@ -186,11 +184,6 @@ class CatkeysUnit(base.TranslationUnit):
         self._rich_source = None
         self._set_source_or_target('source', source)
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
-
     @property
     def target(self):
         return self._get_source_or_target('target')
@@ -200,15 +193,10 @@ class CatkeysUnit(base.TranslationUnit):
         self._rich_target = None
         self._set_source_or_target('target', target)
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
-
     def getnotes(self, origin=None):
         if not origin or origin in ["programmer", "developer", "source code"]:
             return self._dict.get("comment", "")
-        return u""
+        return ""
 
     def getcontext(self):
         return self._dict.get("context", "")
@@ -221,14 +209,14 @@ class CatkeysUnit(base.TranslationUnit):
         notes = self.getnotes()
         id = self.source
         if notes:
-            id = u"%s\04%s" % (notes, id)
+            id = "%s\04%s" % (notes, id)
         if context:
-            id = u"%s\04%s" % (context, id)
+            id = "%s\04%s" % (context, id)
         return id
 
     def markfuzzy(self, present=True):
         if present:
-            self.target = u""
+            self.target = ""
 
     def settargetlang(self, newlang):
         self._dict['target-lang'] = newlang
@@ -262,7 +250,7 @@ class CatkeysFile(base.TranslationStore):
 
     def __init__(self, inputfile=None, **kwargs):
         """Construct a catkeys store, optionally reading in from inputfile."""
-        super(CatkeysFile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         self.header = CatkeysHeader()
         if inputfile is not None:

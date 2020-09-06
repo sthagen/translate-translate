@@ -1,11 +1,12 @@
+from io import BytesIO
+
 from translate.convert import test_convert, xliff2po
-from translate.misc import wStringIO
 from translate.storage import po, xliff
 from translate.storage.poheader import poheader
 from translate.storage.test_base import first_translatable, headerless_len
 
 
-class TestXLIFF2PO(object):
+class TestXLIFF2PO:
     target_filetype = po.pofile
     xliffskeleton = '''<?xml version="1.0" ?>
 <xliff version="1.1" xmlns="urn:oasis:names:tc:xliff:document:1.1">
@@ -18,7 +19,7 @@ class TestXLIFF2PO(object):
 
     def xliff2po(self, xliffsource):
         """helper that converts xliff source to po source without requiring files"""
-        inputfile = wStringIO.StringIO(xliffsource)
+        inputfile = BytesIO(xliffsource.encode())
         convertor = xliff2po.xliff2po()
         outputpo = convertor.convertstore(inputfile)
         print("The generated po:")
@@ -306,4 +307,4 @@ class TestXLIFF2POCommand(test_convert.TestConvertCommand, TestXLIFF2PO):
         self.run_command("simple.xlf", "simple.po", error="traceback", duplicates="merge")
         pofile = self.target_filetype(self.open_testfile("simple.po"))
         assert len(pofile.units) == 2
-        assert pofile.units[1].target == u"matlhapolosa"
+        assert pofile.units[1].target == "matlhapolosa"

@@ -21,14 +21,6 @@ file_discovery
    :inherited-members:
 
 
-lru
----
-
-.. automodule:: translate.misc.lru
-   :members:
-   :inherited-members:
-
-
 multistring
 -----------
 
@@ -75,13 +67,6 @@ wsgi
 .. automodule:: translate.misc.wsgi
    :members:
    :inherited-members:
-
-
-wStringIO
----------
-
-.. automodule:: translate.misc.wStringIO
-   :members:
 
 
 xml_helpers

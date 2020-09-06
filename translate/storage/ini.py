@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007,2009 Zuza Software Foundation
 #
@@ -30,14 +29,15 @@ b : a string
 """
 
 import re
-from io import StringIO, BytesIO
+from io import StringIO
+
+from translate.storage import base
+
 
 try:
     from iniparse import INIConfig
 except ImportError:
-    INIConfig = None
-
-from translate.storage import base
+    raise ImportError("Missing iniparse library.")
 
 
 dialects = {}
@@ -49,7 +49,7 @@ def register_dialect(dialect):
     return dialect
 
 
-class Dialect(object):
+class Dialect:
     """Base class for differentiating dialect options and functions"""
 
     name = None
@@ -84,7 +84,7 @@ class iniunit(base.TranslationUnit):
         self.location = ""
         if source:
             self.source = source
-        super(iniunit, self).__init__(source)
+        super().__init__(source)
 
     def addlocation(self, location):
         self.location = location
@@ -100,11 +100,8 @@ class inifile(base.TranslationStore):
 
     def __init__(self, inputfile=None, dialect="default", **kwargs):
         """construct an INI file, optionally reading in from inputfile."""
-        if INIConfig is None:
-            raise NotImplementedError("Missing iniparse library.")
-
         self._dialect = dialects.get(dialect, DialectDefault)()  # fail correctly/use getattr/
-        super(inifile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         self._inifile = None
         if inputfile is not None:

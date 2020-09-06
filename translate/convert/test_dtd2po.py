@@ -1,31 +1,31 @@
-# -*- coding: utf-8 -*-
+
+from io import BytesIO
 
 from pytest import mark
 
 from translate.convert import dtd2po, test_convert
-from translate.misc import wStringIO
 from translate.storage import dtd, po
 
 
-class TestDTD2PO(object):
+class TestDTD2PO:
 
     def dtd2po(self, dtdsource, dtdtemplate=None):
         """helper that converts dtd source to po source without requiring files"""
-        inputfile = wStringIO.StringIO(dtdsource)
+        inputfile = BytesIO(dtdsource.encode())
         inputdtd = dtd.dtdfile(inputfile)
         convertor = dtd2po.dtd2po()
         if dtdtemplate is None:
             outputpo = convertor.convertstore(inputdtd)
         else:
-            templatefile = wStringIO.StringIO(dtdtemplate)
+            templatefile = BytesIO(dtdtemplate.encode())
             templatedtd = dtd.dtdfile(templatefile)
             outputpo = convertor.mergestore(templatedtd, inputdtd)
         return outputpo
 
     def convertdtd(self, dtdsource):
         """call the convertdtd, return the outputfile"""
-        inputfile = wStringIO.StringIO(dtdsource)
-        outputfile = wStringIO.StringIO()
+        inputfile = BytesIO(dtdsource.encode())
+        outputfile = BytesIO()
         templatefile = None
         assert dtd2po.convertdtd(inputfile, outputfile, templatefile)
         return outputfile.getvalue()
@@ -63,7 +63,7 @@ class TestDTD2PO(object):
         """checks that the convertdtd function is working"""
         dtdsource = '<!ENTITY saveas.label "Save As...">\n'
         posource = self.convertdtd(dtdsource)
-        pofile = po.pofile(wStringIO.StringIO(posource))
+        pofile = po.pofile(BytesIO(posource))
         unit = self.singleelement(pofile)
         assert unit.source == "Save As..."
         assert unit.target == ""
@@ -95,8 +95,8 @@ class TestDTD2PO(object):
         """checks that two empty entitu definitions have correct context (bug 2190)."""
         dtdsource = '<!ENTITY community.exp.start "">\n<!ENTITY contribute.end "">\n'
         pofile = self.dtd2po(dtdsource)
-        assert pofile.units[-2].getcontext() == u"community.exp.start"
-        assert pofile.units[-1].getcontext() == u"contribute.end"
+        assert pofile.units[-2].getcontext() == "community.exp.start"
+        assert pofile.units[-1].getcontext() == "contribute.end"
 
     def test_emptyentity_translated(self):
         """checks that if we translate an empty entity it makes it into the PO, bug 101"""
@@ -303,9 +303,9 @@ Some other text
         pofile = self.dtd2po(dtdlanguage, dtdtemplate)
         print(pofile)
         assert pofile.units[3].source == "Manage Certificates..."
-        assert pofile.units[3].target == u"ﺇﺩﺍﺭﺓ ﺎﻠﺸﻫﺍﺩﺎﺗ..."
+        assert pofile.units[3].target == "ﺇﺩﺍﺭﺓ ﺎﻠﺸﻫﺍﺩﺎﺗ..."
         assert pofile.units[4].source == "M"
-        assert pofile.units[4].target == u"ﺩ"
+        assert pofile.units[4].target == "ﺩ"
 
     @mark.xfail(reason="Not Implemented")
     def test_accelerator_keys_not_in_sentence(self):

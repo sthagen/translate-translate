@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006-2009 Zuza Software Foundation
 #
@@ -24,10 +23,10 @@ import logging
 import pickle
 from io import BytesIO
 
-from translate.misc.deprecation import deprecated
 from translate.misc.multistring import multistring
 from translate.storage.placeables import StringElem, parse as rich_parse
 from translate.storage.workflow import StateEnum as states
+
 
 # Simple BOM based encoding detection
 ENCODING_BOMS = (
@@ -50,7 +49,7 @@ class ParseError(Exception):
         return repr(self.inner_exc)
 
 
-class TranslationUnit(object):
+class TranslationUnit:
     """Base class for translation units.
 
     Our concept of a *translation unit* is influenced heavily by `XLIFF
@@ -155,18 +154,18 @@ class TranslationUnit(object):
         >>> from translate.storage.placeables.interfaces import X
         >>> rich = [StringElem(['foo', X(id='xxx', sub=[' ']), 'bar'])]
         >>> TranslationUnit.rich_to_multistring(rich)
-        multistring(u'foo bar')
+        multistring('foo bar')
         """
         return multistring([str(elem) for elem in elem_list])
 
     def multistring_to_rich(self, mulstring):
         """Convert a multistring to a list of "rich" string trees:
 
-        >>> target = multistring([u'foo', u'bar', u'baz'])
+        >>> target = multistring(['foo', 'bar', 'baz'])
         >>> TranslationUnit.multistring_to_rich(target)
-        [<StringElem([<StringElem([u'foo'])>])>,
-         <StringElem([<StringElem([u'bar'])>])>,
-         <StringElem([<StringElem([u'baz'])>])>]
+        [<StringElem([<StringElem(['foo'])>])>,
+         <StringElem([<StringElem(['bar'])>])>,
+         <StringElem([<StringElem(['baz'])>])>]
         """
         if isinstance(mulstring, multistring):
             return [rich_parse(s, self.rich_parsers) for s in mulstring.strings]
@@ -182,11 +181,6 @@ class TranslationUnit(object):
         self._rich_source = None
         self._source = source
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def setsource(self, source):
-        self.source = source
-
     @property
     def target(self):
         return self._target
@@ -196,11 +190,6 @@ class TranslationUnit(object):
         """Set the target string to the given value."""
         self._rich_target = None
         self._target = target
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def settarget(self, target):
-        self.target = target
 
     @property
     def rich_source(self):
@@ -352,7 +341,7 @@ class TranslationUnit(object):
 
     def removenotes(self, origin=None):
         """Remove all the translator's notes."""
-        self.notes = u''
+        self.notes = ''
 
     def adderror(self, errorname, errortext):
         """Adds an error message to this unit.
@@ -504,7 +493,7 @@ class TranslationUnit(object):
         pass
 
 
-class TranslationStore(object):
+class TranslationStore:
     """Base class for stores for multiple translation units of type UnitClass.
     """
 
@@ -820,11 +809,11 @@ class TranslationStore(object):
             if encoding == self.encoding and suffix == 'sig':
                 encodings.append(detected_encoding['encoding'])
             elif detected_encoding['encoding'] != self.encoding:
-                logging.warn("trying to parse %s with encoding: %s but "
-                             "detected encoding is %s (confidence: %s)",
-                             self.filename, self.encoding,
-                             detected_encoding['encoding'],
-                             detected_encoding['confidence'])
+                logging.warning("trying to parse %s with encoding: %s but "
+                                "detected encoding is %s (confidence: %s)",
+                                self.filename, self.encoding,
+                                detected_encoding['encoding'],
+                                detected_encoding['confidence'])
             encodings.append(self.encoding)
         else:
             encodings.append(self.encoding)
@@ -898,3 +887,40 @@ class TranslationStore(object):
         :rtype: string
         """
         return "id"
+
+
+class DictUnit(TranslationUnit):
+    def getvalue(self):
+        """Returns dictionary for serialization."""
+        raise NotImplementedError()
+
+
+class DictStore(TranslationStore):
+    def serialize_merge(self, d1, d2):
+        for k in d2:
+            if k in d1:
+                if isinstance(d1[k], dict) and isinstance(d2[k], dict):
+                    self.serialize_merge(d1[k], d2[k])
+                elif isinstance(d1[k], list) and isinstance(d2[k], tuple):
+                    if isinstance(d2[k][1], dict):
+                        if len(d1[k]) > d2[k][0]:
+                            d1[k][d2[k][0]].update(d2[k][1])
+                        else:
+                            d1[k].append(d2[k][1])
+                    else:
+                        if len(d1[k]) > d2[k][0]:
+                            d1[k][d2[k][0]] = d2[k][1]
+                        else:
+                            d1[k].append(d2[k][1])
+                elif isinstance(d1[k], list) and isinstance(d2[k], list):
+                    d1[k].extend(d2[k])
+                else:
+                    d1[k] = d2[k]
+            elif isinstance(d2[k], tuple):
+                d1[k] = [d2[k][1]]
+            else:
+                d1[k] = d2[k]
+
+    def serialize_units(self, output):
+        for unit in self.unit_iter():
+            self.serialize_merge(output, unit.getvalue())

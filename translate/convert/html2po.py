@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2004-2006 Zuza Software Foundation
 #
@@ -27,7 +26,7 @@ for examples and usage instructions.
 from translate.storage import html, po
 
 
-class html2po(object):
+class html2po:
 
     def convertfile(self, inputfile, filename, includeuntagged=False,
                     duplicatestyle="msgctxt", keepcomments=False):

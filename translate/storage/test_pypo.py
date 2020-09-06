@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
+
+from io import BytesIO
 
 from pytest import raises
 
-from translate.misc import wStringIO
 from translate.misc.multistring import multistring
 from translate.storage import pypo, test_po
 
@@ -57,7 +57,7 @@ class TestHelpers():
 
         See :issue:`3140`
         """
-        assert pypo.quoteforpo('''You can get a copy of your Recovery Key by going to &syncBrand.shortName.label; Options on your other device, and selecting  "My Recovery Key" under "Manage Account".''') == [u'""', u'"You can get a copy of your Recovery Key by going to "', u'"&syncBrand.shortName.label; Options on your other device, and selecting  \\""', u'"My Recovery Key\\" under \\"Manage Account\\"."']
+        assert pypo.quoteforpo('''You can get a copy of an recovery key by going to "My Recovery Key" under "Manage Account".''') == ['""', '"You can get a copy of an recovery key by going to \\"My Recovery Key\\" under "', '"\\"Manage Account\\"."']
 
 
 class TestPYPOUnit(test_po.TestPOUnit):
@@ -81,11 +81,11 @@ class TestPYPOUnit(test_po.TestPOUnit):
         assert unit.target.strings == ["Koei", "Koeie"]
         assert unit.target == "Koei"
 
-        unit.target = [u"Sk\u00ear", u"Sk\u00eare"]
+        unit.target = ["Sk\u00ear", "Sk\u00eare"]
         assert isinstance(unit.target, multistring)
-        assert unit.target.strings == [u"Sk\u00ear", u"Sk\u00eare"]
-        assert unit.target.strings == [u"Sk\u00ear", u"Sk\u00eare"]
-        assert unit.target == u"Sk\u00ear"
+        assert unit.target.strings == ["Sk\u00ear", "Sk\u00eare"]
+        assert unit.target.strings == ["Sk\u00ear", "Sk\u00eare"]
+        assert unit.target == "Sk\u00ear"
 
     def test_plural_reduction(self):
         """checks that reducing the number of plurals supplied works"""
@@ -231,8 +231,8 @@ class TestPYPOFile(test_po.TestPOFile):
 
     def test_output_str_unicode(self):
         """checks that we can str(element) which is in unicode"""
-        posource = u'''#: nb\nmsgid "Norwegian Bokm\xe5l"\nmsgstr ""\n'''
-        pofile = self.StoreClass(wStringIO.StringIO(posource.encode("UTF-8")), encoding="UTF-8")
+        posource = '''#: nb\nmsgid "Norwegian Bokm\xe5l"\nmsgstr ""\n'''
+        pofile = self.StoreClass(BytesIO(posource.encode("UTF-8")), encoding="UTF-8")
         assert len(pofile.units) == 1
         print(bytes(pofile))
         thepo = pofile.units[0]
@@ -350,16 +350,16 @@ msgstr[1] "toetse"
         pofile = self.poparse(posource)
 
         assert pofile.units[1].prev_msgctxt == []
-        assert pofile.units[1].prev_source == multistring([u"trea"])
+        assert pofile.units[1].prev_source == multistring(["trea"])
 
         assert pofile.units[2].prev_msgctxt == []
-        assert pofile.units[2].prev_source == multistring([u"trea", u"treas"])
+        assert pofile.units[2].prev_source == multistring(["trea", "treas"])
 
-        assert pofile.units[3].prev_msgctxt == [u'"context 1"']
-        assert pofile.units[3].prev_source == multistring([u"tast"])
+        assert pofile.units[3].prev_msgctxt == ['"context 1"']
+        assert pofile.units[3].prev_source == multistring(["tast"])
 
-        assert pofile.units[4].prev_msgctxt == [u'"context 2"']
-        assert pofile.units[4].prev_source == multistring([u"tast", u"tasts"])
+        assert pofile.units[4].prev_msgctxt == ['"context 2"']
+        assert pofile.units[4].prev_source == multistring(["tast", "tasts"])
 
         assert bytes(pofile).decode('utf-8') == posource
 
@@ -518,7 +518,7 @@ msgstr ""
 EXTRA
 '''
         with raises(ValueError):
-            pofile = self.poparse(posource)
+            self.poparse(posource)
 
     def test_invalid(self):
         """checks that empty file raises error"""
@@ -527,4 +527,4 @@ EXTRA
 This is just a random text file.
 '''
         with raises(ValueError):
-            pofile = self.poparse(posource)
+            self.poparse(posource)

@@ -1,17 +1,14 @@
-# -*- coding: utf-8 -*-
-
-from pytest import mark
+from io import BytesIO
 
 from translate.convert import po2prop, test_convert
-from translate.misc import wStringIO
 from translate.storage import po
 
 
-class TestPO2Prop(object):
+class TestPO2Prop:
 
     def po2prop(self, posource):
         """helper that converts po source to .properties source without requiring files"""
-        inputfile = wStringIO.StringIO(posource)
+        inputfile = BytesIO(posource.encode())
         inputpo = po.pofile(inputfile)
         convertor = po2prop.po2prop()
         outputprop = convertor.convertstore(inputpo)
@@ -19,9 +16,9 @@ class TestPO2Prop(object):
 
     def merge2prop(self, propsource, posource, personality="java", remove_untranslated=False, encoding='utf-8'):
         """helper that merges po translations to .properties source without requiring files"""
-        inputfile = wStringIO.StringIO(posource)
+        inputfile = BytesIO(posource.encode())
         inputpo = po.pofile(inputfile)
-        templatefile = wStringIO.StringIO(propsource)
+        templatefile = BytesIO(propsource.encode() if isinstance(propsource, str) else propsource)
         #templateprop = properties.propfile(templatefile)
         convertor = po2prop.reprop(templatefile, inputpo, personality=personality, remove_untranslated=remove_untranslated)
         outputprop = convertor.convertstore()
@@ -73,7 +70,6 @@ class TestPO2Prop(object):
         print(propfile)
         assert propfile == propexpected
 
-    @mark.xfail(reason="This doesn't work as expected right now")
     def test_no_separator(self):
         """check that we can handle keys without separator"""
         posource = '''#: KEY\nmsgctxt "KEY"\nmsgid ""\nmsgstr ""\n'''
@@ -148,7 +144,7 @@ prop.accesskey=V
 
     def test_mozilla_margin_whitespace(self):
         """Check handling of Mozilla leading and trailing spaces"""
-        posource = u'''#: sepAnd
+        posource = '''#: sepAnd
 msgid " and "
 msgstr " و "
 
@@ -159,7 +155,7 @@ msgstr "، "
         proptemplate = r'''sepAnd = \u0020and\u0020
 sepComma = ,\u20
 '''
-        propexpected = u'''sepAnd = \\u0020و\\u0020
+        propexpected = '''sepAnd = \\u0020و\\u0020
 sepComma = ،\\u0020
 '''
         propfile = self.merge2prop(proptemplate, posource, personality="mozilla")
@@ -169,7 +165,7 @@ sepComma = ،\\u0020
     def test_mozilla_all_whitespace(self):
         """Check for all white-space Mozilla hack, remove when the
         corresponding code is removed."""
-        posource = u'''#: accesskey-accept
+        posource = '''#: accesskey-accept
 msgctxt "accesskey-accept"
 msgid ""
 msgstr " "
@@ -181,7 +177,7 @@ msgstr "م"
         proptemplate = '''accesskey-accept=
 accesskey-help=H
 '''
-        propexpected = u'''accesskey-accept=
+        propexpected = '''accesskey-accept=
 accesskey-help=م
 '''
         propfile = self.merge2prop(proptemplate, posource, personality="mozilla")
@@ -223,23 +219,23 @@ msgstr "translated"
 
     def test_personalities(self):
         """test that we output correctly for Java and Mozilla style property files.  Mozilla uses Unicode, while Java uses escaped Unicode"""
-        posource = u'''#: prop\nmsgid "value"\nmsgstr "ṽḁḽṻḝ"\n'''
-        proptemplate = u'''prop  =  value\n'''
-        propexpectedjava = u'''prop  =  \\u1E7D\\u1E01\\u1E3D\\u1E7B\\u1E1D\n'''
+        posource = '''#: prop\nmsgid "value"\nmsgstr "ṽḁḽṻḝ"\n'''
+        proptemplate = '''prop  =  value\n'''
+        propexpectedjava = '''prop  =  \\u1E7D\\u1E01\\u1E3D\\u1E7B\\u1E1D\n'''
         propfile = self.merge2prop(proptemplate, posource)
         assert propfile == propexpectedjava
 
-        propexpectedmozilla = u'''prop  =  ṽḁḽṻḝ\n'''
+        propexpectedmozilla = '''prop  =  ṽḁḽṻḝ\n'''
         propfile = self.merge2prop(proptemplate, posource, personality="mozilla")
         assert propfile == propexpectedmozilla
 
-        proptemplate = u'''prop  =  value\n'''.encode('utf-16')
-        propexpectedskype = u'''prop  =  ṽḁḽṻḝ\n'''
+        proptemplate = '''prop  =  value\n'''.encode('utf-16')
+        propexpectedskype = '''prop  =  ṽḁḽṻḝ\n'''
         propfile = self.merge2prop(proptemplate, posource, personality="skype", encoding='utf-16')
         assert propfile == propexpectedskype
 
-        proptemplate = u'''"prop" = "value";\n'''.encode('utf-16')
-        propexpectedstrings = u'''"prop" = "ṽḁḽṻḝ";\n'''
+        proptemplate = '''"prop" = "value";\n'''.encode('utf-16')
+        propexpectedstrings = '''"prop" = "ṽḁḽṻḝ";\n'''
         propfile = self.merge2prop(proptemplate, posource, personality="strings", encoding='utf-16')
         assert propfile == propexpectedstrings
 
@@ -460,6 +456,38 @@ key1=Waarde
 key2=Waarde
 '''
         propfile = self.merge2prop(proptemplate, posource, personality="mozilla")
+        assert propfile == propexpected
+
+    def test_gwt_plurals(self):
+        """Test back conversion of gwt plural units."""
+        proptemplate = '''
+message-multiedit-header={0,number} selected
+message-multiedit-header[none]=Edit
+message-multiedit-header[one]={0,number} selected
+message-multiedit-header[two]={0,number} selected
+message-multiedit-header[few]={0,number} selected
+message-multiedit-header[many]={0,number} selected
+'''
+        posource = r'''#: message-multiedit-header
+msgctxt "message-multiedit-header"
+msgid "Edit"
+msgid_plural "{0,number} selected"
+msgstr[0] "Redigeer"
+msgstr[1] "{0,number} gekies"
+msgstr[2] "{0,number} gekies"
+msgstr[3] "{0,number} gekies"
+msgstr[4] "{0,number} gekies"
+msgstr[5] "{0,number} gekies"
+'''
+        propexpected = '''
+message-multiedit-header={0,number} gekies
+message-multiedit-header[none]=Redigeer
+message-multiedit-header[one]={0,number} gekies
+message-multiedit-header[two]={0,number} gekies
+message-multiedit-header[few]={0,number} gekies
+message-multiedit-header[many]={0,number} gekies
+'''
+        propfile = self.merge2prop(proptemplate, posource, personality="gwt")
         assert propfile == propexpected
 
 

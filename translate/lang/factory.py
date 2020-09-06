@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007-2010 Zuza Software Foundation
 #
@@ -19,8 +18,9 @@
 
 """This module provides a factory to instantiate language classes."""
 
-
 import pkgutil
+from functools import lru_cache
+from importlib import import_module
 
 from translate.lang import common, data
 
@@ -28,6 +28,7 @@ from translate.lang import common, data
 prefix = "code_"
 
 
+@lru_cache(maxsize=128)
 def getlanguage(code):
     """This returns a language class.
 
@@ -42,11 +43,10 @@ def getlanguage(code):
             internal_code = prefix + code
         else:
             internal_code = code
-        module = __import__("translate.lang.%s" % internal_code, globals(), {},
-                            internal_code)
+        module = import_module("translate.lang.%s" % internal_code)
         langclass = getattr(module, internal_code)
         return langclass(code)
-    except ImportError as e:
+    except ImportError:
         simplercode = data.simplercode(code)
         if simplercode:
             relatedlanguage = getlanguage(simplercode)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2005-2011 Zuza Software Foundation
 #
@@ -24,9 +23,9 @@ The official recommendation is to use the extention .xlf for XLIFF files.
 
 from lxml import etree
 
-from translate.misc.deprecation import deprecated
 from translate.misc.multistring import multistring
-from translate.misc.xml_helpers import getXMLspace, setXMLlang, setXMLspace, reindent
+from translate.misc.xml_helpers import (getXMLspace, reindent, setXMLlang,
+                                        setXMLspace)
 from translate.storage import base, lisa
 from translate.storage.placeables.lisa import strelem_to_xml, xml_to_strelem
 from translate.storage.workflow import StateEnum as state
@@ -34,13 +33,13 @@ from translate.storage.workflow import StateEnum as state
 
 # TODO: handle translation types
 
-ID_SEPARATOR = u"\04"
+ID_SEPARATOR = "\04"
 # ID_SEPARATOR is commonly used through toolkit to generate compound
 # unit ids (for instance to concatenate msgctxt and msgid in po), but
 # \04 is an illegal char in XML 1.0, ID_SEPARATOR_SAFE will be used
 # instead when converting between xliff and other toolkit supported
 # formats
-ID_SEPARATOR_SAFE = u"__%04__"
+ID_SEPARATOR_SAFE = "__%04__"
 
 
 # List of ASCII control codes which are unaccepted in XML.
@@ -79,7 +78,7 @@ ASCII_CONTROL_CODES = [
 ASCII_CONTROL_CHARACTERS = {code: chr(int(code, 16))
                             for code in ASCII_CONTROL_CODES}
 
-ASCII_CONTROL_CHARACTERS_ESCAPES = {code: u'&#x%s;' % code.lstrip('0') or '0'
+ASCII_CONTROL_CHARACTERS_ESCAPES = {code: '&#x%s;' % code.lstrip('0') or '0'
                                     for code in ASCII_CONTROL_CODES}
 
 
@@ -126,15 +125,14 @@ class xliffunit(lisa.LISAunit):
 
     def __init__(self, source, empty=False, **kwargs):
         """Override the constructor to set xml:space="preserve"."""
-        super(xliffunit, self).__init__(source, empty, **kwargs)
+        super().__init__(source, empty, **kwargs)
         if empty:
             return
         setXMLspace(self.xmlelement, "preserve")
 
     def getNodeText(self, languageNode, xml_space="preserve"):
         """Retrieves the term from the given :attr:`languageNode`."""
-        text = super(xliffunit, self).getNodeText(languageNode,
-                                                  xml_space=xml_space)
+        text = super().getNodeText(languageNode, xml_space=xml_space)
         if text is not None:
             # Unescape the unaccepted ASCII control characters.
             for code, character in ASCII_CONTROL_CHARACTERS.items():
@@ -158,7 +156,7 @@ class xliffunit(lisa.LISAunit):
         for code in ASCII_CONTROL_CODES:
             text = text.replace(
                 chr(int(code, 16)),
-                u'&#x%s;' % code.lstrip('0') or '0')
+                '&#x%s;' % code.lstrip('0') or '0')
 
         langset.text = text
         return langset
@@ -182,7 +180,7 @@ class xliffunit(lisa.LISAunit):
     def set_rich_source(self, value, sourcelang='en'):
         sourcelanguageNode = self.get_source_dom()
         if sourcelanguageNode is None:
-            sourcelanguageNode = self.createlanguageNode(sourcelang, u'', "source")
+            sourcelanguageNode = self.createlanguageNode(sourcelang, '', "source")
             self.set_source_dom(sourcelanguageNode)
 
         # Clear sourcelanguageNode first
@@ -208,20 +206,15 @@ class xliffunit(lisa.LISAunit):
     def rich_source(self, value):
         self.set_rich_source(value)
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `rich_source` property instead")
-    def get_rich_source(self):
-        return self.rich_source
-
     def set_rich_target(self, value, lang='xx', append=False):
         self._rich_target = None
         if value is None:
-            self.set_target_dom(self.createlanguageNode(lang, u'', "target"))
+            self.set_target_dom(self.createlanguageNode(lang, '', "target"))
             return
 
         languageNode = self.get_target_dom()
         if languageNode is None:
-            languageNode = self.createlanguageNode(lang, u'', "target")
+            languageNode = self.createlanguageNode(lang, '', "target")
             self.set_target_dom(languageNode, append)
 
         # Clear languageNode first
@@ -468,7 +461,7 @@ class xliffunit(lisa.LISAunit):
 
     def settarget(self, target, lang='xx', append=False):
         """Sets the target string to the given value."""
-        super(xliffunit, self).settarget(target, lang, append)
+        super().settarget(target, lang, append)
         if target:
             self.marktranslated()
 
@@ -495,7 +488,7 @@ class xliffunit(lisa.LISAunit):
         self.xmlelement.set("id", id.replace(ID_SEPARATOR, ID_SEPARATOR_SAFE))
 
     def getid(self):
-        uid = u""
+        uid = ""
         try:
             filename = next(self.xmlelement.iterancestors(self.namespaced('file'))).get('original')
             if filename:
@@ -504,14 +497,14 @@ class xliffunit(lisa.LISAunit):
             # unit has no proper file ancestor, probably newly created
             pass
         # hide the fact that we sanitize ID_SEPERATOR
-        uid += str(self.xmlelement.get("id") or u"").replace(ID_SEPARATOR_SAFE, ID_SEPARATOR)
+        uid += str(self.xmlelement.get("id") or "").replace(ID_SEPARATOR_SAFE, ID_SEPARATOR)
         return uid
 
     def addlocation(self, location):
         self.setid(location)
 
     def getlocations(self):
-        id_attr = str(self.xmlelement.get("id") or u"")
+        id_attr = str(self.xmlelement.get("id") or "")
         # XLIFF files downloaded from PO projects in Pootle
         # might have id equal to .source, so let's avoid
         # that:
@@ -562,7 +555,7 @@ class xliffunit(lisa.LISAunit):
 
     def merge(self, otherunit, overwrite=False, comments=True, authoritative=False):
         # TODO: consider other attributes like "approved"
-        super(xliffunit, self).merge(otherunit, overwrite, comments)
+        super().merge(otherunit, overwrite, comments)
         if self.target:
             self.marktranslated()
             if otherunit.isfuzzy():
@@ -630,7 +623,7 @@ class xlifffile(lisa.LISAfile):
 
     def __init__(self, *args, **kwargs):
         self._filename = None
-        lisa.LISAfile.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._messagenum = 0
 
     def initbody(self):
@@ -679,7 +672,7 @@ class xlifffile(lisa.LISAfile):
         if targetlanguage:
             filenode.set("target-language", targetlanguage)
         filenode.set("datatype", datatype)
-        bodyNode = etree.SubElement(filenode, self.namespaced(self.bodyNode))
+        etree.SubElement(filenode, self.namespaced(self.bodyNode))
         return filenode
 
     def getfilename(self, filenode):
@@ -712,7 +705,7 @@ class xlifffile(lisa.LISAfile):
 
     def getids(self, filename=None):
         if not filename:
-            return super(xlifffile, self).getids()
+            return super().getids()
 
         self.id_index = {}
         prefix = filename + ID_SEPARATOR
@@ -819,7 +812,7 @@ class xlifffile(lisa.LISAfile):
             filename, unitid = parts[0], "\x04".join(parts[1:])
             self.switchfile(filename, createifmissing=True)
             unit.setid(unitid)
-        super(xlifffile, self).addunit(unit, new=new)
+        super().addunit(unit, new=new)
 
     def addsourceunit(self, source, filename="NoName", createifmissing=False):
         """adds the given trans-unit to the last used body node if the filename
@@ -829,7 +822,7 @@ class xlifffile(lisa.LISAfile):
         if self._filename != filename:
             if not self.switchfile(filename, createifmissing):
                 return None
-        unit = super(xlifffile, self).addsourceunit(source)
+        unit = super().addsourceunit(source)
         self._messagenum += 1
         unit.setid("%d" % self._messagenum)
         return unit
@@ -872,12 +865,12 @@ class xlifffile(lisa.LISAfile):
     def serialize(self, out):
         self.removedefaultfile()
         reindent(self.document.getroot(), indent="  ", max_level=4)
-        super(xlifffile, self).serialize(out)
+        super().serialize(out)
 
     @classmethod
     def parsestring(cls, storestring):
         """Parses the string to return the correct file object"""
-        xliff = super(xlifffile, cls).parsestring(storestring)
+        xliff = super().parsestring(storestring)
         if xliff.units:
             header = xliff.units[0]
             if (("gettext-domain-header" in (header.getrestype() or "") or

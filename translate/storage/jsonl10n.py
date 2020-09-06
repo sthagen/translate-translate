@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007,2009-2011 Zuza Software Foundation
 #
@@ -71,19 +70,20 @@ import json
 import uuid
 from collections import OrderedDict
 
-
-from translate.misc.deprecation import deprecated
+from translate.lang.data import cldr_plural_categories, plural_tags
 from translate.misc.multistring import multistring
 from translate.storage import base
 
 
-class JsonUnit(base.TranslationUnit):
+class JsonUnit(base.DictUnit):
     """A JSON entry"""
+
+    ID_FORMAT = ".{}"
 
     def __init__(self, source=None, item=None, notes=None, placeholders=None, **kwargs):
         identifier = str(uuid.uuid4())
         # Global identifier across file
-        self._id = '.' + identifier
+        self._id = self.ID_FORMAT.format(identifier)
         # Identifier at this level
         self._item = identifier if item is None else item
         # Type conversion for the unit
@@ -96,7 +96,7 @@ class JsonUnit(base.TranslationUnit):
                 self.target = source
             else:
                 self.target = str(source)
-        super(JsonUnit, self).__init__(source)
+        super().__init__(source)
 
     @property
     def source(self):
@@ -105,11 +105,6 @@ class JsonUnit(base.TranslationUnit):
     @source.setter
     def source(self, source):
         self.target = source
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
 
     def setid(self, value):
         self._id = value
@@ -138,17 +133,17 @@ class JsonUnit(base.TranslationUnit):
         return {self.getkey(): self.converttarget()}
 
 
-class JsonFile(base.TranslationStore):
+class JsonFile(base.DictStore):
     """A JSON file"""
 
     UnitClass = JsonUnit
 
     def __init__(self, inputfile=None, filter=None, **kwargs):
         """construct a JSON file, optionally reading in from inputfile."""
-        super(JsonFile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._filter = filter
         self.filename = ''
-        self._file = u''
+        self._file = ''
         self.dump_args = {
             'separators': (',', ': '),
             'indent': 4,
@@ -158,20 +153,8 @@ class JsonFile(base.TranslationStore):
             self.parse(inputfile)
 
     def serialize(self, out):
-        def merge(d1, d2):
-            for k in d2:
-                if k in d1:
-                    if isinstance(d1[k], dict) and isinstance(d2[k], dict):
-                        merge(d1[k], d2[k])
-                    elif isinstance(d1[k], list) and isinstance(d2[k], list):
-                        d1[k].extend(d2[k])
-                    else:
-                        d1[k] = d2[k]
-                else:
-                    d1[k] = d2[k]
         units = OrderedDict()
-        for unit in self.unit_iter():
-            merge(units, unit.getvalue())
+        self.serialize_units(units)
         out.write(json.dumps(units, **self.dump_args).encode(self.encoding))
         out.write(b'\n')
 
@@ -235,8 +218,8 @@ class JsonNestedUnit(JsonUnit):
         ret = self.converttarget()
         for k in reversed(self.getkey()):
             if '[' in k and k[-1] == ']':
-                k = k.split('[')[0]
-                ret = [ret]
+                k, pos = k[:-1].split('[')
+                ret = (int(pos), ret)
             ret = OrderedDict({k: ret})
         return ret
 
@@ -322,7 +305,7 @@ class I18NextUnit(JsonNestedUnit):
 
     def getvalue(self):
         if not isinstance(self.target, multistring):
-            return super(I18NextUnit, self).getvalue()
+            return super().getvalue()
 
         ret = OrderedDict()
         for i, value in enumerate(self.target.strings):
@@ -383,8 +366,135 @@ class I18NextFile(JsonNestedFile):
                 for x in self._extract_units(v, stop, "%s.%s" % (prev, k), k, None, data):
                     yield x
         else:
-            parent = super(I18NextFile, self)._extract_units(
+            parent = super()._extract_units(
                 data, stop, prev, name_node, name_last_node, last_node
             )
             for x in parent:
                 yield x
+
+
+class GoI18NJsonUnit(JsonUnit):
+    ID_FORMAT = "{}"
+
+    def getvalue(self):
+        target = self.target
+        if isinstance(target, multistring):
+            strings = list(target.strings)
+            if len(self._store.plural_tags) > len(target.strings):
+                strings += [""] * (len(self._store.plural_tags) - len(target.strings))
+            target = OrderedDict([
+                (plural, strings[offset]) for offset, plural in enumerate(self._store.plural_tags)
+            ])
+        value = OrderedDict((
+            ('id', self.getid()),
+        ))
+        if self.notes:
+            value['description'] = self.notes
+        value['translation'] = target
+        return value
+
+
+class GoI18NJsonFile(JsonFile):
+    """go-i18n JSON file
+
+    See following URLs for doc:
+
+    https://github.com/nicksnyder/go-i18n
+    https://godoc.org/github.com/nicksnyder/go-i18n/v2
+    """
+
+    UnitClass = GoI18NJsonUnit
+
+    @property
+    def plural_tags(self):
+        locale = self.gettargetlanguage()
+        if locale:
+            locale = locale.replace('_', '-').split('-')[0]
+        else:
+            locale = "en"
+        return plural_tags.get(locale, plural_tags['en'])
+
+    def _extract_units(self, data, stop=None, prev="", name_node=None, name_last_node=None, last_node=None):
+        for value in data:
+            translation = value.get('translation', '')
+            if isinstance(translation, dict):
+                # Ordered list of plurals
+                translation = multistring(
+                    [translation.get(key) for key in cldr_plural_categories if key in translation]
+                )
+            unit = self.UnitClass(
+                translation,
+                value.get('id', ''),
+                value.get('description', ''),
+            )
+            unit.setid(value.get('id', ''))
+            yield unit
+
+    def serialize(self, out):
+        units = [unit.getvalue() for unit in self.units]
+        out.write(json.dumps(units, **self.dump_args).encode(self.encoding))
+        out.write(b'\n')
+
+
+class ARBJsonUnit(JsonUnit):
+    ID_FORMAT = "{}"
+
+    def __init__(self, source=None, item=None, notes=None, placeholders=None, metadata=None, **kwargs):
+        super().__init__(source, item, notes, placeholders, **kwargs)
+        self.metadata = metadata or {}
+
+    def getvalue(self):
+        if self.notes:
+            self.metadata['description'] = self.notes
+        identifier = self.getid()
+        if identifier == "@":
+            return self.metadata
+        return OrderedDict((
+            (identifier, self.target),
+            ('@{}'.format(identifier), self.metadata),
+        ))
+
+    def isheader(self):
+        return self._id == "@"
+
+
+class ARBJsonFile(JsonFile):
+    """ARB JSON file
+
+    See following URLs for doc:
+
+    https://github.com/google/app-resource-bundle/wiki/ApplicationResourceBundleSpecification
+    https://flutter.dev/docs/development/accessibility-and-localization/internationalization#appendix-using-the-dart-intl-tools
+    """
+
+    UnitClass = ARBJsonUnit
+
+    def __init__(self, inputfile=None, filter=None, **kwargs):
+        super().__init__(inputfile, filter, **kwargs)
+        self.dump_args = {
+            'separators': (',', ': '),
+            'indent': 2,
+            'ensure_ascii': False,
+        }
+
+    def _extract_units(self, data, stop=None, prev="", name_node=None, name_last_node=None, last_node=None):
+        # Extract metadata as header
+        metadata = OrderedDict([(key, value) for key, value in data.items() if key.startswith("@@")])
+        if metadata:
+            unit = self.UnitClass(metadata=metadata)
+            unit.setid("@")
+            yield unit
+
+        for item, value in data.items():
+            if item.startswith("@"):
+                continue
+            metadata = data.get("@{}".format(item), {})
+            unit = self.UnitClass(
+                value,
+                item,
+                metadata.get('description', ''),
+                metadata.get('placeholders', None),
+                metadata=metadata,
+            )
+            unit.setid(item)
+            yield unit

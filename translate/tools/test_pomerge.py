@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 
+from io import BytesIO
 
 import pytest
 from pytest import mark
 
-from translate.misc import wStringIO
 from translate.storage import po, xliff
 from translate.tools import pomerge
 
@@ -36,9 +35,9 @@ class TestPOMerge:
                    mergecomments="yes"):
         """merges the sources of the given files and returns a new pofile
         object"""
-        templatefile = wStringIO.StringIO(templatesource)
-        inputfile = wStringIO.StringIO(inputsource)
-        outputfile = wStringIO.StringIO()
+        templatefile = BytesIO(templatesource.encode())
+        inputfile = BytesIO(inputsource.encode())
+        outputfile = BytesIO()
         assert pomerge.mergestore(inputfile, outputfile, templatefile,
                                   mergeblanks=mergeblanks,
                                   mergefuzzy=mergefuzzy,
@@ -52,9 +51,9 @@ class TestPOMerge:
                    mergecomments="yes"):
         """merges the sources of the given files and returns a new xlifffile
         object"""
-        templatefile = wStringIO.StringIO(templatesource)
-        inputfile = wStringIO.StringIO(inputsource)
-        outputfile = wStringIO.StringIO()
+        templatefile = BytesIO(templatesource.encode())
+        inputfile = BytesIO(inputsource.encode())
+        outputfile = BytesIO()
         assert pomerge.mergestore(inputfile, outputfile, templatefile,
                                   mergeblanks=mergeblanks,
                                   mergefuzzy=mergefuzzy,
@@ -80,9 +79,9 @@ class TestPOMerge:
 
     def test_mergesore_bad_data(self):
         """Test that we catch bad options sent to mergestore"""
-        templatefile = wStringIO.StringIO("")
-        inputfile = wStringIO.StringIO("")
-        outputfile = wStringIO.StringIO()
+        templatefile = BytesIO(b"")
+        inputfile = BytesIO(b"")
+        outputfile = BytesIO()
         with pytest.raises(ValueError):
             pomerge.mergestore(inputfile, outputfile, templatefile, mergeblanks="yay")
         with pytest.raises(ValueError):
@@ -198,7 +197,7 @@ msgstr "Dimpled Ring"
         newpo = '''#: newMenu.label newMenu.accesskey\nmsgid "&New"\nmsgstr "&Nuwe"\n'''
         expectedpo = '''#: newMenu.label%snewMenu.accesskey\nmsgid "&New"\nmsgstr "&Nuwe"\n''' % po.lsep
         pofile = self.mergestore(templatepo, newpo)
-        pounit = self.singleunit(pofile)
+        self.singleunit(pofile)
         print(pofile)
         assert bytes(pofile).decode('utf-8') == expectedpo
 
@@ -214,7 +213,7 @@ msgstr "blabla"
         newpo = templatepo
         expectedpo = templatepo
         pofile = self.mergestore(templatepo, newpo)
-        pounit = self.singleunit(pofile)
+        self.singleunit(pofile)
         print(pofile)
         assert bytes(pofile).decode('utf-8') == expectedpo
 

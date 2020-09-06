@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008-2009 Zuza Software Foundation
 #
@@ -25,7 +24,10 @@ for examples and usage instructions.
 
 from translate.storage import factory
 from translate.storage.pypo import unescape
-from translate.storage.symbian import *
+from translate.storage.symbian import (ParseState, eat_whitespace,
+                                       header_item_or_end_re, header_item_re,
+                                       identity, read_charset, read_while,
+                                       skip_no_translate, string_entry_re)
 
 
 def read_header_items(ps):

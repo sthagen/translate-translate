@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Zuza Software Foundation
 #
@@ -63,7 +62,7 @@ class RunProcessError(CalledProcessError):
     def __init__(self, message=None, **kwargs):
         """Use and strip string message='' from kwargs"""
         self._message = message or self._default_message
-        super(RunProcessError, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __str__(self):
         """Format exception message string (avoiding TypeErrors)"""

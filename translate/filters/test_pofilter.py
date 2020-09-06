@@ -1,19 +1,19 @@
-# -*- coding: utf-8 -*-
+
+from io import BytesIO
 
 from translate.filters import checks, pofilter
-from translate.misc import wStringIO
 from translate.storage import factory, xliff
 from translate.storage.test_base import first_translatable, headerless_len
 
 
-class BaseTestFilter(object):
+class BaseTestFilter:
     """Base class for filter tests."""
 
     filename = ""
 
     def parse_text(self, filetext):
         """helper that parses xliff file content without requiring files"""
-        dummyfile = wStringIO.StringIO(filetext)
+        dummyfile = BytesIO(filetext.encode())
         dummyfile.name = self.filename
         store = factory.getobject(dummyfile)
         return store
@@ -28,7 +28,8 @@ class BaseTestFilter(object):
                                                             cmdlineoptions)
         checkerclasses = [checks.StandardChecker, checks.StandardUnitChecker]
         if checkerconfig is None:
-            checkerconfig = pofilter.build_checkerconfig(options)
+            parser = pofilter.FilterOptionParser({})
+            checkerconfig = parser.build_checkerconfig(options)
         checkfilter = pofilter.pocheckfilter(options, checkerclasses,
                                              checkerconfig)
         tofile = checkfilter.filterfile(translationstore)
@@ -160,7 +161,7 @@ class BaseTestFilter(object):
     def test_notes(self):
         """tests the optional adding of notes"""
         # let's make sure we trigger the 'long' and/or 'doubleword' test
-        self.unit.target = u"asdf asdf asdf asdf asdf asdf asdf"
+        self.unit.target = "asdf asdf asdf asdf asdf asdf asdf"
         filter_result = self.filter(self.translationstore)
         assert headerless_len(filter_result.units) == 1
         assert first_translatable(filter_result).geterrors()
@@ -179,8 +180,8 @@ class BaseTestFilter(object):
     def test_unicode(self):
         """tests that we can handle UTF-8 encoded characters when there is no
         known header specified encoding"""
-        self.unit.source = u'Bézier curve'
-        self.unit.target = u'Bézier-kurwe'
+        self.unit.source = 'Bézier curve'
+        self.unit.target = 'Bézier-kurwe'
         filter_result = self.filter(self.translationstore)
         assert headerless_len(filter_result.units) == 0
 

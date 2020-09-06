@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007-2008 Zuza Software Foundation
 #
@@ -69,7 +68,7 @@ from translate.lang import data
 logger = logging.getLogger(__name__)
 
 
-class Common(object):
+class Common:
     """This class is the common parent class for all language classes."""
 
     code = ""

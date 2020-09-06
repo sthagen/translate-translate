@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2009-2010 Zuza Software Foundation
 #
@@ -27,7 +26,7 @@ for examples and usage instructions.
 from translate.storage import po
 
 
-class web2py2po(object):
+class web2py2po:
 
     def __init__(self, pofile=None, duplicatestyle="msgctxt"):
         self.mypofile = pofile
@@ -49,7 +48,7 @@ class web2py2po(object):
             target_str = mydict[source_str]
             if target_str == source_str.replace('@markmin\x01', ''):
                 # a convention with new (untranslated) web2py files
-                target_str = u''
+                target_str = ''
             pounit = self.convertunit(source_str, target_str)
             self.mypofile.addunit(pounit)
 

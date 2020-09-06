@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Zuza Software Foundation
 #
@@ -20,7 +19,7 @@
 
 import os
 import shutil
-from ConfigParser import ConfigParser, NoSectionError
+from configparser import ConfigParser, NoSectionError
 
 
 srccheckout = "mozilla"

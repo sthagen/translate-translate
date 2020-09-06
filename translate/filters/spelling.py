@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007 Zuza Software Foundation
 # 2013 F Wolff
@@ -21,6 +20,7 @@
 """An API to provide spell checking for use in checks or elsewhere."""
 
 import logging
+from functools import lru_cache
 
 
 logger = logging.getLogger(__name__)
@@ -38,10 +38,10 @@ try:
             try:
                 checkers[lang] = checker.SpellChecker(lang)
                 # some versions only report an error when checking something
-                checkers[lang].check(u'bla')
+                checkers[lang].check('bla')
             except EnchantError as e:
                 # sometimes this is raised instead of DictNotFoundError
-                logger.error(str(e))
+                logger.error('Dictionary not found: %s', e)
                 checkers[lang] = None
 
         return checkers[lang]
@@ -54,13 +54,13 @@ try:
         for err in spellchecker:
             yield err.word, err.wordpos, err.suggest()
 
+    @lru_cache(maxsize=1024)
     def simple_check(text, lang):
         spellchecker = _get_checker(lang)
         if not spellchecker:
-            return
+            return []
         spellchecker.set_text(str(text))
-        for err in spellchecker:
-            yield err.word
+        return [err.word for err in spellchecker]
 
 
 except ImportError:

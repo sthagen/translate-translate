@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 
 import warnings
+from io import BytesIO
 
-from translate.misc import wStringIO
 from translate.storage import oo
 
 
@@ -37,7 +36,7 @@ class TestOO:
 
     def ooparse(self, oosource):
         """helper that parses oo source without requiring files"""
-        dummyfile = wStringIO.StringIO(oosource)
+        dummyfile = BytesIO(oosource.encode())
         oofile = oo.oofile(dummyfile)
         return oofile
 

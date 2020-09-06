@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2018 BhaaL
 #
@@ -27,7 +26,7 @@ from translate.convert import convert
 from translate.storage import flatxml, po
 
 
-class flatxml2po(object):
+class flatxml2po:
     """Convert a single XML file to a single PO file."""
 
     SourceStoreClass = flatxml.FlatXMLFile

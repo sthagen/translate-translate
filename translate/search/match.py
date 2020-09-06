@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2006-2009 Zuza Software Foundation
 #
@@ -45,7 +44,7 @@ def _sort_matches(matches, match_info):
     matches.sort(key=lambda x: match_info[x.source]['pos'])
 
 
-class matcher(object):
+class matcher:
     """A class that will do matching and store configuration for the matching
     process.
     """
@@ -255,7 +254,7 @@ class terminologymatcher(matcher):
     def __init__(self, store, max_candidates=10, min_similarity=75, max_length=500, comparer=None):
         if comparer is None:
             comparer = terminology.TerminologyComparer(max_length)
-        matcher.__init__(self, store, max_candidates, min_similarity=10, max_length=max_length, comparer=comparer)
+        super().__init__(store, max_candidates, min_similarity=10, max_length=max_length, comparer=comparer)
         self.addpercentage = False
         self.match_info = {}
 

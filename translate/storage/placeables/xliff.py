@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008-2009 Zuza Software Foundation
 #
@@ -75,8 +74,7 @@ class UnknownXML(StringElem):
     # INITIALIZERS #
     def __init__(self, sub=None, id=None, rid=None,
                  xid=None, xml_node=None, **kwargs):
-        super(UnknownXML, self).__init__(sub=sub, id=id, rid=rid,
-                                         xid=xid, **kwargs)
+        super().__init__(sub=sub, id=id, rid=rid, xid=xid, **kwargs)
         if xml_node is None:
             raise ValueError('xml_node must be a lxml node')
         self.xml_node = xml_node

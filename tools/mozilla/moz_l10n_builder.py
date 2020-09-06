@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Zuza Software Foundation
 #
@@ -32,7 +31,8 @@ import os
 import shutil
 import tempfile
 import time
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
+
 
 join = os.path.join
 

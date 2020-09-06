@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2004-2006 Zuza Software Foundation
 #
@@ -27,7 +26,7 @@ from translate.convert import convert
 from translate.storage import html, po
 
 
-class po2html(object):
+class po2html:
     """po2html can take a po file and generate html. best to give it a template
     file otherwise will just concat msgstrs
     """

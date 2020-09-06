@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2014 Zuza Software Foundation
 #
@@ -18,10 +17,6 @@
 
 import warnings
 from functools import wraps
-
-
-class RemovedInTTK2Warning(DeprecationWarning):
-    pass
 
 
 def deprecated(message=""):

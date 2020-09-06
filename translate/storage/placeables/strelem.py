@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2009 Zuza Software Foundation
 # Copyright 2013-2014 F Wolff
@@ -31,7 +30,7 @@ class ElementNotFoundError(ValueError):
     pass
 
 
-class StringElem(object):
+class StringElem:
     """
     This class represents a sub-tree of a string parsed into a rich structure.
     It is also the base class of all placeables.
@@ -166,8 +165,8 @@ class StringElem(object):
         if callable(self.renderer):
             return self.renderer(self)
         if not self.isvisible:
-            return u''
-        return u''.join([str(elem) for elem in self.sub])
+            return ''
+        return ''.join([str(elem) for elem in self.sub])
 
     # METHODS #
     def apply_to_strings(self, f):
@@ -310,7 +309,7 @@ class StringElem(object):
 
             # XXX: This might not have the expected result if start['elem']
             # is a StringElem sub-class instance.
-            newstr = u''.join(start['elem'].sub)
+            newstr = ''.join(start['elem'].sub)
             removed = StringElem(newstr[start['offset']:end['offset']])
             newstr = newstr[:start['offset']] + newstr[end['offset']:]
             parent = self.get_parent_elem(start['elem'])
@@ -365,7 +364,7 @@ class StringElem(object):
         for node in marked_nodes:
             try:
                 self.delete_elem(node)
-            except ElementNotFoundError as e:
+            except ElementNotFoundError:
                 pass
 
         if start['elem'] is not end['elem']:
@@ -373,13 +372,13 @@ class StringElem(object):
                 (not start['elem'].iseditable and start['elem'].isfragile)):
                 self.delete_elem(start['elem'])
             elif start['elem'].iseditable:
-                start['elem'].sub = [u''.join(start['elem'].sub)[:start['offset']]]
+                start['elem'].sub = [''.join(start['elem'].sub)[:start['offset']]]
 
             if (end_offset + len(end['elem']) == end['index'] or
                 (not end['elem'].iseditable and end['elem'].isfragile)):
                 self.delete_elem(end['elem'])
             elif end['elem'].iseditable:
-                end['elem'].sub = [u''.join(end['elem'].sub)[end['offset']:]]
+                end['elem'].sub = [''.join(end['elem'].sub)[end['offset']:]]
 
         self.prune()
         return removed, None, None
@@ -837,10 +836,10 @@ class StringElem(object):
         manner.
         """
         indent_prefix = " " * indent * 2
-        out = (u"%s%s [%s]" % (indent_prefix, self.__class__.__name__,
-                               str(self))).encode('utf-8')
+        out = ("%s%s [%s]" % (indent_prefix, self.__class__.__name__,
+                              str(self))).encode('utf-8')
         if verbose:
-            out += u' ' + repr(self)
+            out += ' ' + repr(self)
 
         print(out)
 
@@ -848,8 +847,8 @@ class StringElem(object):
             if isinstance(elem, StringElem):
                 elem.print_tree(indent + 1, verbose=verbose)
             else:
-                print((u'%s%s[%s]' % (indent_prefix, indent_prefix,
-                                      elem)).encode('utf-8'))
+                print(('%s%s[%s]' % (indent_prefix, indent_prefix,
+                                     elem)).encode('utf-8'))
 
     def prune(self):
         """Remove unnecessary nodes to make the tree optimal."""
@@ -882,7 +881,7 @@ class StringElem(object):
 
             if type(elem) is StringElem and elem.isleaf():
                 # Collapse all strings in this leaf into one string.
-                elem.sub = [u''.join(elem.sub)]
+                elem.sub = [''.join(elem.sub)]
 
             for i in reversed(range(len(elem.sub))):
                 # Remove empty strings or StringElem nodes

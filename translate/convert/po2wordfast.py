@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2005-2007 Zuza Software Foundation
 #
@@ -30,7 +29,7 @@ from translate.misc import wStringIO
 from translate.storage import po, wordfast
 
 
-class po2wordfast(object):
+class po2wordfast:
 
     def convertfiles(self, inputfile, wffile, sourcelanguage='en', targetlanguage=None):
         """converts a .po file (possibly many) to a Wordfast TM file"""
@@ -53,7 +52,7 @@ def convertpo(inputfile, outputfile, templatefile, sourcelanguage='en', targetla
     return 1
 
 
-class wfmultifile(object):
+class wfmultifile:
 
     def __init__(self, filename, mode=None):
         """initialises wfmultifile from a seekable inputfile or writable outputfile"""
@@ -83,7 +82,7 @@ class WfOptionParser(convert.ArchiveConvertOptionParser):
     def recursiveprocess(self, options):
         if not options.targetlanguage:
             raise ValueError("You must specify the target language")
-        super(WfOptionParser, self).recursiveprocess(options)
+        super().recursiveprocess(options)
         with open(options.output, 'wb') as self.output:
             #self.outputarchive.wffile.setsourcelanguage(options.sourcelanguage)
             self.outputarchive.wffile.serialize(self.output)

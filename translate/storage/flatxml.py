@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2018 BhaaL
 #
@@ -36,7 +35,7 @@ class FlatXMLUnit(base.TranslationUnit):
         self.element_name = element_name
         self.attribute_name = attribute_name
         self.xmlelement = etree.Element(self.namespaced(self.element_name))
-        super(FlatXMLUnit, self).__init__(source, **kwargs)
+        super().__init__(source, **kwargs)
 
     def __str__(self):
         # "unicode" encoding keeps the unicode status of the output
@@ -125,7 +124,7 @@ class FlatXMLFile(base.TranslationStore):
         self.indent_chars = indent_chars
         self.trailing_eol = trailing_eol
 
-        super(FlatXMLFile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if inputfile is not None:
             self.parse(inputfile)
         else:
@@ -135,7 +134,7 @@ class FlatXMLFile(base.TranslationStore):
 
     def addunit(self, unit, new=True):
         unit.namespace = self.namespace
-        super(FlatXMLFile, self).addunit(unit)
+        super().addunit(unit)
         if new:
             self.root.append(unit.xmlelement)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2006 Zuza Software Foundation
 #
@@ -18,7 +17,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 
-class XPathBreadcrumb(object):
+class XPathBreadcrumb:
     """A class which is used to build XPath-like paths as a DOM tree is
     walked. It keeps track of the number of times which it has seen
     a certain tag, so that it will correctly create indices for tags.
@@ -70,5 +69,5 @@ class XPathBreadcrumb(object):
     def xpath(self):
         def str_component(component):
             tag, pos = component
-            return u"%s[%d]" % (tag, pos)
-        return u"/".join(str_component(component) for component in self._xpath)
+            return "%s[%d]" % (tag, pos)
+        return "/".join(str_component(component) for component in self._xpath)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008, 2011 Zuza Software Foundation
 #
@@ -44,7 +43,7 @@ class LangUnit(base.TranslationUnit):
         self.locations = []
         self.eol = "\n"
         self.rawtarget = None
-        base.TranslationUnit.__init__(self, source)
+        super().__init__(source)
 
     def __str__(self):
         if self.istranslated():
@@ -64,9 +63,9 @@ class LangUnit(base.TranslationUnit):
                   else "# %s" % note)
                  for note
                  in self.getnotes('developer').split("\n")])
-            return u"%s%s;%s%s%s" % (
+            return "%s%s;%s%s%s" % (
                 notes, self.eol, self.source, self.eol, target)
-        return u";%s%s%s" % (self.source, self.eol, target)
+        return ";%s%s%s" % (self.source, self.eol, target)
 
     def getlocations(self):
         return self.locations
@@ -89,7 +88,7 @@ class LangStore(txt.TxtFile):
         self._headers = []
         self.eol = "\n"
         self.location_root = getattr(inputfile, "location_root", "")
-        super(LangStore, self).__init__(inputfile, **kwargs)
+        super().__init__(inputfile, **kwargs)
 
     def parse(self, lines):
         source_unit = None

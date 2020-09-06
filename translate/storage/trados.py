@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2010 Zuza Software Foundation
 #
@@ -43,14 +42,15 @@ A Trados file looks like this:
 import re
 import time
 
+from translate.storage import base
+
+
 try:
     # FIXME see if we can't use lxml
     from bs4 import BeautifulSoup
 except ImportError:
     raise ImportError("BeautifulSoup 4 is not installed. Support for Trados txt is disabled.")
 
-from translate.misc.deprecation import deprecated
-from translate.storage import base
 
 __all__ = (
     'TRADOS_TIMEFORMAT', 'RTF_ESCAPES',
@@ -63,24 +63,24 @@ TRADOS_TIMEFORMAT = "%d%m%Y, %H:%M:%S"
 """Time format used by Trados .txt"""
 
 RTF_ESCAPES = {
-    u"\\emdash": u"—",
-    u"\\endash": u"–",
+    "\\emdash": "—",
+    "\\endash": "–",
     # Nonbreaking space equal to width of character "m" in current font.
-    u"\\emspace": u"\u2003",
+    "\\emspace": "\u2003",
     # Nonbreaking space equal to width of character "n" in current font.
-    u"\\enspace": u"\u2002",
-    #u"\\qmspace": "",    # One-quarter em space.
-    u"\\bullet": u"•",     # Bullet character.
-    u"\\lquote": u"‘",     # Left single quotation mark. \u2018
-    u"\\rquote": u"’",     # Right single quotation mark. \u2019
-    u"\\ldblquote": u"“",  # Left double quotation mark. \u201C
-    u"\\rdblquote": u"”",  # Right double quotation mark. \u201D
-    u"\\~": u"\u00a0",  # Nonbreaking space
-    u"\\-": u"\u00ad",  # Optional hyphen.
-    u"\\_": u"‑",  # Nonbreaking hyphen \U2011
+    "\\enspace": "\u2002",
+    #"\\qmspace": "",    # One-quarter em space.
+    "\\bullet": "•",     # Bullet character.
+    "\\lquote": "‘",     # Left single quotation mark. \u2018
+    "\\rquote": "’",     # Right single quotation mark. \u2019
+    "\\ldblquote": "“",  # Left double quotation mark. \u201C
+    "\\rdblquote": "”",  # Right double quotation mark. \u201D
+    "\\~": "\u00a0",  # Nonbreaking space
+    "\\-": "\u00ad",  # Optional hyphen.
+    "\\_": "‑",  # Nonbreaking hyphen \U2011
     # A hexadecimal value, based on the specified character set (may be used to
     # identify 8-bit values).
-    #u"\\'hh": "",
+    #"\\'hh": "",
 }
 """RTF control to Unicode map. See
 http://msdn.microsoft.com/en-us/library/aa140283(v=office.10).aspx
@@ -101,7 +101,7 @@ def escape(text):
     return text
 
 
-class TradosTxtDate(object):
+class TradosTxtDate:
     """Manages the timestamps in the Trados .txt format of DDMMYYY, hh:mm:ss"""
 
     def __init__(self, newtime=None):
@@ -155,7 +155,7 @@ class TradosUnit(base.TranslationUnit):
 
     def __init__(self, source=None):
         self._soup = None
-        super(TradosUnit, self).__init__(source)
+        super().__init__(source)
 
     @property
     def source(self):
@@ -164,11 +164,6 @@ class TradosUnit(base.TranslationUnit):
     @source.setter
     def source(self, source):
         pass
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
 
     def gettarget(self):
         return unescape(self._soup.findAll('seg')[1].contents[0])
@@ -194,7 +189,7 @@ class TradosTxtTmFile(base.TranslationStore):
 
     def __init__(self, inputfile=None, **kwargs):
         """construct a Wordfast TM, optionally reading in from inputfile."""
-        super(TradosTxtTmFile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = ''
         if inputfile is not None:
             self.parse(inputfile)

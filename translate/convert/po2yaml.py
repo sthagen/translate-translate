@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2017 Zuza Software Foundation
 #
@@ -27,7 +26,7 @@ from translate.convert import convert
 from translate.storage import po, yaml
 
 
-class po2yaml(object):
+class po2yaml:
     """Convert a PO file and a template YAML file to a YAML file."""
 
     SourceStoreClass = po.pofile
@@ -97,12 +96,12 @@ def run_converter(inputfile, outputfile, templatefile=None, includefuzzy=False,
                    outputthreshold).run()
 
 
-formats = {
-    ("po", "yml"): ("yml", run_converter),
-    "po": ("yml", run_converter),
-    ("po", "yaml"): ("yaml", run_converter),
-    "po": ("yaml", run_converter),
-}
+formats = (
+    (("po", "yml"), ("yml", run_converter)),
+    ("po", ("yml", run_converter)),
+    (("po", "yaml"), ("yaml", run_converter)),
+    ("po", ("yaml", run_converter)),
+)
 
 
 def main(argv=None):

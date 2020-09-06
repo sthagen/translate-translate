@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 import os
 
@@ -7,7 +6,7 @@ import pytest
 from translate.convert import convert
 
 
-class TestConvertCommand(object):
+class TestConvertCommand:
     """Tests running actual commands on files"""
     convertmodule = convert
     defaultoptions = {"progress": "none"}

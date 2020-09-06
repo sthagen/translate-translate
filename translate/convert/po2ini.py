@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2006 Zuza Software Foundation
 #
@@ -29,7 +28,7 @@ from translate.convert import convert
 from translate.storage import ini, po
 
 
-class po2ini(object):
+class po2ini:
     """Convert a PO file and a template INI file to a INI file."""
 
     SourceStoreClass = po.pofile

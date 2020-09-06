@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
+
+from io import BytesIO
 
 from translate.convert import po2web2py
-from translate.misc import wStringIO
 from translate.storage import po
 
 
-class TestPO2WEB2PY(object):
+class TestPO2WEB2PY:
 
     def po2web2py(self, po_source):
         """helper that converts po source to web2py source without requiring files"""
-        input_file = wStringIO.StringIO(po_source)
+        input_file = BytesIO(po_source.encode())
         input_po = po.pofile(input_file)
         convertor = po2web2py.po2pydict()
         output_web2py = convertor.convertstore(input_po, False)

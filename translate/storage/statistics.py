@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007 Zuza Software Foundation
 #
@@ -37,7 +36,7 @@ from translate.lang import factory
 # Consider providing quickstats
 
 
-class Statistics(object):
+class Statistics:
     """Manages statistics for storage objects."""
 
     def __init__(self, sourcelanguage='en', targetlanguage='en', checkerstyle=None):

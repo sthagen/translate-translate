@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2004-2006 Zuza Software Foundation
 #
@@ -33,8 +32,7 @@ class MozConvertOptionParser(convert.ConvertOptionParser):
 
     def __init__(self, formats, usetemplates=False, usepots=False,
                  description=None):
-        convert.ConvertOptionParser.__init__(self, formats, usetemplates, usepots,
-                                             description=description)
+        super().__init__(formats, usetemplates, usepots, description=description)
 
     def splitinputext(self, inputpath):
         """splits a inputpath into name and extension
@@ -54,7 +52,7 @@ class MozConvertOptionParser(convert.ConvertOptionParser):
     def recursiveprocess(self, options):
         """recurse through directories and convert files"""
         self.replacer.replacestring = options.locale
-        result = super(MozConvertOptionParser, self).recursiveprocess(options)
+        result = super().recursiveprocess(options)
         return result
 
 

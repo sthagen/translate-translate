@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2005, 2006 Zuza Software Foundation
 #
@@ -21,9 +20,9 @@
 """
 
 import sys
+from io import BytesIO
 
 from translate.convert import mozfunny2prop, po2prop
-from translate.misc.wStringIO import StringIO
 from translate.storage import properties
 
 
@@ -91,11 +90,11 @@ def prop2funny(src, itencoding="cp1252"):
 def po2inc(inputfile, outputfile, templatefile, encoding=None, includefuzzy=False,
            remove_untranslated=False, outputthreshold=None):
     """wraps po2prop but converts outputfile to properties first"""
-    outputpropfile = StringIO()
+    outputpropfile = BytesIO()
     if templatefile is not None:
         templatelines = templatefile.readlines()
         templateproplines = [line for line in mozfunny2prop.inc2prop(templatelines)]
-        templatepropfile = StringIO("".join(templateproplines))
+        templatepropfile = BytesIO("".join(templateproplines).encode())
     else:
         templatepropfile = None
     result = po2prop.convertmozillaprop(inputfile, outputpropfile,
@@ -114,11 +113,11 @@ def po2inc(inputfile, outputfile, templatefile, encoding=None, includefuzzy=Fals
 def po2it(inputfile, outputfile, templatefile, encoding="cp1252", includefuzzy=False,
           remove_untranslated=False, outputthreshold=None):
     """wraps po2prop but converts outputfile to properties first"""
-    outputpropfile = StringIO()
+    outputpropfile = BytesIO()
     if templatefile is not None:
         templatelines = templatefile.readlines()
         templateproplines = [line for line in mozfunny2prop.it2prop(templatelines, encoding=encoding)]
-        templatepropfile = StringIO("".join(templateproplines))
+        templatepropfile = BytesIO("".join(templateproplines).encode())
     else:
         templatepropfile = None
     result = po2prop.convertmozillaprop(inputfile, outputpropfile,

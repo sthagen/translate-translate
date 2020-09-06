@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2002-2013 Zuza Software Foundation
 #
@@ -86,13 +85,10 @@ Escaping in Android DTD
 import re
 import warnings
 from io import BytesIO
-try:
-    from lxml import etree
-except ImportError:
-    etree = None
+
+from lxml import etree
 
 from translate.misc import quote
-from translate.misc.deprecation import deprecated
 from translate.storage import base
 
 
@@ -108,8 +104,8 @@ def quoteforandroid(source):
     """Escapes a line for Android DTD files."""
     # Replace "'" character with the \u0027 escape. Other possible replaces are
     # "\\&apos;" or "\\'".
-    source = source.replace(u"'", u"\\u0027")
-    source = source.replace(u"\"", u"\\&quot;")
+    source = source.replace("'", "\\u0027")
+    source = source.replace("\"", "\\&quot;")
     value = quotefordtd(source)  # value is an UTF-8 encoded string.
     return value
 
@@ -117,9 +113,9 @@ def quoteforandroid(source):
 def unquotefromandroid(source):
     """Unquotes a quoted Android DTD definition."""
     value = unquotefromdtd(source)  # value is an UTF-8 encoded string.
-    value = value.replace(u"\\&apos;", u"'")
-    value = value.replace(u"\\'", u"'")
-    value = value.replace(u"\\u0027", u"'")
+    value = value.replace("\\&apos;", "'")
+    value = value.replace("\\'", "'")
+    value = value.replace("\\u0027", "'")
     value = value.replace("\\\"", "\"")  # This converts \&quot; to ".
     return value
 
@@ -154,7 +150,7 @@ _DTD_NAME2CODEPOINT = {
     #"gt": ord(">"),  # Not really so useful.
     # FIXME these should probably be handled in a more general way
     "#x0022": ord('"'),
-    "#187": ord(u"»"),
+    "#187": ord("»"),
     "#037": ord("%"),
     "#37": ord("%"),
     "#x25": ord("%"),
@@ -231,7 +227,7 @@ class dtdunit(base.TranslationUnit):
         """construct the dtdunit, prepare it for parsing"""
         self.android = android
 
-        super(dtdunit, self).__init__(source)
+        super().__init__(source)
         self.comments = []
         self.unparsedlines = []
         self.incomment = False
@@ -260,11 +256,6 @@ class dtdunit(base.TranslationUnit):
             self.definition = quotefordtd(source)
         self._rich_source = None
 
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
-
     @property
     def target(self):
         """gets the unquoted target string"""
@@ -283,11 +274,6 @@ class dtdunit(base.TranslationUnit):
         else:
             self.definition = quotefordtd(target)
         self._rich_target = None
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
 
     def getid(self):
         return self.entity
@@ -530,7 +516,7 @@ class dtdfile(base.TranslationStore):
 
     def __init__(self, inputfile=None, android=False):
         """construct a dtdfile, optionally reading in from inputfile"""
-        super(dtdfile, self).__init__()
+        super().__init__()
         self.filename = getattr(inputfile, 'name', '')
         self.android = android
         if inputfile is not None:
@@ -595,11 +581,11 @@ class dtdfile(base.TranslationStore):
         :rtype: Boolean
         """
         # Android files are invalid DTDs
-        if etree is not None and not self.android:
+        if not self.android:
             # #expand is a Mozilla hack and are removed as they are not valid in DTDs
             _input = re.sub(b"#expand", b"", content)
             try:
-                dtd = etree.DTD(BytesIO(_input))
+                etree.DTD(BytesIO(_input))
             except etree.DTDParseError as e:
                 warnings.warn("DTD parse error: %s" % e.error_log)
                 return False

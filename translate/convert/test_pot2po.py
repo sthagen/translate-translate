@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 
 import warnings
+from io import BytesIO
 
 from pytest import mark
 
 from translate.convert import pot2po, test_convert
-from translate.misc import wStringIO
 from translate.storage import po
 
 
-class TestPOT2PO(object):
+class TestPOT2PO:
 
     def setup_method(self, method):
         warnings.resetwarnings()
@@ -19,12 +18,12 @@ class TestPOT2PO(object):
 
     def convertpot(self, potsource, posource=None):
         """helper that converts pot source to po source without requiring files"""
-        potfile = wStringIO.StringIO(potsource)
+        potfile = BytesIO(potsource.encode())
         if posource:
-            pofile = wStringIO.StringIO(posource)
+            pofile = BytesIO(posource.encode())
         else:
             pofile = None
-        pooutfile = wStringIO.StringIO()
+        pooutfile = BytesIO()
         pot2po.convertpot(potfile, pooutfile, pofile)
         pooutfile.seek(0)
         return po.pofile(pooutfile.read())
@@ -312,7 +311,7 @@ msgstr "Sertifikate"
 
         # Now test with real units present in posource
         posource2 = '''msgid "Old"\nmsgstr "Oud"\n'''
-        newpo = self.convertpot(potsource, posource)
+        newpo = self.convertpot(potsource, posource2)
         assert len(newpo.units) == 3
         assert newpo.units[0].isheader()
         assert newpo.units[2].isobsolete()
@@ -638,8 +637,8 @@ msgstr "trans"
         assert len(newpo.units) == 2
         assert newpo.units[0].isheader()
         unit = newpo.units[1]
-        assert unit.source == u""
-        assert unit.getid() == u"bla\04"
+        assert unit.source == ""
+        assert unit.getid() == "bla\04"
         assert unit.target == "trans"
         assert not unit.isfuzzy()
 
@@ -676,8 +675,8 @@ msgstr "trans"
         assert len(newpo.units) == 2
         assert newpo.units[0].isheader()
         unit = newpo.units[1]
-        assert unit.source == u""
-        assert unit.getid() == u"bla\04"
+        assert unit.source == ""
+        assert unit.getid() == "bla\04"
         assert unit.target == "trans"
         assert not unit.isfuzzy()
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2007 Zuza Software Foundation
 #
@@ -28,7 +27,6 @@ Supported formats are
 
 import re
 
-from translate.misc.deprecation import deprecated
 from translate.storage import base
 
 
@@ -55,7 +53,7 @@ class TxtUnit(base.TranslationUnit):
 
     def __init__(self, source="", **kwargs):
         """Construct the txtunit"""
-        super(TxtUnit, self).__init__(source)
+        super().__init__(source)
         # Note that source and target are equivalent for monolingual units.
         self.source = source
         self.pretext = ""
@@ -64,12 +62,7 @@ class TxtUnit(base.TranslationUnit):
 
     def __str__(self):
         """Convert a txt unit to a string"""
-        return u"".join([self.pretext, self.source, self.posttext])
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `source` property instead")
-    def getsource(self):
-        return self.source
+        return "".join([self.pretext, self.source, self.posttext])
 
     @property
     def target(self):
@@ -81,11 +74,6 @@ class TxtUnit(base.TranslationUnit):
         """Sets the definition to the quoted value of target"""
         self._rich_target = None
         self.source = target
-
-    # Deprecated on 2.3.1
-    @deprecated("Use `target` property instead")
-    def gettarget(self):
-        return self.target
 
     def addlocation(self, location):
         self.location.append(location)
@@ -101,7 +89,7 @@ class TxtFile(base.TranslationStore):
 
     def __init__(self, inputfile=None, flavour=None, no_segmentation=False,
                  **kwargs):
-        super(TxtFile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.filename = getattr(inputfile, 'name', '')
         self.flavour = flavours.get(flavour, [])
         self.no_segmentation = no_segmentation

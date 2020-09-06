@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2008 Zuza Software Foundation
 #
@@ -27,7 +26,10 @@ for examples and usage instructions.
 from translate.convert import convert
 from translate.storage import factory
 from translate.storage.pypo import po_escape_map
-from translate.storage.symbian import *
+from translate.storage.symbian import (ParseState, eat_whitespace,
+                                       header_item_or_end_re, header_item_re,
+                                       read_charset, read_while,
+                                       skip_no_translate, string_entry_re)
 
 
 def escape(text):
@@ -58,7 +60,7 @@ def parse(ps, header_replacements, body_replacements):
                 key = match.groupdict()['id']
                 if key in body_replacements:
                     value = body_replacements[key].target or body_replacements[key].source
-                    ps.current_line = match.expand(u'\\g<start>\\g<id>\\g<space>%s\n' % escape(value))
+                    ps.current_line = match.expand('\\g<start>\\g<id>\\g<space>%s\n' % escape(value))
             ps.read_line()
     except StopIteration:
         pass
