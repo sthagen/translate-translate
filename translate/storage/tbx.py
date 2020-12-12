@@ -35,8 +35,6 @@ class tbxunit(lisa.LISAunit):
 
     def createlanguageNode(self, lang, text, purpose):
         """returns a langset xml Element setup with given parameters"""
-        if isinstance(text, bytes):
-            text = text.decode("utf-8")
         langset = etree.Element(self.languageNode)
         setXMLlang(langset, lang)
         tig = etree.SubElement(langset, "tig")  # or ntig with termGrp inside
@@ -65,8 +63,6 @@ class tbxunit(lisa.LISAunit):
             text = text.strip()
         if not text:
             return
-        if isinstance(text, bytes):
-            text = text.decode("utf-8")
         note = etree.SubElement(self.xmlelement, self.namespaced("note"))
         note.text = text
         if origin:
@@ -81,28 +77,32 @@ class tbxunit(lisa.LISAunit):
         :rtype: List
         """
         note_nodes = []
-        if origin == 'pos':
+        if origin == "pos":
             note_nodes = self.xmlelement.iterdescendants(self.namespaced("termNote"))
-        elif origin == 'definition':
+        elif origin == "definition":
             note_nodes = self.xmlelement.iterdescendants(self.namespaced("descrip"))
         else:
             note_nodes = self.xmlelement.iterdescendants(self.namespaced("note"))
         # TODO: consider using xpath to construct initial_list directly
         # or to simply get the correct text from the outset (just remember to
         # check for duplication.
-        initial_list = [lisa.getText(note,
-                                     getXMLspace(self.xmlelement,
-                                                 self._default_xml_space))
-                        for note in note_nodes]
+        initial_list = [
+            lisa.getText(note, getXMLspace(self.xmlelement, self._default_xml_space))
+            for note in note_nodes
+        ]
 
         # Remove duplicate entries from list:
         dictset = {}
-        note_list = [dictset.setdefault(note, note) for note in initial_list if note not in dictset]
+        note_list = [
+            dictset.setdefault(note, note)
+            for note in initial_list
+            if note not in dictset
+        ]
 
         return note_list
 
     def getnotes(self, origin=None):
-        return '\n'.join(self._getnotelist(origin=origin))
+        return "\n".join(self._getnotelist(origin=origin))
 
 
 class tbxfile(lisa.LISAfile):
@@ -114,7 +114,7 @@ class tbxfile(lisa.LISAfile):
     Extensions = ["tbx"]
     rootNode = "martif"
     bodyNode = "body"
-    XMLskeleton = '''<?xml version="1.0"?>
+    XMLskeleton = """<?xml version="1.0"?>
 <!DOCTYPE martif PUBLIC "ISO 12200:1999A//DTD MARTIF core (DXFcdV04)//EN" "TBXcdv04.dtd">
 <martif type="TBX">
 <martifHeader>
@@ -123,7 +123,7 @@ class tbxfile(lisa.LISAfile):
 </fileDesc>
 </martifHeader>
 <text><body></body></text>
-</martif>'''
+</martif>"""
 
     def addheader(self):
         """Initialise headers with TBX specific things."""

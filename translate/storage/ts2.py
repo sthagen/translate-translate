@@ -50,7 +50,7 @@ class tsunit(lisa.LISAunit):
     rootNode = "message"
     languageNode = "source"
     textNode = ""
-    namespace = ''
+    namespace = ""
     rich_parsers = general.parsers
 
     S_OBSOLETE = state.OBSOLETE
@@ -73,7 +73,7 @@ class tsunit(lisa.LISAunit):
         S_TRANSLATED: (state.UNREVIEWED, state.MAX),
     }
 
-    statemap_r = dict((i[1], i[0]) for i in statemap.items())
+    statemap_r = {i[1]: i[0] for i in statemap.items()}
     _context = None
 
     def createlanguageNode(self, lang, text, purpose):
@@ -84,7 +84,7 @@ class tsunit(lisa.LISAunit):
             purpose = "translation"
         langset = etree.Element(self.namespaced(purpose))
         # TODO: check language
-        #lisa.setXMLlang(langset, lang)
+        # lisa.setXMLlang(langset, lang)
 
         langset.text = text
         return langset
@@ -100,13 +100,14 @@ class tsunit(lisa.LISAunit):
 
     def getlanguageNodes(self):
         """We override this to get source and target nodes."""
-        return [n for n in [self._getsourcenode(), self._gettargetnode()]
-                if n is not None]
+        return [
+            n for n in [self._getsourcenode(), self._gettargetnode()] if n is not None
+        ]
 
     @lisa.LISAunit.source.getter
     def source(self):
         # TODO: support <byte>. See bug 528.
-        text = data.forceunicode(self._getsourcenode().text)
+        text = self._getsourcenode().text
         if self.hasplural():
             return multistring([text])
         return text
@@ -116,9 +117,9 @@ class tsunit(lisa.LISAunit):
         targetnode = self._gettargetnode()
         if self.hasplural():
             numerus_nodes = targetnode.findall(self.namespaced("numerusform"))
-            return multistring([data.forceunicode(node.text) or "" for node in numerus_nodes])
+            return multistring([node.text or "" for node in numerus_nodes])
         else:
-            return data.forceunicode(targetnode.text) or ""
+            return targetnode.text or ""
 
     @target.setter
     def target(self, target):
@@ -147,27 +148,27 @@ class tsunit(lisa.LISAunit):
             self.xmlelement.set("numerus", "yes")
             for string in strings:
                 numerus = etree.SubElement(targetnode, self.namespaced("numerusform"))
-                numerus.text = data.forceunicode(string) or ""
+                numerus.text = string or ""
         else:
-            targetnode.text = data.forceunicode(target) or ""
+            targetnode.text = target or ""
 
     def hasplural(self):
         return self.xmlelement.get("numerus") == "yes"
 
     def addnote(self, text, origin=None, position="append"):
         """Add a note specifically in the appropriate *comment* tag"""
-        if isinstance(text, bytes):
-            text = text.decode("utf-8")
         current_notes = self.getnotes(origin)
         self.removenotes(origin)
         if origin in ["programmer", "developer", "source code"]:
             note = etree.SubElement(self.xmlelement, self.namespaced("extracomment"))
         else:
-            note = etree.SubElement(self.xmlelement, self.namespaced("translatorcomment"))
+            note = etree.SubElement(
+                self.xmlelement, self.namespaced("translatorcomment")
+            )
         if position == "append":
-            note.text = "\n".join([item
-                                   for item in [current_notes, text.strip()]
-                                   if item])
+            note.text = "\n".join(
+                [item for item in [current_notes, text.strip()] if item]
+            )
         else:
             note.text = text.strip()
 
@@ -182,7 +183,7 @@ class tsunit(lisa.LISAunit):
             notenode = self.xmlelement.find(self.namespaced("translatorcomment"))
             if notenode is not None and notenode.text is not None:
                 comments.append(notenode.text)
-        return '\n'.join(comments)
+        return "\n".join(comments)
 
     def removenotes(self, origin=None):
         """Remove all the translator notes."""
@@ -271,18 +272,16 @@ class tsunit(lisa.LISAunit):
         commentnode = self.xmlelement.find(self.namespaced("comment"))
         if commentnode is not None and commentnode.text is not None:
             contexts.append(commentnode.text)
-        message_id = self.xmlelement.get('id')
+        message_id = self.xmlelement.get("id")
         if message_id is not None:
             contexts.append(message_id)
         contexts = filter(None, contexts)
-        return '\n'.join(contexts)
+        return "\n".join(contexts)
 
     def addlocation(self, location):
-        if isinstance(location, bytes):
-            location = location.decode("utf-8")
         newlocation = etree.SubElement(self.xmlelement, self.namespaced("location"))
         try:
-            filename, line = location.split(':', 1)
+            filename, line = location.split(":", 1)
         except ValueError:
             filename = location
             line = None
@@ -298,7 +297,7 @@ class tsunit(lisa.LISAunit):
             line = location_tag.get("line")
             if line:
                 if location:
-                    location += ':' + line
+                    location += ":" + line
                 else:
                     location = line
             if location:
@@ -350,11 +349,11 @@ class tsfile(lisa.LISAfile):
     rootNode = "TS"
     # We will switch out .body to fit with the context we are working on
     bodyNode = "context"
-    XMLskeleton = '''<!DOCTYPE TS>
+    XMLskeleton = """<!DOCTYPE TS>
 <TS>
 </TS>
-'''
-    namespace = ''
+"""
+    namespace = ""
 
     def __init__(self, *args, **kwargs):
         self._contextname = None
@@ -382,9 +381,9 @@ class tsfile(lisa.LISAfile):
         :return: ISO code e.g. af, fr, pt_BR
         :rtype: String
         """
-        lang = data.normalize_code(self.header.get('sourcelanguage', "en"))
-        if lang == 'en-us':
-            return 'en'
+        lang = data.normalize_code(self.header.get("sourcelanguage", "en"))
+        if lang == "en-us":
+            return "en"
         return lang
 
     def gettargetlanguage(self):
@@ -393,7 +392,7 @@ class tsfile(lisa.LISAfile):
         :return: ISO code e.g. af, fr, pt_BR
         :rtype: String
         """
-        return data.normalize_code(self.header.get('language'))
+        return data.normalize_code(self.header.get("language"))
 
     def settargetlanguage(self, targetlanguage):
         """Set the target language for this .ts file to *targetlanguage*.
@@ -402,11 +401,13 @@ class tsfile(lisa.LISAfile):
         :type targetlanguage: String
         """
         if targetlanguage:
-            self.header.set('language', targetlanguage)
+            self.header.set("language", targetlanguage)
 
     def _createcontext(self, contextname, comment=None):
         """Creates a context node with an optional comment"""
-        context = etree.SubElement(self.document.getroot(), self.namespaced(self.bodyNode))
+        context = etree.SubElement(
+            self.document.getroot(), self.namespaced(self.bodyNode)
+        )
         name = etree.SubElement(context, self.namespaced("name"))
         name.text = contextname
         if comment:
@@ -421,7 +422,9 @@ class tsfile(lisa.LISAfile):
     def _getcontextnames(self):
         """Returns all contextnames in this TS file."""
         contextnodes = self.document.findall(self.namespaced("context"))
-        contextnames = [self.getcontextname(contextnode) for contextnode in contextnodes]
+        contextnames = [
+            self.getcontextname(contextnode) for contextnode in contextnodes
+        ]
         return contextnames
 
     def _getcontextnode(self, contextname):
@@ -432,7 +435,9 @@ class tsfile(lisa.LISAfile):
                 return contextnode
         return None
 
-    def addunit(self, unit, new=True, contextname=None, comment=None, createifmissing=True):
+    def addunit(
+        self, unit, new=True, contextname=None, comment=None, createifmissing=True
+    ):
         """Adds the given unit to the last used body node (current context).
 
         If the contextname is specified, switch to that context (creating it if
@@ -445,7 +450,7 @@ class tsfile(lisa.LISAfile):
             if not self._switchcontext(contextname, comment, createifmissing):
                 return None
         super().addunit(unit, new)
-#        lisa.setXMLspace(unit.xmlelement, "preserve")
+        #        lisa.setXMLspace(unit.xmlelement, "preserve")
         return unit
 
     def _switchcontext(self, contextname, comment, createifmissing=False):
@@ -473,27 +478,36 @@ class tsfile(lisa.LISAfile):
     def serialize(self, out):
         """Write the XML document to a file."""
         root = self.document.getroot()
-        reindent(root, indent="    ", skip=['TS'])
+        reindent(root, indent="    ", skip=["TS"])
         doctype = self.document.docinfo.doctype
         # Iterate over empty tags without children and force empty text
         # This will prevent self-closing tags in pretty_print mode
         # Qt Linguist does self-close the "location" elements though
-        for e in root.xpath("//*[not(./node()) and not(text()) and not(name() = 'location')]"):
+        for e in root.xpath(
+            "//*[not(./node()) and not(text()) and not(name() = 'location')]"
+        ):
             e.text = ""
         # For conformance with Qt output, write XML declaration with double quotes
-        out.write(str('<?xml version="1.0" encoding="utf-8"?>\n').encode('utf-8'))
+        out.write(b'<?xml version="1.0" encoding="utf-8"?>\n')
         # For conformance with Qt output, post-process etree.tostring output,
         # replacing ' with &apos; and " with &quot; in text elements
-        treestring = etree.tostring(root, doctype=doctype, pretty_print=True,
-                                    xml_declaration=False, encoding='utf-8')
+        treestring = etree.tostring(
+            root,
+            doctype=doctype,
+            pretty_print=True,
+            xml_declaration=False,
+            encoding="utf-8",
+        )
         pos = 0
         while pos >= 0:
-            nextpos = treestring.find(b'<', pos)
+            nextpos = treestring.find(b"<", pos)
             out.write(
-                treestring[pos:nextpos].replace(b"'", b"&apos;").replace(b'"', b"&quot;")
+                treestring[pos:nextpos]
+                .replace(b"'", b"&apos;")
+                .replace(b'"', b"&quot;")
             )
             pos = nextpos
-            nextpos = treestring.find(b'>', pos)
+            nextpos = treestring.find(b">", pos)
             out.write(treestring[pos:nextpos])
             pos = nextpos
         out.write(treestring[pos:])

@@ -4,12 +4,13 @@ from translate.storage import po, poxliff
 
 
 class TestPO2XLIFF:
-
-    def po2xliff(self, posource, sourcelanguage='en', targetlanguage=None):
+    def po2xliff(self, posource, sourcelanguage="en", targetlanguage=None):
         """helper that converts po source to xliff source without requiring files"""
-        postore = po.pofile(posource.encode('utf-8'))
+        postore = po.pofile(posource.encode("utf-8"))
         convertor = po2xliff.po2xliff()
-        outputxliff = convertor.convertstore(postore, None, sourcelanguage=sourcelanguage, targetlanguage=targetlanguage)
+        outputxliff = convertor.convertstore(
+            postore, None, sourcelanguage=sourcelanguage, targetlanguage=targetlanguage
+        )
         return poxliff.PoXliffFile(outputxliff)
 
     def getnode(self, xliff):
@@ -19,7 +20,7 @@ class TestPO2XLIFF:
         return unit
 
     def test_minimal(self):
-        minipo = '''msgid "red"\nmsgstr "rooi"\n'''
+        minipo = """msgid "red"\nmsgstr "rooi"\n"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         print(bytes(xliff))
@@ -52,12 +53,12 @@ msgstr "Toepassings"
         print(bytes(xliff))
         assert xliff.translate("Applications") == "Toepassings"
         assert xliff.translate("bla") is None
-        xmltext = bytes(xliff).decode('utf-8')
-        assert xmltext.index('<xliff ') >= 0
+        xmltext = bytes(xliff).decode("utf-8")
+        assert xmltext.index("<xliff ") >= 0
         assert xmltext.index(' version="1.1"') >= 0
-        assert xmltext.index('<file')
-        assert xmltext.index('source-language')
-        assert xmltext.index('datatype')
+        assert xmltext.index("<file")
+        assert xmltext.index("source-language")
+        assert xmltext.index("datatype")
 
     def test_multiline(self):
         """Test multiline po entry"""
@@ -68,16 +69,16 @@ msgstr "Eerste deel "
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         print(bytes(xliff))
-        assert xliff.translate('First part and extra') == 'Eerste deel en ekstra'
+        assert xliff.translate("First part and extra") == "Eerste deel en ekstra"
 
     def test_escapednewlines(self):
         """Test the escaping of newlines"""
-        minipo = r'''msgid "First line\nSecond line"
+        minipo = r"""msgid "First line\nSecond line"
 msgstr "Eerste lyn\nTweede lyn"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
-        xmltext = bytes(xliff).decode('utf-8')
+        xmltext = bytes(xliff).decode("utf-8")
         print(xmltext)
         assert xliff.translate("First line\nSecond line") == "Eerste lyn\nTweede lyn"
         assert xliff.translate("First line\\nSecond line") is None
@@ -88,14 +89,17 @@ msgstr "Eerste lyn\nTweede lyn"
 
     def test_escapedtabs(self):
         """Test the escaping of tabs"""
-        minipo = r'''msgid "First column\tSecond column"
+        minipo = r"""msgid "First column\tSecond column"
 msgstr "Eerste kolom\tTweede kolom"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
-        xmltext = bytes(xliff).decode('utf-8')
+        xmltext = bytes(xliff).decode("utf-8")
         print(xmltext)
-        assert xliff.translate("First column\tSecond column") == "Eerste kolom\tTweede kolom"
+        assert (
+            xliff.translate("First column\tSecond column")
+            == "Eerste kolom\tTweede kolom"
+        )
         assert xliff.translate("First column\\tSecond column") is None
         assert xmltext.find("column\\tSecond") == -1
         assert xmltext.find("kolom\\tTweede") == -1
@@ -104,35 +108,37 @@ msgstr "Eerste kolom\tTweede kolom"
 
     def test_escapedquotes(self):
         """Test the escaping of quotes (and slash)"""
-        minipo = r'''msgid "Hello \"Everyone\""
+        minipo = r"""msgid "Hello \"Everyone\""
 msgstr "Good day \"All\""
 
 msgid "Use \\\"."
 msgstr "Gebruik \\\"."
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
-        xmltext = bytes(xliff).decode('utf-8')
+        xmltext = bytes(xliff).decode("utf-8")
         print(xmltext)
         assert xliff.translate('Hello "Everyone"') == 'Good day "All"'
-        assert xliff.translate(r'Use \".') == r'Gebruik \".'
-        assert xmltext.find(r'\&quot;') > 0 or xmltext.find(r'\"') > 0
+        assert xliff.translate(r"Use \".") == r"Gebruik \"."
+        assert xmltext.find(r"\&quot;") > 0 or xmltext.find(r"\"") > 0
         assert xmltext.find(r"\\") == -1
 
     def getcontexttuples(self, node, namespace):
-        """Returns all the information in the context nodes as a list of tuples
-        of (type, text)"""
+        """
+        Returns all the information in the context nodes as a list of tuples
+        of (type, text)
+        """
         contexts = node.findall(".//{%s}context" % namespace)
         return [(context.get("context-type"), getText(context)) for context in contexts]
 
     def test_locationcomments(self):
-        minipo = r'''#: file.c:123 asdf.c
+        minipo = r"""#: file.c:123 asdf.c
 msgid "one"
 msgstr "kunye"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
-        xmltext = bytes(xliff).decode('utf-8')
+        xmltext = bytes(xliff).decode("utf-8")
         print(xmltext)
         assert xliff.translate("one") == "kunye"
         assert len(xliff.units) == 1
@@ -143,14 +149,18 @@ msgstr "kunye"
             assert group.get("name") == "po-reference"
             assert group.get("purpose") == "location"
         tuples = self.getcontexttuples(node, xliff.namespace)
-        assert tuples == [("sourcefile", "file.c"), ("linenumber", "123"), ("sourcefile", "asdf.c")]
+        assert tuples == [
+            ("sourcefile", "file.c"),
+            ("linenumber", "123"),
+            ("sourcefile", "asdf.c"),
+        ]
 
     def test_othercomments(self):
-        minipo = r'''# Translate?
+        minipo = r"""# Translate?
 # How?
 msgid "one"
 msgstr "kunye"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         xmltext = bytes(xliff)
@@ -169,11 +179,11 @@ msgstr "kunye"
         assert xliff.units[0].getnotes("translator") == "Translate?\nHow?"
 
     def test_automaticcomments(self):
-        minipo = r'''#. Don't translate.
+        minipo = r"""#. Don't translate.
 #. Please
 msgid "one"
 msgstr "kunye"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         xmltext = bytes(xliff)
@@ -190,13 +200,13 @@ msgstr "kunye"
         assert tuples == [("x-po-autocomment", "Don't translate.\nPlease")]
 
     def test_header(self):
-        minipo = r'''# Pulana  Translation for bla
+        minipo = r"""# Pulana  Translation for bla
 # Hallo Ma!
 #, fuzzy
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         xmltext = bytes(xliff)
@@ -207,16 +217,18 @@ msgstr ""
         assert unit.xmlelement.get("restype") == "x-gettext-domain-header"
         assert unit.xmlelement.get("approved") != "yes"
         assert unit.xmlelement.get("{%s}space" % XML_NS) == "preserve"
-        assert unit.getnotes("po-translator") == "Pulana  Translation for bla\nHallo Ma!"
+        assert (
+            unit.getnotes("po-translator") == "Pulana  Translation for bla\nHallo Ma!"
+        )
 
     def test_fuzzy(self):
-        minipo = r'''#, fuzzy
+        minipo = r"""#, fuzzy
 msgid "two"
 msgstr "pedi"
 
 msgid "three"
 msgstr "raro"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         xmltext = bytes(xliff)
@@ -226,11 +238,11 @@ msgstr "raro"
         assert not xliff.units[1].isfuzzy()
 
     def test_germanic_plurals(self):
-        minipo = r'''msgid "cow"
+        minipo = r"""msgid "cow"
 msgid_plural "cows"
 msgstr[0] "inkomo"
 msgstr[1] "iinkomo"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         xmltext = bytes(xliff)
@@ -239,12 +251,12 @@ msgstr[1] "iinkomo"
         assert xliff.translate("cow") == "inkomo"
 
     def test_funny_plurals(self):
-        minipo = r'''msgid "cow"
+        minipo = r"""msgid "cow"
 msgid_plural "cows"
 msgstr[0] "inkomo"
 msgstr[1] "iinkomo"
 msgstr[2] "iiinkomo"
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         xmltext = bytes(xliff)
@@ -253,9 +265,9 @@ msgstr[2] "iiinkomo"
         assert xliff.translate("cow") == "inkomo"
 
     def test_language_tags(self):
-        minipo = r'''msgid "Een"
+        minipo = r"""msgid "Een"
 msgstr "Uno"
-'''
+"""
         xliff = self.po2xliff(minipo, "af", "es")
         assert xliff.sourcelanguage == "af"
         assert xliff.targetlanguage == "es"
@@ -268,7 +280,7 @@ msgstr "%s%s%s%s het %s sy/haar vriend/vriendin gemaak%s%s"'''
         assert xliff.units[0].source == "%s%s%s%s has made %s his or her buddy%s%s"
 
     def test_approved(self):
-        minipo = r'''#, fuzzy
+        minipo = r"""#, fuzzy
 msgid "two"
 msgstr "pedi"
 
@@ -277,7 +289,7 @@ msgstr "raro"
 
 msgid "four"
 msgstr ""
-'''
+"""
         xliff = self.po2xliff(minipo)
         print("The generated xml:")
         xmltext = bytes(xliff)

@@ -27,14 +27,13 @@ from translate.storage import po
 
 
 class web2py2po:
-
     def __init__(self, pofile=None, duplicatestyle="msgctxt"):
         self.mypofile = pofile
         self.duplicatestyle = duplicatestyle
 
     def convertunit(self, source_str, target_str):
         pounit = po.pounit(encoding="UTF-8")
-        pounit.settypecomment('python-format')
+        pounit.settypecomment("python-format")
         pounit.source = source_str
         if target_str:
             pounit.target = target_str
@@ -46,9 +45,9 @@ class web2py2po:
 
         for source_str in mydict.keys():
             target_str = mydict[source_str]
-            if target_str == source_str.replace('@markmin\x01', ''):
+            if target_str == source_str.replace("@markmin\x01", ""):
                 # a convention with new (untranslated) web2py files
-                target_str = ''
+                target_str = ""
             pounit = self.convertunit(source_str, target_str)
             self.mypofile.addunit(pounit)
 
@@ -77,16 +76,14 @@ def convertpy(inputfile, outputfile, encoding="UTF-8", duplicatestyle="msgctxt")
 
 def main(argv=None):
     from translate.convert import convert
-    formats = {
-        ("py", "po"): ("po", convertpy),
-        ("py", None): ("po", convertpy)
-    }
-    parser = convert.ConvertOptionParser(formats, usetemplates=False,
-                                         usepots=True,
-                                         description=__doc__)
+
+    formats = {("py", "po"): ("po", convertpy), ("py", None): ("po", convertpy)}
+    parser = convert.ConvertOptionParser(
+        formats, usetemplates=False, usepots=True, description=__doc__
+    )
     parser.add_duplicates_option()
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

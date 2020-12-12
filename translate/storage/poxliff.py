@@ -26,7 +26,6 @@ import re
 
 from lxml import etree
 
-from translate.lang import data
 from translate.misc.multistring import multistring
 from translate.misc.xml_helpers import setXMLspace
 from translate.storage import base, lisa, poheader, xliff
@@ -68,7 +67,7 @@ class PoXliffUnit(xliff.xliffunit):
             if not super().__eq__(other):
                 return False
             for i in range(len(self.units) - 1):
-                if not self.units[i+1] == other.units[i+1]:
+                if not self.units[i + 1] == other.units[i + 1]:
                     return False
             return True
         if len(self.units) <= 1:
@@ -78,12 +77,12 @@ class PoXliffUnit(xliff.xliffunit):
                 return self.source == other.source and self.target == other.target
         return False
 
-#XXX: We don't return language nodes correctly at the moment
-#    def getlanguageNodes(self):
-#        if not self.hasplural():
-#            return super().getlanguageNodes()
-#        else:
-#            return self.units[0].getlanguageNodes()
+    # XXX: We don't return language nodes correctly at the moment
+    #    def getlanguageNodes(self):
+    #        if not self.hasplural():
+    #            return super().getlanguageNodes()
+    #        else:
+    #            return self.units[0].getlanguageNodes()
 
     @property
     def source(self):
@@ -110,7 +109,7 @@ class PoXliffUnit(xliff.xliffunit):
             self.units = []
             for s in source.strings:
                 newunit = xliff.xliffunit(s)
-#                newunit.namespace = self.namespace #XXX?necessary?
+                #                newunit.namespace = self.namespace #XXX?necessary?
                 self.units.append(newunit)
                 self.xmlelement.append(newunit.xmlelement)
             self.target = target
@@ -124,7 +123,7 @@ class PoXliffUnit(xliff.xliffunit):
 
     def gettarget(self, lang=None):
         if self.hasplural():
-            strings = [data.forceunicode(unit.target) for unit in self.units]
+            strings = [unit.target for unit in self.units]
             if strings:
                 return multistring(strings)
             else:
@@ -132,7 +131,7 @@ class PoXliffUnit(xliff.xliffunit):
         else:
             return super().gettarget(lang)
 
-    def settarget(self, target, lang='xx', append=False):
+    def settarget(self, target, lang="xx", append=False):
         self._rich_target = None
         if self.target == target:
             return
@@ -160,8 +159,6 @@ class PoXliffUnit(xliff.xliffunit):
 
     def addnote(self, text, origin=None, position="append"):
         """Add a note specifically in a "note" tag"""
-        if isinstance(text, bytes):
-            text = text.decode("utf-8")
         note = etree.SubElement(self.xmlelement, self.namespaced("note"))
         note.text = text
         if origin:
@@ -170,7 +167,7 @@ class PoXliffUnit(xliff.xliffunit):
             unit.addnote(text, origin)
 
     def getnotes(self, origin=None):
-        #NOTE: We support both <context> and <note> tags in xliff files for comments
+        # NOTE: We support both <context> and <note> tags in xliff files for comments
         if origin == "translator":
             notes = super().getnotes("translator")
             trancomments = self.gettranslatorcomments()
@@ -234,6 +231,7 @@ class PoXliffUnit(xliff.xliffunit):
 
         def hasautocomment(grp):
             return grp[0] == "x-po-autocomment"
+
         groups = self.getcontextgroups("po-entry")
         comments = []
         for group in groups:
@@ -249,6 +247,7 @@ class PoXliffUnit(xliff.xliffunit):
 
         def hastrancomment(grp):
             return grp[0] == "x-po-trancomment"
+
         groups = self.getcontextgroups("po-entry")
         comments = []
         for group in groups:
@@ -274,7 +273,7 @@ class PoXliffUnit(xliff.xliffunit):
         group = cls(None, empty=True)
         group.xmlelement = element
         group.namespace = namespace
-        units = list(element.iterdescendants(group.namespaced('trans-unit')))
+        units = list(element.iterdescendants(group.namespaced("trans-unit")))
         for unit in units:
             subunit = xliff.xliffunit.createfromxmlElement(unit)
             subunit.namespace = namespace
@@ -298,7 +297,9 @@ class PoXliffFile(xliff.xlifffile, poheader.poheader):
     def createfilenode(self, filename, sourcelanguage="en-US", datatype="po"):
         # Let's ignore the sourcelanguage parameter opting for the internal
         # one. PO files will probably be one language
-        return super().createfilenode(filename, sourcelanguage=self.sourcelanguage, datatype="po")
+        return super().createfilenode(
+            filename, sourcelanguage=self.sourcelanguage, datatype="po"
+        )
 
     def _insert_header(self, header):
         header.xmlelement.set("restype", "x-gettext-domain-header")
@@ -351,7 +352,7 @@ class PoXliffFile(xliff.xlifffile, poheader.poheader):
 
     def parse(self, xml):
         """Populates this object from the given xml string"""
-        #TODO: Make more robust
+        # TODO: Make more robust
 
         def ispluralgroup(node):
             """determines whether the xml node refers to a getttext plural"""
@@ -367,9 +368,11 @@ class PoXliffFile(xliff.xlifffile, poheader.poheader):
 
         def pluralunits(pluralgroups):
             for pluralgroup in pluralgroups:
-                yield self.UnitClass.createfromxmlElement(pluralgroup, namespace=self.namespace)
+                yield self.UnitClass.createfromxmlElement(
+                    pluralgroup, namespace=self.namespace
+                )
 
-        self.filename = getattr(xml, 'name', '')
+        self.filename = getattr(xml, "name", "")
         if hasattr(xml, "read"):
             xml.seek(0)
             xmlsrc = xml.read()
@@ -381,7 +384,9 @@ class PoXliffFile(xliff.xlifffile, poheader.poheader):
         assert root_node.tag == self.namespaced(self.rootNode)
         groups = root_node.iterdescendants(self.namespaced("group"))
         pluralgroups = filter(ispluralgroup, groups)
-        termEntries = root_node.iterdescendants(self.namespaced(self.UnitClass.rootNode))
+        termEntries = root_node.iterdescendants(
+            self.namespaced(self.UnitClass.rootNode)
+        )
 
         singularunits = list(filter(isnonpluralunit, termEntries))
         if len(singularunits) == 0:

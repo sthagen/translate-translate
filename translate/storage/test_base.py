@@ -42,8 +42,11 @@ def first_translatable(store):
 
 
 class TestTranslationUnit:
-    """Tests a TranslationUnit.
-    Derived classes can reuse these tests by pointing UnitClass to a derived Unit"""
+    """
+    Tests a TranslationUnit.
+    Derived classes can reuse these tests by pointing UnitClass to a derived Unit
+    """
+
     UnitClass = base.TranslationUnit
 
     def setup_method(self, method):
@@ -59,7 +62,7 @@ class TestTranslationUnit:
     def test_create(self):
         """tests a simple creation with a source string"""
         unit = self.unit
-        print('unit.source:', unit.source)
+        print("unit.source:", unit.source)
         assert unit.source == "Test String"
 
     def test_eq(self):
@@ -80,9 +83,7 @@ class TestTranslationUnit:
         assert unit1 == unit2
         assert unit1 != unit3
         assert unit4 != unit5
-        if unit1.__class__.__name__ in ('RESXUnit', 'dtdunit', 'TxtUnit',
-                                        'JsonUnit', 'YAMLUnit',
-                                        'WebExtensionJsonUnit'):
+        if unit1.__class__.__name__ in ("RESXUnit", "dtdunit", "TxtUnit"):
             # unit1 will generally equal unit6 for monolingual formats (resx, dtd, txt)
             # with the default comparison method which compare units by their
             # target and source properties only.
@@ -91,10 +92,10 @@ class TestTranslationUnit:
             # - phpunit and propunit (properties) can have different source/target
             #   and are reunited when serializing through `self.translation or self.value`
             assert unit1 == unit6
-            assert not(unit1 != unit6)
+            assert not (unit1 != unit6)
         else:
             assert unit1 != unit6
-            assert not(unit1 == unit6)
+            assert not (unit1 == unit6)
 
     def test_target(self):
         unit = self.unit
@@ -107,13 +108,32 @@ class TestTranslationUnit:
         assert unit.target == ""
 
     def test_escapes(self):
-        """Test all sorts of characters that might go wrong in a quoting and
-        escaping roundtrip."""
+        """
+        Test all sorts of characters that might go wrong in a quoting and
+        escaping roundtrip.
+        """
         unit = self.unit
-        specials = ['Fish & chips', 'five < six', 'six > five', 'five &lt; six',
-                    'Use &nbsp;', 'Use &amp;nbsp;', 'Use &amp;amp;nbsp;',
-                    'A "solution"', "skop 'n bal", '"""', "'''", 'µ',
-                    '\n', '\t', '\r', '\r\n', '\\r', '\\', '\\\r']
+        specials = [
+            "Fish & chips",
+            "five < six",
+            "six > five",
+            "five &lt; six",
+            "Use &nbsp;",
+            "Use &amp;nbsp;",
+            "Use &amp;amp;nbsp;",
+            'A "solution"',
+            "skop 'n bal",
+            '"""',
+            "'''",
+            "µ",
+            "\n",
+            "\t",
+            "\r",
+            "\r\n",
+            "\\r",
+            "\\",
+            "\\\r",
+        ]
         for special in specials:
             unit.source = special
             print("unit.source:", repr(unit.source))
@@ -121,17 +141,32 @@ class TestTranslationUnit:
             assert unit.source == special
 
     def test_difficult_escapes(self):
-        """Test difficult characters that might go wrong in a quoting and
-        escaping roundtrip."""
+        """
+        Test difficult characters that might go wrong in a quoting and
+        escaping roundtrip.
+        """
 
         unit = self.unit
-        specials = ['\\n', '\\t', '\\"', '\\ ',
-                    '\\\n', '\\\t', '\\\\n', '\\\\t', '\\\\r', '\\\\"',
-                    '\\r\\n', '\\\\r\\n', '\\r\\\\n', '\\\\n\\\\r']
+        specials = [
+            "\\n",
+            "\\t",
+            '\\"',
+            "\\ ",
+            "\\\n",
+            "\\\t",
+            "\\\\n",
+            "\\\\t",
+            "\\\\r",
+            '\\\\"',
+            "\\r\\n",
+            "\\\\r\\n",
+            "\\r\\\\n",
+            "\\\\n\\\\r",
+        ]
         for special in specials:
             unit.source = special
-            print("unit.source:", repr(unit.source) + '|')
-            print("special:", repr(special) + '|')
+            print("unit.source:", repr(unit.source) + "|")
+            print("special:", repr(special) + "|")
             assert unit.source == special
 
     def test_note_sanity(self):
@@ -157,8 +192,8 @@ class TestTranslationUnit:
 
     def test_rich_get(self):
         """Basic test for converting from multistrings to StringElem trees."""
-        target_mstr = multistring(['tėst', '<b>string</b>'])
-        unit = self.UnitClass(multistring(['a', 'b']))
+        target_mstr = multistring(["tėst", "<b>string</b>"])
+        unit = self.UnitClass(multistring(["a", "b"]))
         unit.rich_parsers = general.parsers
         unit.target = target_mstr
         elems = unit.rich_target
@@ -171,9 +206,9 @@ class TestTranslationUnit:
             assert str(elems[0]) == target_mstr.strings[0]
             assert str(elems[1]) == target_mstr.strings[1]
 
-            assert str(elems[1].sub[0]) == '<b>'
-            assert str(elems[1].sub[1]) == 'string'
-            assert str(elems[1].sub[2]) == '</b>'
+            assert str(elems[1].sub[0]) == "<b>"
+            assert str(elems[1].sub[1]) == "string"
+            assert str(elems[1].sub[2]) == "</b>"
         else:
             assert len(elems[0].sub) == 1
             assert str(elems[0]) == target_mstr.strings[0]
@@ -181,27 +216,31 @@ class TestTranslationUnit:
     def test_rich_set(self):
         """Basic test for converting from multistrings to StringElem trees."""
         elems = [
-            rich_parse('Tëst <x>string</x>', general.parsers),
-            rich_parse('Another test string.', general.parsers),
+            rich_parse("Tëst <x>string</x>", general.parsers),
+            rich_parse("Another test string.", general.parsers),
         ]
-        unit = self.UnitClass(multistring(['a', 'b']))
+        unit = self.UnitClass(multistring(["a", "b"]))
         unit.rich_target = elems
 
         if unit.hasplural():
-            assert unit.target.strings[0] == 'Tëst <x>string</x>'
-            assert unit.target.strings[1] == 'Another test string.'
+            assert unit.target.strings[0] == "Tëst <x>string</x>"
+            assert unit.target.strings[1] == "Another test string."
         else:
-            assert unit.target == 'Tëst <x>string</x>'
+            assert unit.target == "Tëst <x>string</x>"
 
 
 class TestTranslationStore:
-    """Tests a TranslationStore.
-    Derived classes can reuse these tests by pointing StoreClass to a derived Store"""
+    """
+    Tests a TranslationStore.
+
+    Derived classes can reuse these tests by pointing StoreClass to a derived Store
+    """
+
     StoreClass = base.TranslationStore
 
     def setup_method(self, method):
         """Allocates a unique self.filename for the method, making sure it doesn't exist"""
-        self.filename = "%s_%s.test" % (self.__class__.__name__, method.__name__)
+        self.filename = f"{self.__class__.__name__}_{method.__name__}.test"
         if os.path.exists(self.filename):
             os.remove(self.filename)
         warnings.resetwarnings()
@@ -225,6 +264,21 @@ class TestTranslationStore:
         print(bytes(store))
         assert headerless_len(store.units) == 1
         assert unit.source == "Test String"
+
+    def test_remove(self):
+        """Tests removing a unit with a source string"""
+        store = self.StoreClass()
+        unit = store.addsourceunit("Test String")
+        # Some storages (MO, OmegaT) serialize only translated units
+        unit.target = "Test target"
+        assert headerless_len(store.units) == 1
+        withunit = bytes(store)
+        print(withunit)
+        store.removeunit(unit)
+        assert headerless_len(store.units) == 0
+        withoutunit = bytes(store)
+        print(withoutunit)
+        assert withoutunit != withunit
 
     def test_find(self):
         """Tests searching for a given source string"""
@@ -258,7 +312,10 @@ class TestTranslationStore:
             store2unit = store2.units[n]
             match = store1unit == store2unit
             if not match:
-                print("match failed between elements %d of %d" % ((n + 1), headerless_len(store1.units)))
+                print(
+                    "match failed between elements %d of %d"
+                    % ((n + 1), headerless_len(store1.units))
+                )
                 print("store1:")
                 print(bytes(store1))
                 print("store2:")
@@ -313,19 +370,21 @@ class TestTranslationStore:
         unit = store.addsourceunit("Beziér curve")
         unit.target = "Beziér-kurwe"
         answer = store.translate("Beziér curve")
-        if isinstance(answer, bytes):
-            answer = answer.decode("utf-8")
         assert answer == "Beziér-kurwe"
-        #Just test that __str__ doesn't raise exception:
+        # Just test that __str__ doesn't raise exception:
         store.serialize(BytesIO())
 
     def test_extensions(self):
         """Test that the factory knows the extensions for this class."""
         supported = factory.supported_files()
-        supported_dict = dict([(name, (extensions, mimetypes)) for name, extensions, mimetypes in supported])
+        supported_dict = {
+            name: (extensions, mimetypes) for name, extensions, mimetypes in supported
+        }
         if not (self.StoreClass.Name and self.StoreClass.Name in supported_dict):
             return
-        detail = supported_dict[self.StoreClass.Name]  # will start to get problematic once translated
+        detail = supported_dict[
+            self.StoreClass.Name
+        ]  # will start to get problematic once translated
         print("Factory:", detail[0])
         print("StoreClass:", self.StoreClass.Extensions)
         for ext in detail[0]:
@@ -336,10 +395,14 @@ class TestTranslationStore:
     def test_mimetypes(self):
         """Test that the factory knows the mimetypes for this class."""
         supported = factory.supported_files()
-        supported_dict = dict([(name, (extensions, mimetypes)) for name, extensions, mimetypes in supported])
+        supported_dict = {
+            name: (extensions, mimetypes) for name, extensions, mimetypes in supported
+        }
         if not (self.StoreClass.Name and self.StoreClass.Name in supported_dict):
             return
-        detail = supported_dict[self.StoreClass.Name]  # will start to get problematic once translated
+        detail = supported_dict[
+            self.StoreClass.Name
+        ]  # will start to get problematic once translated
         print("Factory:", detail[1])
         print("StoreClass:", self.StoreClass.Mimetypes)
         for ext in detail[1]:

@@ -1,4 +1,3 @@
-
 # po2tiki unit tests
 # Author: Wil Clouser <wclouser@mozilla.com>
 # Date: 2008-12-01
@@ -11,8 +10,7 @@ class TestPo2Tiki:
 
     ConverterClass = po2tiki.po2tiki
 
-    def _convert(self, input_string, template_string=None,
-                 success_expected=True):
+    def _convert(self, input_string, template_string=None, success_expected=True):
         """Helper that converts to target format without using files."""
         input_file = BytesIO(input_string.encode())
         output_file = BytesIO()
@@ -26,11 +24,11 @@ class TestPo2Tiki:
 
     def _convert_to_string(self, *args, **kwargs):
         """Helper that converts to target format string without using files."""
-        return self._convert(*args, **kwargs)[1].getvalue().decode('utf-8')
+        return self._convert(*args, **kwargs)[1].getvalue().decode("utf-8")
 
     def test_convert_empty(self):
         """Check converting empty file returns no output."""
-        assert self._convert_to_string('', success_expected=False) == ''
+        assert self._convert_to_string("", success_expected=False) == ""
 
     def test_convert(self):
         """Check converting simple file."""
@@ -60,6 +58,7 @@ msgstr "It is translated"
 
 class TestPo2TikiCommand(test_convert.TestConvertCommand, TestPo2Tiki):
     """Tests running actual po2tiki commands on files"""
+
     convertmodule = po2tiki
     defaultoptions = {}
 

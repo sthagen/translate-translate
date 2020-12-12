@@ -1,4 +1,3 @@
-
 import pytest
 
 from translate.storage import qm, test_base
@@ -32,6 +31,11 @@ class TestQtFile(test_base.TestTranslationStore):
             self.StoreClass.serialize(self.StoreClass())
 
     def test_add(self):
+        # QM does not implement serialising
+        with pytest.raises(Exception):
+            self.StoreClass.serialize(self.StoreClass())
+
+    def test_remove(self):
         # QM does not implement serialising
         with pytest.raises(Exception):
             self.StoreClass.serialize(self.StoreClass())

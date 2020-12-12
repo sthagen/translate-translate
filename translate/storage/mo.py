@@ -46,21 +46,21 @@ from translate.misc.multistring import multistring
 from translate.storage import base, poheader
 
 
-MO_MAGIC_NUMBER = 0x950412de
+MO_MAGIC_NUMBER = 0x950412DE
 
 
-def mounpack(filename='messages.mo'):
+def mounpack(filename="messages.mo"):
     """Helper to unpack Gettext MO files into a Python string"""
-    with open(filename, 'rb') as fh:
+    with open(filename, "rb") as fh:
         s = fh.read()
         print("\\x%02x" * len(s) % tuple(map(ord, s)))
 
 
 def my_swap4(result):
-    c0 = (result >> 0) & 0xff
-    c1 = (result >> 8) & 0xff
-    c2 = (result >> 16) & 0xff
-    c3 = (result >> 24) & 0xff
+    c0 = (result >> 0) & 0xFF
+    c1 = (result >> 8) & 0xFF
+    c2 = (result >> 16) & 0xFF
+    c3 = (result >> 24) & 0xFF
 
     return (c0 << 24) | (c1 << 16) | (c2 << 8) | c3
 
@@ -73,8 +73,8 @@ def hashpjw(str_param):
     for s in str_param:
         hval = hval << 4
         hval += s
-        g = hval & 0xf << (HASHWORDBITS - 4)
-        if (g != 0):
+        g = hval & 0xF << (HASHWORDBITS - 4)
+        if g != 0:
             hval = hval ^ g >> (HASHWORDBITS - 8)
             hval = hval ^ g
     return hval
@@ -139,7 +139,7 @@ class mofile(poheader.poheader, base.TranslationStore):
 
     def __init__(self, inputfile=None, **kwargs):
         super().__init__(**kwargs)
-        self.filename = ''
+        self.filename = ""
         if inputfile is not None:
             self.parsestring(inputfile)
 
@@ -156,15 +156,15 @@ class mofile(poheader.poheader, base.TranslationStore):
             increment = 1 + (V % (S - 2))
             while True:
                 index = hash_table[hash_cursor]
-                if (index == 0):
+                if index == 0:
                     hash_table[hash_cursor] = i + 1
                     break
                 hash_cursor += increment
                 hash_cursor = hash_cursor % S
-                assert (hash_cursor != orig_hash_cursor)
+                assert hash_cursor != orig_hash_cursor
 
-        def lst_encode(lst, join_char=b''):
-            return join_char.join([i.encode('utf-8') for i in lst])
+        def lst_encode(lst, join_char=b""):
+            return join_char.join([i.encode("utf-8") for i in lst])
 
         # hash_size should be the smallest prime number that is greater
         # or equal (4 / 3 * N) - where N is the number of keys/units.
@@ -178,16 +178,17 @@ class mofile(poheader.poheader, base.TranslationStore):
             if not unit.istranslated():
                 continue
             if isinstance(unit.source, multistring):
-                source = (lst_encode(unit.msgidcomments) +
-                          lst_encode(unit.source.strings, b"\0"))
+                source = lst_encode(unit.msgidcomments) + lst_encode(
+                    unit.source.strings, b"\0"
+                )
             else:
-                source = lst_encode(unit.msgidcomments) + unit.source.encode('utf-8')
+                source = lst_encode(unit.msgidcomments) + unit.source.encode("utf-8")
             if unit.msgctxt:
                 source = lst_encode(unit.msgctxt) + b"\x04" + source
             if isinstance(unit.target, multistring):
                 target = lst_encode(unit.target.strings, b"\0")
             else:
-                target = unit.target.encode('utf-8')
+                target = unit.target.encode("utf-8")
             if unit.target:
                 MESSAGES[source] = target
         # using "I" works for 32- and 64-bit systems, but not for 16-bit!
@@ -195,7 +196,7 @@ class mofile(poheader.poheader, base.TranslationStore):
         # the keys are sorted in the .mo file
         keys = sorted(MESSAGES.keys())
         offsets = []
-        ids = strs = b''
+        ids = strs = b""
         for i, id in enumerate(keys):
             # For each string, we need size and file offset.  Each string is
             # NUL terminated; the NUL does not count into the size.
@@ -203,9 +204,9 @@ class mofile(poheader.poheader, base.TranslationStore):
             add_to_hash_table(id, i)
             string = MESSAGES[id]  # id already encoded for use as dictionary key
             offsets.append((len(ids), len(id), len(strs), len(string)))
-            ids = ids + id + b'\0'
-            strs = strs + string + b'\0'
-        output = ''
+            ids = ids + id + b"\0"
+            strs = strs + string + b"\0"
+        output = ""
         # The header is 7 32-bit unsigned integers
         keystart = 7 * 4 + 16 * len(keys) + hash_size * 4
         # and the values start after the keys
@@ -218,16 +219,18 @@ class mofile(poheader.poheader, base.TranslationStore):
             koffsets = koffsets + [l1, o1 + keystart]
             voffsets = voffsets + [l2, o2 + valuestart]
         offsets = koffsets + voffsets
-        output = struct.pack("Iiiiiii",
-                             MO_MAGIC_NUMBER,   # Magic
-                             0,                 # Version
-                             len(keys),         # # of entries
-                             7 * 4,             # start of key index
-                             7 * 4 + len(keys) * 8,  # start of value index
-                             hash_size,         # size of hash table
-                             7 * 4 + 2 * (len(keys) * 8))  # offset of hash table
+        output = struct.pack(
+            "Iiiiiii",
+            MO_MAGIC_NUMBER,  # Magic
+            0,  # Version
+            len(keys),  # # of entries
+            7 * 4,  # start of key index
+            7 * 4 + len(keys) * 8,  # start of value index
+            hash_size,  # size of hash table
+            7 * 4 + 2 * (len(keys) * 8),
+        )  # offset of hash table
         # additional data is not necessary for empty mo files
-        if (len(keys) > 0):
+        if len(keys) > 0:
             output = output + array.array("i", offsets).tobytes()
             output = output + hash_table.tobytes()
             output = output + ids
@@ -236,48 +239,64 @@ class mofile(poheader.poheader, base.TranslationStore):
 
     def parse(self, input):
         """parses the given file or file source string"""
-        if hasattr(input, 'name'):
+        if hasattr(input, "name"):
             self.filename = input.name
-        elif not getattr(self, 'filename', ''):
-            self.filename = ''
+        elif not getattr(self, "filename", ""):
+            self.filename = ""
         if hasattr(input, "read"):
             mosrc = input.read()
             input.close()
             input = mosrc
-        little, = struct.unpack("<L", input[:4])
-        big, = struct.unpack(">L", input[:4])
+        (little,) = struct.unpack("<L", input[:4])
+        (big,) = struct.unpack(">L", input[:4])
         if little == MO_MAGIC_NUMBER:
             endian = "<"
         elif big == MO_MAGIC_NUMBER:
             endian = ">"
         else:
             raise ValueError("This is not an MO file")
-        magic, version_maj, version_min, lenkeys, startkey, \
-            startvalue, sizehash, offsethash = struct.unpack("%sLHHiiiii" % endian,
-                                                             input[:(7 * 4)])
+        (
+            magic,
+            version_maj,
+            version_min,
+            lenkeys,
+            startkey,
+            startvalue,
+            sizehash,
+            offsethash,
+        ) = struct.unpack("%sLHHiiiii" % endian, input[: (7 * 4)])
         if version_maj >= 1:
-            raise base.ParseError("""Unable to process version %d.%d MO files""" % (version_maj, version_min))
+            raise base.ParseError(
+                """Unable to process version %d.%d MO files"""
+                % (version_maj, version_min)
+            )
         for i in range(lenkeys):
             nextkey = startkey + (i * 2 * 4)
             nextvalue = startvalue + (i * 2 * 4)
-            klength, koffset = struct.unpack("%sii" % endian,
-                                             input[nextkey:nextkey + (2 * 4)])
-            vlength, voffset = struct.unpack("%sii" % endian,
-                                             input[nextvalue:nextvalue + (2 * 4)])
-            source = input[koffset:koffset + klength]
+            klength, koffset = struct.unpack(
+                "%sii" % endian, input[nextkey : nextkey + (2 * 4)]
+            )
+            vlength, voffset = struct.unpack(
+                "%sii" % endian, input[nextvalue : nextvalue + (2 * 4)]
+            )
+            source = input[koffset : koffset + klength]
             context = None
             if b"\x04" in source:
                 context, source = source.split(b"\x04")
             # Still need to handle KDE comments
             if source == "":
-                charset = re.search(b"charset=([^\\s]+)",
-                                    input[voffset:voffset + vlength])
+                charset = re.search(
+                    b"charset=([^\\s]+)", input[voffset : voffset + vlength]
+                )
                 if charset:
                     self.encoding = charset.group(1)
-            source = multistring([s.decode(self.encoding)
-                                  for s in source.split(b"\0")])
-            target = multistring([s.decode(self.encoding)
-                                  for s in input[voffset:voffset + vlength].split(b"\0")])
+            source = multistring([s.decode(self.encoding) for s in source.split(b"\0")])
+            target = multistring(
+                [
+                    s.decode(self.encoding)
+                    for s in input[voffset : voffset + vlength].split(b"\0")
+                ]
+            )
             newunit = mounit(source)
             newunit.target = target
             if context is not None:

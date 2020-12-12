@@ -50,7 +50,6 @@ class StateEnum:
 
 
 class State:
-
     def __init__(self, name, enter_action=None, leave_action=None):
         self.name = name
         self.enter_action = enter_action
@@ -74,13 +73,12 @@ class State:
 
 
 class UnitState(State):
-
     def __init__(self, name, state_value):
         self.state_value = state_value
         super().__init__(name, self._enter)
 
     def __repr__(self):
-        return '<UnitState name=%s value=%d>' % (self.name, self.state_value)
+        return "<UnitState name=%s value=%d>" % (self.name, self.state_value)
 
     def _enter(self, unit):
         unit.set_state_n(self.state_value)
@@ -99,16 +97,13 @@ class TransitionError(WorkflowError):
 
 
 class InvalidStateObjectError(WorkflowError):
-
     def __init__(self, obj):
-        super().__init__('Invalid state object: %s' % (obj))
+        super().__init__("Invalid state object: %s" % (obj))
 
 
 class StateNotInWorkflowError(Exception):
-
     def __init__(self, state):
-        super().__init__(
-            'State not in workflow: %s' % (state))
+        super().__init__("State not in workflow: %s" % (state))
 
 
 class Workflow:
@@ -124,10 +119,12 @@ class Workflow:
     # ACCESSORS #
     def _get_edges(self):
         return list(self._edges)
+
     edges = property(_get_edges)
 
     def _get_states(self):
         return list(self._states)
+
     states = property(_get_states)
 
     # METHODS #
@@ -148,7 +145,7 @@ class Workflow:
         if not isinstance(state, State):
             raise InvalidStateObjectError(state)
         if state in self.states:
-            raise ValueError('State already in workflow: %s' % (state))
+            raise ValueError("State already in workflow: %s" % (state))
         self._states.append(state)
         if self._initial_state is None:
             self._initial_state = state
@@ -220,19 +217,20 @@ class Workflow:
         returned by ``get_to_states`` is used.
         """
         if self._current_state is None:
-            raise ValueError('No current state set')
+            raise ValueError("No current state set")
         if isinstance(to_state, str):
             to_state = self.get_state_by_name(to_state)
         if to_state is None:
             to_state = self.get_to_states()
             if not to_state:
-                raise TransitionError('No state to transition to')
+                raise TransitionError("No state to transition to")
             to_state = to_state[0]
         if to_state not in self.states:
             raise StateNotInWorkflowError(to_state)
         if (self._current_state, to_state) not in self.edges:
-            raise TransitionError('No edge between edges %s and %s' % (
-                                  self._current_state, to_state))
+            raise TransitionError(
+                f"No edge between edges {self._current_state} and {to_state}"
+            )
         self._current_state.leave(self._workflow_obj)
         self._current_state = to_state
         self._current_state.enter(self._workflow_obj)

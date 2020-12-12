@@ -24,7 +24,9 @@ from lxml import etree
 
 
 # some useful xpath expressions
-xml_preserve_ancestors = etree.XPath("ancestor-or-self::*[attribute::xml:space='preserve']")
+xml_preserve_ancestors = etree.XPath(
+    "ancestor-or-self::*[attribute::xml:space='preserve']"
+)
 """All ancestors with xml:space='preserve'"""
 
 xml_space_ancestors = etree.XPath("ancestor-or-self::*/attribute::xml:space")
@@ -51,14 +53,14 @@ def getText(node, xml_space="preserve"):
 
     # If we want to normalise space and only preserve it when the directive
     # xml:space="preserve" is given in node or in parents, consider this code:
-    #xml_preserves = xml_preserve_ancestors(node)
-    #if xml_preserves and xml_preserves[-1] == "preserve":
+    # xml_preserves = xml_preserve_ancestors(node)
+    # if xml_preserves and xml_preserves[-1] == "preserve":
     #    return unicode(string_xpath(node)) # specific to lxml.etree
-    #else:
+    # else:
     #    return unicode(string_xpath_normalized(node)) # specific to lxml.etree
 
 
-XML_NS = 'http://www.w3.org/XML/1998/namespace'
+XML_NS = "http://www.w3.org/XML/1998/namespace"
 
 
 def getXMLlang(node):
@@ -94,7 +96,7 @@ def namespaced(namespace, name):
     This is needed throughout lxml.
     """
     if namespace:
-        return "{%s}%s" % (namespace, name)
+        return f"{{{namespace}}}{name}"
     else:
         return name
 
@@ -104,8 +106,7 @@ MULTIWHITESPACE_RE = re.compile(MULTIWHITESPACE_PATTERN, re.MULTILINE)
 
 
 def normalize_space(text):
-    """Normalize the given text for implementation of ``xml:space="default"``.
-    """
+    """Normalize the given text for implementation of ``xml:space="default"``."""
     text = MULTIWHITESPACE_RE.sub(" ", text)
     return text
 
@@ -115,7 +116,7 @@ def normalize_xml_space(node, xml_space, remove_start=False):
     given xml_space parameter.
     """
     xml_space = getXMLspace(node) or xml_space
-    if xml_space == 'preserve':
+    if xml_space == "preserve":
         return
     if node.text:
         node.text = normalize_space(node.text)
@@ -133,7 +134,9 @@ def normalize_xml_space(node, xml_space, remove_start=False):
         normalize_xml_space(child, remove_start)
 
 
-def reindent(elem, level=0, indent="  ", max_level=4, skip=None, toplevel=True, leaves=None):
+def reindent(
+    elem, level=0, indent="  ", max_level=4, skip=None, toplevel=True, leaves=None
+):
     """Adjust indentation to match specification.
 
     Each nested tag is identified by indent string, up to
@@ -150,21 +153,25 @@ def reindent(elem, level=0, indent="  ", max_level=4, skip=None, toplevel=True, 
         extra_i = i + indent
     if len(elem) and level < max_level:
         is_leave = leaves and elem.tag in leaves
-        if ((not elem.text or not elem.text.strip())
-                and getXMLspace(elem) != 'preserve'
-                and elem[0].tag is not etree.Entity
-                and not is_leave):
+        if (
+            (not elem.text or not elem.text.strip())
+            and getXMLspace(elem) != "preserve"
+            and elem[0].tag is not etree.Entity
+            and not is_leave
+        ):
             elem.text = extra_i
         if not elem.tail or not elem.tail.strip():
             elem.tail = i
         if not is_leave:
             for child in elem:
                 reindent(child, next_level, indent, max_level, skip, False, leaves)
-            if (not child.tail or not child.tail.strip()) and child.tag is not etree.Entity:
+            if (
+                not child.tail or not child.tail.strip()
+            ) and child.tag is not etree.Entity:
                 child.tail = i
     if toplevel:
         if not elem.tail or not elem.tail.strip():
-            elem.tail = ''
+            elem.tail = ""
     else:
         if not elem.tail or not elem.tail.strip():
             elem.tail = i

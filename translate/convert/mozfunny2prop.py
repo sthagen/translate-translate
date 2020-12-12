@@ -49,7 +49,7 @@ def inc2prop(lines):
                 commented = False
             if commented:
                 yield "# "
-            yield "%s = %s\n" % (key, value)
+            yield f"{key} = {value}\n"
         else:
             if commented:
                 yield "# "
@@ -76,14 +76,19 @@ def it2prop(lines, encoding="cp1252"):
 def funny2prop(lines, itencoding="cp1252"):
     hashstarts = len([line for line in lines if line.startswith("#")])
     if hashstarts:
-        for line in inc2prop(lines):
-            yield line
+        yield from inc2prop(lines)
     else:
-        for line in it2prop(lines, encoding=itencoding):
-            yield line
+        yield from it2prop(lines, encoding=itencoding)
 
 
-def inc2po(inputfile, outputfile, templatefile, encoding=None, pot=False, duplicatestyle="msgctxt"):
+def inc2po(
+    inputfile,
+    outputfile,
+    templatefile,
+    encoding=None,
+    pot=False,
+    duplicatestyle="msgctxt",
+):
     """wraps prop2po but converts input/template files to properties first"""
     inputlines = inputfile.readlines()
     inputproplines = [line for line in inc2prop(inputlines)]
@@ -94,10 +99,24 @@ def inc2po(inputfile, outputfile, templatefile, encoding=None, pot=False, duplic
         templatepropfile = BytesIO("".join(templateproplines).encode())
     else:
         templatepropfile = None
-    return prop2po.convertprop(inputpropfile, outputfile, templatepropfile, personality="mozilla", pot=pot, duplicatestyle=duplicatestyle)
+    return prop2po.convertprop(
+        inputpropfile,
+        outputfile,
+        templatepropfile,
+        personality="mozilla",
+        pot=pot,
+        duplicatestyle=duplicatestyle,
+    )
 
 
-def it2po(inputfile, outputfile, templatefile, encoding="cp1252", pot=False, duplicatestyle="msgctxt"):
+def it2po(
+    inputfile,
+    outputfile,
+    templatefile,
+    encoding="cp1252",
+    pot=False,
+    duplicatestyle="msgctxt",
+):
     """wraps prop2po but converts input/template files to properties first"""
     inputlines = inputfile.readlines()
     inputproplines = [line for line in it2prop(inputlines, encoding=encoding)]
@@ -108,15 +127,37 @@ def it2po(inputfile, outputfile, templatefile, encoding="cp1252", pot=False, dup
         templatepropfile = BytesIO("".join(templateproplines).encode())
     else:
         templatepropfile = None
-    return prop2po.convertprop(inputpropfile, outputfile, templatepropfile, personality="mozilla", pot=pot, duplicatestyle=duplicatestyle)
+    return prop2po.convertprop(
+        inputpropfile,
+        outputfile,
+        templatepropfile,
+        personality="mozilla",
+        pot=pot,
+        duplicatestyle=duplicatestyle,
+    )
 
 
-def ini2po(inputfile, outputfile, templatefile, encoding="UTF-8", pot=False, duplicatestyle="msgctxt"):
-    return it2po(inputfile=inputfile, outputfile=outputfile, templatefile=templatefile, encoding=encoding, pot=pot, duplicatestyle=duplicatestyle)
+def ini2po(
+    inputfile,
+    outputfile,
+    templatefile,
+    encoding="UTF-8",
+    pot=False,
+    duplicatestyle="msgctxt",
+):
+    return it2po(
+        inputfile=inputfile,
+        outputfile=outputfile,
+        templatefile=templatefile,
+        encoding=encoding,
+        pot=pot,
+        duplicatestyle=duplicatestyle,
+    )
 
 
 def main(argv=None):
     import sys
+
     lines = sys.stdin.readlines()
     for line in funny2prop(lines):
         sys.stdout.write(line)

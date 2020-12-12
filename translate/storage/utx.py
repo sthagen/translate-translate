@@ -102,6 +102,7 @@ class UtxUnit(base.TranslationUnit):
         """
         # TODO First check that the values are OK
         self._dict = newdict
+
     dict = property(getdict, setdict)
 
     def _get_field(self, key):
@@ -120,47 +121,46 @@ class UtxUnit(base.TranslationUnit):
             self._dict[key] = newvalue
 
     def getnotes(self, origin=None):
-        return self._get_field('comment')
+        return self._get_field("comment")
 
     def addnote(self, text, origin=None, position="append"):
-        currentnote = self._get_field('comment')
-        if (position == "append" and
-            currentnote is not None and
-            currentnote != ''):
-            self._set_field('comment', currentnote + '\n' + text)
+        currentnote = self._get_field("comment")
+        if position == "append" and currentnote is not None and currentnote != "":
+            self._set_field("comment", currentnote + "\n" + text)
         else:
-            self._set_field('comment', text)
+            self._set_field("comment", text)
 
     def removenotes(self, origin=None):
-        self._set_field('comment', '')
+        self._set_field("comment", "")
 
     @property
     def source(self):
-        return self._get_field('src')
+        return self._get_field("src")
 
     @source.setter
     def source(self, source):
         self._rich_source = None
-        self._set_field('src', source)
+        self._set_field("src", source)
 
     @property
     def target(self):
-        return self._get_field('tgt')
+        return self._get_field("tgt")
 
     @target.setter
     def target(self, target):
         self._rich_target = None
-        self._set_field('tgt', target)
+        self._set_field("tgt", target)
 
     def settargetlang(self, newlang):
-        self._dict['target-lang'] = newlang
+        self._dict["target-lang"] = newlang
+
     targetlang = property(None, settargetlang)
 
     def __str__(self):
         return str(self._dict)
 
     def istranslated(self):
-        return bool(self._dict.get('tgt', None))
+        return bool(self._dict.get("tgt", None))
 
 
 class UtxFile(base.TranslationStore):
@@ -172,17 +172,17 @@ class UtxFile(base.TranslationStore):
     UnitClass = UtxUnit
 
     def __init__(self, inputfile=None, **kwargs):
-        """Construct an UTX dictionary, optionally reading in from inputfile.
-        """
+        """Construct an UTX dictionary, optionally reading in from inputfile."""
         super().__init__(**kwargs)
-        self.filename = ''
-        self.extension = ''
-        self._fieldnames = ['src', 'tgt', 'src:pos']
+        self.filename = ""
+        self.extension = ""
+        self._fieldnames = ["src", "tgt", "src:pos"]
         self._header = {
             "version": "1.00",
             "source_language": "en",
-            "date_created": time.strftime("%Y-%m-%dT%H:%M:%SZ%z",
-                                          time.localtime(time.time()))
+            "date_created": time.strftime(
+                "%Y-%m-%dT%H:%M:%SZ%z", time.localtime(time.time())
+            ),
         }
         if inputfile is not None:
             self.parse(inputfile)
@@ -190,7 +190,7 @@ class UtxFile(base.TranslationStore):
     def _read_header(self, header=None):
         """Read a UTX header"""
         if header is None:
-            self._fieldnames = ['src', 'tgt', 'src:pos']
+            self._fieldnames = ["src", "tgt", "src:pos"]
             # FIXME make the header properly
             self._header = {"version": "1.00"}
             return
@@ -212,23 +212,22 @@ class UtxFile(base.TranslationStore):
         for data in header_components[3:]:
             key, value = data.strip().split(":")
             self._header[key] = value.strip()
-        self._fieldnames = header_lines[-1:][0].replace("#", ""). split('\t')
+        self._fieldnames = header_lines[-1:][0].replace("#", "").split("\t")
         return len(header_lines)
 
     def _write_header(self):
         """Create a UTX header"""
-        header = "#UTX-S %(version)s; %(src)s/%(tgt)s; %(date)s" % {
-            "version": self._header["version"],
-            "src": self._header["source_language"],
-            "tgt": self._header.get("target_language", ""),
-            "date": self._header["date_created"],
-        }
+        header = "#UTX-S {version}; {src}/{tgt}; {date}".format(
+            version=self._header["version"],
+            src=self._header["source_language"],
+            tgt=self._header.get("target_language", ""),
+            date=self._header["date_created"],
+        )
         items = []
         for key, value in self._header.items():
-            if key in ["version", "source_language",
-                       "target_language", "date_created"]:
+            if key in ["version", "source_language", "target_language", "date_created"]:
                 continue
-            items.append("%s: %s" % (key, value))
+            items.append(f"{key}: {value}")
         if len(items):
             items = "; ".join(items)
             header += "; " + items
@@ -250,10 +249,10 @@ class UtxFile(base.TranslationStore):
 
     def parse(self, input):
         """parsese the given file or file source string"""
-        if hasattr(input, 'name'):
+        if hasattr(input, "name"):
             self.filename = input.name
-        elif not getattr(self, 'filename', ''):
-            self.filename = ''
+        elif not getattr(self, "filename", ""):
+            self.filename = ""
         if hasattr(input, "read"):
             tmsrc = input.read()
             input.close()
@@ -266,7 +265,8 @@ class UtxFile(base.TranslationStore):
         lines = csv.DictReader(
             input.split(UtxDialect.lineterminator)[header_length:],
             fieldnames=self._fieldnames,
-            dialect="utx")
+            dialect="utx",
+        )
         for line in lines:
             newunit = UtxUnit()
             newunit.dict = line

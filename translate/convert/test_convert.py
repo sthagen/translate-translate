@@ -1,4 +1,3 @@
-
 import os
 
 import pytest
@@ -8,12 +7,13 @@ from translate.convert import convert
 
 class TestConvertCommand:
     """Tests running actual commands on files"""
+
     convertmodule = convert
     defaultoptions = {"progress": "none"}
 
     def setup_method(self, method):
         """creates a clean test directory for the given method"""
-        self.testdir = "%s_%s" % (self.__class__.__name__, method.__name__)
+        self.testdir = f"{self.__class__.__name__}_{method.__name__}"
         self.cleardir()
         os.mkdir(self.testdir)
         self.rundir = os.path.abspath(os.getcwd())
@@ -45,7 +45,7 @@ class TestConvertCommand:
             if value is True:
                 argv.append("--%s" % key)
             else:
-                argv.append("--%s=%s" % (key, value))
+                argv.append(f"--{key}={value}")
         try:
             self.convertmodule.main(argv)
         finally:
@@ -71,14 +71,14 @@ class TestConvertCommand:
     def create_testfile(self, filename, contents):
         """creates the given file in the testdirectory with the given contents"""
         if isinstance(contents, str):
-            contents = contents.encode('utf-8')
+            contents = contents.encode("utf-8")
         testfile = self.open_testfile(filename, "wb")
         testfile.write(contents)
         testfile.close()
 
     def read_testfile(self, filename):
         """reads the given file in the testdirectory and returns the contents"""
-        with open(self.get_testfilename(filename), 'rb') as testfile:
+        with open(self.get_testfilename(filename), "rb") as testfile:
             content = testfile.read()
         return content
 
@@ -100,18 +100,19 @@ class TestConvertCommand:
             self.run_command(help=True)
         help_string, err = capsys.readouterr()
         # normalize newlines
-        help_string = help_string.replace('\r\n', '\n').replace('\r', '\n')
+        help_string = help_string.replace("\r\n", "\n").replace("\r", "\n")
         convertsummary = self.convertmodule.__doc__.split("\n")[0]
         # the convertsummary might be wrapped. this will probably unwrap it
         assert convertsummary in help_string.replace("\n", " ")
-        usageline = help_string[:help_string.find("\n")]
+        usageline = help_string[: help_string.find("\n")]
         # Different versions of optparse might contain either upper or
         # lowercase versions of 'Usage:' and 'Options:', so we need to take
         # that into account
-        assert (usageline.startswith("Usage: ") or usageline.startswith("usage: ")) \
-            and "[--version] [-h|--help]" in usageline
-        options = help_string[help_string.find("ptions:\n"):]
-        options = options[options.find("\n")+1:]
+        assert (
+            usageline.startswith("Usage: ") or usageline.startswith("usage: ")
+        ) and "[--version] [-h|--help]" in usageline
+        options = help_string[help_string.find("ptions:\n") :]
+        options = options[options.find("\n") + 1 :]
         options = self.help_check(options, "--progress=PROGRESS")
         options = self.help_check(options, "--version")
         options = self.help_check(options, "-h, --help")

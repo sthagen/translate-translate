@@ -30,7 +30,7 @@ import os
 import platform
 
 
-usecpo = os.getenv('USECPO')
+usecpo = os.getenv("USECPO")
 
 if platform.python_implementation() == "CPython":
     if usecpo == "1":
@@ -41,6 +41,8 @@ if platform.python_implementation() == "CPython":
         from translate.storage.pypo import *  # pylint: disable=W0401,W0614
 else:
     if usecpo:
-        logging.error("cPO and fPO do not work on %s defaulting to PyPO" %
-                      platform.python_implementation())
+        logging.error(
+            "cPO and fPO do not work on %s defaulting to PyPO"
+            % platform.python_implementation()
+        )
     from translate.storage.pypo import *  # pylint: disable=W0401

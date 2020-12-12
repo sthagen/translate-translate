@@ -51,8 +51,9 @@ class po2html:
         return output_store.filesrc
 
 
-def converthtml(inputfile, outputfile, templatefile, includefuzzy=False,
-                outputthreshold=None):
+def converthtml(
+    inputfile, outputfile, templatefile, includefuzzy=False, outputthreshold=None
+):
     """reads in stdin using fromfileclass, converts using convertorclass,
     writes to stdout
     """
@@ -65,9 +66,8 @@ def converthtml(inputfile, outputfile, templatefile, includefuzzy=False,
     if templatefile is None:
         raise ValueError("must have template file for HTML files")
     else:
-        outputstring = convertor.mergestore(inputstore, templatefile,
-                                            includefuzzy)
-    outputfile.write(outputstring.encode('utf-8'))
+        outputstring = convertor.mergestore(inputstore, templatefile, includefuzzy)
+    outputfile.write(outputstring.encode("utf-8"))
     return 1
 
 
@@ -78,12 +78,13 @@ def main(argv=None):
         ("po", "xhtml"): ("xhtml", converthtml),
         ("po"): ("html", converthtml),
     }
-    parser = convert.ConvertOptionParser(formats, usetemplates=True,
-                                         description=__doc__)
+    parser = convert.ConvertOptionParser(
+        formats, usetemplates=True, description=__doc__
+    )
     parser.add_threshold_option()
     parser.add_fuzzy_option()
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

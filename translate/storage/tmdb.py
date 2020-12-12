@@ -34,7 +34,6 @@ STRIP_REGEXP = re.compile(r"\W", re.UNICODE)
 
 
 class LanguageError(Exception):
-
     def __init__(self, value):
         self.value = value
 
@@ -45,8 +44,7 @@ class LanguageError(Exception):
 class TMDB:
     _tm_dbs = {}
 
-    def __init__(self, db_file, max_candidates=3, min_similarity=75,
-                 max_length=1000):
+    def __init__(self, db_file, max_candidates=3, min_similarity=75, max_length=1000):
 
         self.max_candidates = max_candidates
         self.min_similarity = min_similarity
@@ -132,7 +130,9 @@ DROP TABLE test_for_fts3;
             logging.debug("fts3 supported")
             # for some reason CREATE VIRTUAL TABLE doesn't support IF NOT
             # EXISTS syntax check if fulltext index table exists manually
-            self.cursor.execute("SELECT name FROM sqlite_master WHERE name = 'fulltext'")
+            self.cursor.execute(
+                "SELECT name FROM sqlite_master WHERE name = 'fulltext'"
+            )
             if not self.cursor.fetchone():
                 # create fulltext index table, and index all strings in sources
                 script = """
@@ -216,28 +216,26 @@ DROP TRIGGER IF EXISTS sources_delete_trig;
         target_lang = data.normalize_code(target_lang)
         try:
             try:
-                self.cursor.execute("INSERT INTO sources (text, context, lang, length) VALUES(?, ?, ?, ?)",
-                                    (unit["source"],
-                                     unit["context"],
-                                     source_lang,
-                                     len(unit["source"])))
+                self.cursor.execute(
+                    "INSERT INTO sources (text, context, lang, length) VALUES(?, ?, ?, ?)",
+                    (unit["source"], unit["context"], source_lang, len(unit["source"])),
+                )
                 sid = self.cursor.lastrowid
             except dbapi2.IntegrityError:
                 # source string already exists in db, run query to find sid
-                self.cursor.execute("SELECT sid FROM sources WHERE text=? AND context=? and lang=?",
-                                    (unit["source"],
-                                     unit["context"],
-                                     source_lang))
+                self.cursor.execute(
+                    "SELECT sid FROM sources WHERE text=? AND context=? and lang=?",
+                    (unit["source"], unit["context"], source_lang),
+                )
                 sid = self.cursor.fetchone()
                 (sid,) = sid
             try:
                 # FIXME: get time info from translation store
                 # FIXME: do we need so store target length?
-                self.cursor.execute("INSERT INTO targets (sid, text, lang, time) VALUES (?, ?, ?, ?)",
-                                    (sid,
-                                     unit["target"],
-                                     target_lang,
-                                     int(time.time())))
+                self.cursor.execute(
+                    "INSERT INTO targets (sid, text, lang, time) VALUES (?, ?, ?, ?)",
+                    (sid, unit["target"], target_lang, int(time.time())),
+                )
             except dbapi2.IntegrityError:
                 # target string already exists in db, do nothing
                 pass
@@ -274,26 +272,25 @@ DROP TRIGGER IF EXISTS sources_delete_trig;
 
     def translate_unit(self, unit_source, source_langs, target_langs):
         """return TM suggestions for unit_source"""
-        if isinstance(unit_source, bytes):
-            unit_source = unit_source.decode("utf-8")
         if isinstance(source_langs, list):
             source_langs = [data.normalize_code(lang) for lang in source_langs]
-            source_langs = ','.join(source_langs)
+            source_langs = ",".join(source_langs)
         else:
             source_langs = data.normalize_code(source_langs)
         if isinstance(target_langs, list):
             target_langs = [data.normalize_code(lang) for lang in target_langs]
-            target_langs = ','.join(target_langs)
+            target_langs = ",".join(target_langs)
         else:
             target_langs = data.normalize_code(target_langs)
 
         minlen = min_levenshtein_length(len(unit_source), self.min_similarity)
-        maxlen = max_levenshtein_length(len(unit_source), self.min_similarity,
-                                        self.max_length)
+        maxlen = max_levenshtein_length(
+            len(unit_source), self.min_similarity, self.max_length
+        )
 
         # split source into words, remove punctuation and special
         # chars, keep words that are at least 3 chars long
-        unit_words = STRIP_REGEXP.sub(' ', unit_source).split()
+        unit_words = STRIP_REGEXP.sub(" ", unit_source).split()
         unit_words = list(filter(lambda word: len(word) > 2, unit_words))
 
         if self.fulltext and len(unit_words) > 3:
@@ -302,29 +299,30 @@ DROP TRIGGER IF EXISTS sources_delete_trig;
                        WHERE s.lang IN (?) AND t.lang IN (?) AND s.length BETWEEN ? AND ?
                        AND fulltext MATCH ?"""
             search_str = " OR ".join(unit_words)
-            self.cursor.execute(query, (source_langs, target_langs, minlen,
-                                maxlen, search_str))
+            self.cursor.execute(
+                query, (source_langs, target_langs, minlen, maxlen, search_str)
+            )
         else:
             logging.debug("nonfulltext matching")
             query = """SELECT s.text, t.text, s.context, s.lang, t.lang FROM sources s JOIN targets t ON s.sid = t.sid
             WHERE s.lang IN (?) AND t.lang IN (?)
             AND s.length >= ? AND s.length <= ?"""
-            self.cursor.execute(query, (source_langs, target_langs, minlen,
-                                        maxlen))
+            self.cursor.execute(query, (source_langs, target_langs, minlen, maxlen))
 
         results = []
         for row in self.cursor:
-            quality = self.comparer.similarity(unit_source, row[0],
-                                               self.min_similarity)
+            quality = self.comparer.similarity(unit_source, row[0], self.min_similarity)
             if quality >= self.min_similarity:
-                results.append({
-                    'source': row[0],
-                    'target': row[1],
-                    'context': row[2],
-                    'quality': quality,
-                })
-        results.sort(key=lambda match: match['quality'], reverse=True)
-        results = results[:self.max_candidates]
+                results.append(
+                    {
+                        "source": row[0],
+                        "target": row[1],
+                        "context": row[2],
+                        "quality": quality,
+                    }
+                )
+        results.sort(key=lambda match: match["quality"], reverse=True)
+        results = results[: self.max_candidates]
         logging.debug("results: %s", str(results))
         return results
 

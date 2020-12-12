@@ -30,7 +30,8 @@ from translate.lang import common
 def reverse_quotes(text):
     def convertquotation(match):
         return "”%s“" % match.group(1)
-    return re.sub('“([^”]+)”', convertquotation, text)
+
+    return re.sub("“([^”]+)”", convertquotation, text)
 
 
 class ar(common.Common):
@@ -42,8 +43,8 @@ class ar(common.Common):
         ",": "،",
         ";": "؛",
         "?": "؟",
-        #This causes problems with variables, so commented out for now:
-        #"%": "٪",
+        # This causes problems with variables, so commented out for now:
+        # "%": "٪",
     }
 
     numbertuple = (
@@ -60,7 +61,7 @@ class ar(common.Common):
     )
 
     ignoretests = {
-        'all': ["acronyms", "simplecaps", "startcaps"],
+        "all": ["acronyms", "simplecaps", "startcaps"],
     }
 
     @classmethod

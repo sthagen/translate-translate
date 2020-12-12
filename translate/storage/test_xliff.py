@@ -37,15 +37,15 @@ class TestXLIFFUnit(test_base.TestTranslationUnit):
         unit = self.unit
 
         assert len(unit.geterrors()) == 0
-        unit.adderror(errorname='test1', errortext='Test error message 1.')
-        unit.adderror(errorname='test2', errortext='Test error message 2.')
-        unit.adderror(errorname='test3', errortext='Test error message 3.')
+        unit.adderror(errorname="test1", errortext="Test error message 1.")
+        unit.adderror(errorname="test2", errortext="Test error message 2.")
+        unit.adderror(errorname="test3", errortext="Test error message 3.")
         assert len(unit.geterrors()) == 3
-        assert unit.geterrors()['test1'] == 'Test error message 1.'
-        assert unit.geterrors()['test2'] == 'Test error message 2.'
-        assert unit.geterrors()['test3'] == 'Test error message 3.'
-        unit.adderror(errorname='test1', errortext='New error 1.')
-        assert unit.geterrors()['test1'] == 'New error 1.'
+        assert unit.geterrors()["test1"] == "Test error message 1."
+        assert unit.geterrors()["test2"] == "Test error message 2."
+        assert unit.geterrors()["test3"] == "Test error message 3."
+        unit.adderror(errorname="test1", errortext="New error 1.")
+        assert unit.geterrors()["test1"] == "New error 1."
 
     def test_accepted_control_chars(self):
         """Tests we can assign the accepted control chars.
@@ -53,14 +53,14 @@ class TestXLIFFUnit(test_base.TestTranslationUnit):
         Source: https://en.wikipedia.org/wiki/Valid_characters_in_XML#XML_1.0
         """
         # Unicode Character 'CHARACTER TABULATION' (U+0009)
-        self.unit.target = 'Een\t'
-        assert self.unit.target == 'Een\t'
+        self.unit.target = "Een\t"
+        assert self.unit.target == "Een\t"
         # Unicode Character 'LINE FEED (LF)' (U+000A)
-        self.unit.target = 'Een\n'
-        assert self.unit.target == 'Een\n'
+        self.unit.target = "Een\n"
+        assert self.unit.target == "Een\n"
         # Unicode Character 'CARRIAGE RETURN (CR)' (U+000D)
-        self.unit.target = 'Een\r'
-        assert self.unit.target == 'Een\r'
+        self.unit.target = "Een\r"
+        assert self.unit.target == "Een\r"
 
     def test_unaccepted_control_chars(self):
         """Tests we cannot assign the unaccepted control chars without escaping.
@@ -68,15 +68,15 @@ class TestXLIFFUnit(test_base.TestTranslationUnit):
         Source: https://en.wikipedia.org/wiki/Valid_characters_in_XML#XML_1.0
         """
         for code in xliff.ASCII_CONTROL_CODES:
-            self.unit.target = 'Een&#x%s;' % code.lstrip('0') or '0'
-            assert self.unit.target == 'Een%s' % chr(int(code, 16))
-            self.unit.target = 'Een%s' % chr(int(code, 16))
-            assert self.unit.target == 'Een%s' % chr(int(code, 16))
+            self.unit.target = "Een&#x%s;" % code.lstrip("0") or "0"
+            assert self.unit.target == "Een%s" % chr(int(code, 16))
+            self.unit.target = "Een%s" % chr(int(code, 16))
+            assert self.unit.target == "Een%s" % chr(int(code, 16))
 
     def test_unaccepted_control_chars_escapes_roundtrip(self):
         """Test control characters go ok on escaping roundtrip."""
         for code in xliff.ASCII_CONTROL_CODES:
-            special = 'Een%s' % chr(int(code, 16))
+            special = "Een%s" % chr(int(code, 16))
             self.unit.source = special
             print("unit.source:", repr(self.unit.source))
             print("special:", repr(special))
@@ -85,14 +85,14 @@ class TestXLIFFUnit(test_base.TestTranslationUnit):
 
 class TestXLIFFfile(test_base.TestTranslationStore):
     StoreClass = xliff.xlifffile
-    skeleton = '''<?xml version="1.0" encoding="utf-8"?>
+    skeleton = """<?xml version="1.0" encoding="utf-8"?>
 <xliff version="1.1" xmlns="urn:oasis:names:tc:xliff:document:1.1">
         <file original="doc.txt" source-language="en-US">
                 <body>
                         %s
                 </body>
         </file>
-</xliff>'''
+</xliff>"""
 
     def test_basic(self):
         xlifffile = xliff.xlifffile()
@@ -108,7 +108,7 @@ class TestXLIFFfile(test_base.TestTranslationStore):
 
     def test_namespace(self):
         """Check that we handle namespaces other than the default correctly."""
-        xlfsource = '''<?xml version="1.0" encoding="utf-8"?>
+        xlfsource = """<?xml version="1.0" encoding="utf-8"?>
 <xliff:xliff version="1.2" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <xliff:file original="doc.txt" source-language="en-US">
         <xliff:body>
@@ -117,87 +117,106 @@ class TestXLIFFfile(test_base.TestTranslationStore):
             </xliff:trans-unit>
         </xliff:body>
     </xliff:file>
-</xliff:xliff>'''
+</xliff:xliff>"""
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         print(bytes(xlifffile))
         assert xlifffile.units[0].source == "File 1"
 
     def test_rich_source(self):
         xlifffile = xliff.xlifffile()
-        xliffunit = xlifffile.addsourceunit('')
+        xliffunit = xlifffile.addsourceunit("")
 
         # Test 1
-        xliffunit.rich_source = [StringElem(['foo', X(id='bar'), 'baz'])]
+        xliffunit.rich_source = [StringElem(["foo", X(id="bar"), "baz"])]
         source_dom_node = xliffunit.getlanguageNode(None, 0)
         x_placeable = source_dom_node[0]
 
-        assert source_dom_node.text == 'foo'
+        assert source_dom_node.text == "foo"
 
-        assert x_placeable.tag == 'x'
-        assert x_placeable.attrib['id'] == 'bar'
-        assert x_placeable.tail == 'baz'
+        assert x_placeable.tag == "x"
+        assert x_placeable.attrib["id"] == "bar"
+        assert x_placeable.tail == "baz"
 
         xliffunit.rich_source[0].print_tree(2)
         print(xliffunit.rich_source)
-        assert xliffunit.rich_source == [StringElem([StringElem('foo'), X(id='bar'), StringElem('baz')])]
+        assert xliffunit.rich_source == [
+            StringElem([StringElem("foo"), X(id="bar"), StringElem("baz")])
+        ]
 
         # Test 2
-        xliffunit.rich_source = [StringElem(['foo', 'baz', G(id='oof', sub=[G(id='zab', sub=['bar', 'rab'])])])]
+        xliffunit.rich_source = [
+            StringElem(
+                ["foo", "baz", G(id="oof", sub=[G(id="zab", sub=["bar", "rab"])])]
+            )
+        ]
         source_dom_node = xliffunit.getlanguageNode(None, 0)
         g_placeable = source_dom_node[0]
         nested_g_placeable = g_placeable[0]
 
-        assert source_dom_node.text == 'foobaz'
+        assert source_dom_node.text == "foobaz"
 
-        assert g_placeable.tag == 'g'
+        assert g_placeable.tag == "g"
         assert g_placeable.text is None
-        assert g_placeable.attrib['id'] == 'oof'
+        assert g_placeable.attrib["id"] == "oof"
         assert g_placeable.tail is None
 
-        assert nested_g_placeable.tag == 'g'
-        assert nested_g_placeable.text == 'barrab'
-        assert nested_g_placeable.attrib['id'] == 'zab'
+        assert nested_g_placeable.tag == "g"
+        assert nested_g_placeable.text == "barrab"
+        assert nested_g_placeable.attrib["id"] == "zab"
         assert nested_g_placeable.tail is None
 
         rich_source = xliffunit.rich_source
         rich_source[0].print_tree(2)
-        assert rich_source == [StringElem(['foobaz', G(id='oof', sub=[G(id='zab', sub=['barrab'])])])]
+        assert rich_source == [
+            StringElem(["foobaz", G(id="oof", sub=[G(id="zab", sub=["barrab"])])])
+        ]
 
     def test_rich_target(self):
         xlifffile = xliff.xlifffile()
-        xliffunit = xlifffile.addsourceunit('')
+        xliffunit = xlifffile.addsourceunit("")
 
         # Test 1
-        xliffunit.set_rich_target([StringElem(['foo', X(id='bar'), 'baz'])], 'fr')
+        xliffunit.set_rich_target([StringElem(["foo", X(id="bar"), "baz"])], "fr")
         target_dom_node = xliffunit.getlanguageNode(None, 1)
         x_placeable = target_dom_node[0]
 
-        assert target_dom_node.text == 'foo'
-        assert x_placeable.tag == 'x'
-        assert x_placeable.attrib['id'] == 'bar'
-        assert x_placeable.tail == 'baz'
+        assert target_dom_node.text == "foo"
+        assert x_placeable.tag == "x"
+        assert x_placeable.attrib["id"] == "bar"
+        assert x_placeable.tail == "baz"
 
         # Test 2
-        xliffunit.set_rich_target([StringElem(['foo', 'baz', G(id='oof', sub=[G(id='zab', sub=['bar', 'rab'])])])], 'fr')
+        xliffunit.set_rich_target(
+            [
+                StringElem(
+                    ["foo", "baz", G(id="oof", sub=[G(id="zab", sub=["bar", "rab"])])]
+                )
+            ],
+            "fr",
+        )
         target_dom_node = xliffunit.getlanguageNode(None, 1)
         g_placeable = target_dom_node[0]
         nested_g_placeable = g_placeable[0]
 
-        assert target_dom_node.text == 'foobaz'
+        assert target_dom_node.text == "foobaz"
 
-        assert g_placeable.tag == 'g'
-        print('g_placeable.text: %s (%s)' % (g_placeable.text, type(g_placeable.text)))
+        assert g_placeable.tag == "g"
+        print(
+            "g_placeable.text: {} ({})".format(g_placeable.text, type(g_placeable.text))
+        )
         assert g_placeable.text is None
-        assert g_placeable.attrib['id'] == 'oof'
+        assert g_placeable.attrib["id"] == "oof"
         assert g_placeable.tail is None
 
-        assert nested_g_placeable.tag == 'g'
-        assert nested_g_placeable.text == 'barrab'
-        assert nested_g_placeable.attrib['id'] == 'zab'
+        assert nested_g_placeable.tag == "g"
+        assert nested_g_placeable.text == "barrab"
+        assert nested_g_placeable.attrib["id"] == "zab"
         assert nested_g_placeable.tail is None
 
         xliffunit.rich_target[0].print_tree(2)
-        assert xliffunit.rich_target == [StringElem(['foobaz', G(id='oof', sub=[G(id='zab', sub=['barrab'])])])]
+        assert xliffunit.rich_target == [
+            StringElem(["foobaz", G(id="oof", sub=[G(id="zab", sub=["barrab"])])])
+        ]
 
     def test_source(self):
         xlifffile = xliff.xlifffile()
@@ -218,27 +237,44 @@ class TestXLIFFfile(test_base.TestTranslationStore):
 
     def test_sourcelanguage(self):
         xlifffile = xliff.xlifffile(sourcelanguage="xh")
-        xmltext = bytes(xlifffile).decode('utf-8')
+        xmltext = bytes(xlifffile).decode("utf-8")
         print(xmltext)
         assert xmltext.find('source-language="xh"') > 0
-        #TODO: test that it also works for new files.
+        # TODO: test that it also works for new files.
 
     def test_targetlanguage(self):
         xlifffile = xliff.xlifffile(sourcelanguage="zu", targetlanguage="af")
-        xmltext = bytes(xlifffile).decode('utf-8')
+        xmltext = bytes(xlifffile).decode("utf-8")
         print(xmltext)
         assert xmltext.find('source-language="zu"') > 0
         assert xmltext.find('target-language="af"') > 0
+
+    def test_targetlanguage_multi(self):
+        xlfsource = """<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE foo [ <!ELEMENT foo ANY > <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
+<xliff version="1.1" xmlns="urn:oasis:names:tc:xliff:document:1.1">
+        <file original="doc.txt" source-language="en-US">
+        </file>
+        <file original="doc.txt" source-language="en-US">
+        </file>
+</xliff>"""
+        xlifffile = xliff.xlifffile.parsestring(xlfsource)
+        xlifffile.settargetlanguage("cs")
+        xlifffile.setsourcelanguage("de")
+        xmltext = bytes(xlifffile).decode()
+        print(xmltext)
+        assert xmltext.count('source-language="de"') == 2
+        assert xmltext.count('target-language="cs"') == 2
 
     def test_notes(self):
         xlifffile = xliff.xlifffile()
         unit = xlifffile.addsourceunit("Concept")
         # We don't want to add unnecessary notes
-        assert "note" not in bytes(xlifffile).decode('utf-8')
+        assert "note" not in bytes(xlifffile).decode("utf-8")
         unit.addnote(None)
-        assert "note" not in bytes(xlifffile).decode('utf-8')
+        assert "note" not in bytes(xlifffile).decode("utf-8")
         unit.addnote("")
-        assert "note" not in bytes(xlifffile).decode('utf-8')
+        assert "note" not in bytes(xlifffile).decode("utf-8")
 
         unit.addnote("Please buy bread")
         assert unit.getnotes() == "Please buy bread"
@@ -259,10 +295,16 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         assert notenodes[2].get("from") == "Dad"
         assert unit.getnotes(origin="Dad") == "Don't forget the beer"
 
-        assert not unit.getnotes(origin="Bob") == "Please buy bread\nPlease buy milk\nDon't forget the beer"
+        assert (
+            not unit.getnotes(origin="Bob")
+            == "Please buy bread\nPlease buy milk\nDon't forget the beer"
+        )
         assert not notenodes[2].get("from") == "Mom"
         assert "from" not in notenodes[0].attrib
-        assert unit.getnotes() == "Please buy bread\nPlease buy milk\nDon't forget the beer"
+        assert (
+            unit.getnotes()
+            == "Please buy bread\nPlease buy milk\nDon't forget the beer"
+        )
         assert unit.correctorigin(notenodes[2], "ad")
         assert not unit.correctorigin(notenodes[2], "om")
 
@@ -294,14 +336,14 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         assert alternatives[0].target == "ginmi"
         assert alternatives[1].target == "shikenki"
 
-        #clean up:
+        # clean up:
         alternatives = unit.getalttrans()
         for alt in alternatives:
             unit.delalttrans(alt)
         unit.addalttrans("targetx", sourcetxt="sourcex")
         # test that the source node is before the target node:
         alt = unit.getalttrans()[0]
-        altformat = etree.tostring(alt.xmlelement).decode('utf-8')
+        altformat = etree.tostring(alt.xmlelement, encoding="unicode")
         print(altformat)
         assert altformat.find("<source") < altformat.find("<target")
 
@@ -309,7 +351,11 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         unit.target = "newester target"
         unitformat = str(unit)
         print(unitformat)
-        assert unitformat.find("<source") < unitformat.find("<target") < unitformat.find("<alt-trans")
+        assert (
+            unitformat.find("<source")
+            < unitformat.find("<target")
+            < unitformat.find("<alt-trans")
+        )
 
     def test_fuzzy(self):
         xlifffile = xliff.xlifffile()
@@ -325,22 +371,23 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         unit.markfuzzy(True)
         assert unit.isfuzzy()
 
-        #If there is no target, we can't really indicate fuzzyness, so we set
-        #approved to "no". If we want isfuzzy() to reflect that, the line can
-        #be uncommented
+        # If there is no target, we can't really indicate fuzzyness, so we set
+        # approved to "no". If we want isfuzzy() to reflect that, the line can
+        # be uncommented
         unit.target = None
         assert unit.target is None
         print(unit)
         unit.markfuzzy(True)
         assert 'approved="no"' in str(unit)
-        #assert unit.isfuzzy()
+        # assert unit.isfuzzy()
 
     def test_xml_space(self):
         """Test for the correct handling of xml:space attributes."""
         xlfsource = self.skeleton % (
-            '''<trans-unit id="1" xml:space="preserve">
+            """<trans-unit id="1" xml:space="preserve">
                    <source> File  1 </source>
-               </trans-unit>''')
+               </trans-unit>"""
+        )
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         assert xlifffile.units[0].source == " File  1 "
         root_node = xlifffile.document.getroot()
@@ -350,9 +397,10 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         assert xlifffile.units[0].source == " File  1 "
 
         xlfsource = self.skeleton % (
-            '''<trans-unit id="1" xml:space="default">
+            """<trans-unit id="1" xml:space="default">
                    <source> File  1 </source>
-               </trans-unit>''')
+               </trans-unit>"""
+        )
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         assert xlifffile.units[0].source == "File 1"
         root_node = xlifffile.document.getroot()
@@ -362,9 +410,10 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         assert xlifffile.units[0].source == "File 1"
 
         xlfsource = self.skeleton % (
-            '''<trans-unit id="1">
+            """<trans-unit id="1">
                    <source> File  1 </source>
-               </trans-unit>''')
+               </trans-unit>"""
+        )
         # we currently always normalize as default behaviour for xliff
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         assert xlifffile.units[0].source == "File 1"
@@ -375,10 +424,11 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         assert xlifffile.units[0].source == "File 1"
 
         xlfsource = self.skeleton % (
-            '''<trans-unit id="1">
+            """<trans-unit id="1">
                    <source> File  1
 </source>
-               </trans-unit>''')
+               </trans-unit>"""
+        )
         # we currently always normalize as default behaviour for xliff
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         assert xlifffile.units[0].source == "File 1"
@@ -389,32 +439,38 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         assert xlifffile.units[0].source == "File 1"
 
     def test_parsing(self):
-        xlfsource = self.skeleton \
-            % '''<trans-unit id="1" xml:space="preserve">
+        xlfsource = (
+            self.skeleton
+            % """<trans-unit id="1" xml:space="preserve">
                      <source>File</source>
                      <target/>
-                 </trans-unit>'''
+                 </trans-unit>"""
+        )
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         assert xlifffile.units[0].istranslatable()
 
-        xlfsource = self.skeleton \
-            % '''<trans-unit id="1" xml:space="preserve" translate="no">
+        xlfsource = (
+            self.skeleton
+            % """<trans-unit id="1" xml:space="preserve" translate="no">
                      <source>File</source>
                      <target/>
-                 </trans-unit>'''
+                 </trans-unit>"""
+        )
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         assert not xlifffile.units[0].istranslatable()
 
-        xlfsource = self.skeleton \
-            % '''<trans-unit id="1" xml:space="preserve" translate="yes">
+        xlfsource = (
+            self.skeleton
+            % """<trans-unit id="1" xml:space="preserve" translate="yes">
                      <source>File</source>
                      <target/>
-                 </trans-unit>'''
+                 </trans-unit>"""
+        )
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         assert xlifffile.units[0].istranslatable()
 
     def test_entities(self):
-        xlfsource = '''<?xml version="1.0" encoding="utf-8"?>
+        xlfsource = """<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE foo [ <!ELEMENT foo ANY > <!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
 <xliff version="1.1" xmlns="urn:oasis:names:tc:xliff:document:1.1">
         <file original="doc.txt" source-language="en-US">
@@ -429,15 +485,15 @@ class TestXLIFFfile(test_base.TestTranslationStore):
                     </trans-unit>
                 </body>
         </file>
-</xliff>'''
+</xliff>"""
         xlifffile = xliff.xlifffile.parsestring(xlfsource)
         assert xlifffile.units[0].istranslatable()
-        assert xlifffile.units[0].source == ''
+        assert xlifffile.units[0].source == ""
         assert xlifffile.units[1].istranslatable()
-        assert xlifffile.units[1].source == '&'
+        assert xlifffile.units[1].source == "&"
 
     def test_multiple_filenodes(self):
-        xlfsource = '''<?xml version="1.0" encoding="utf-8"?>
+        xlfsource = """<?xml version="1.0" encoding="utf-8"?>
 <xliff version="1.1" xmlns="urn:oasis:names:tc:xliff:document:1.1">
   <file original="file0" source-language="en" datatype="plaintext">
     <body>
@@ -453,7 +509,7 @@ class TestXLIFFfile(test_base.TestTranslationStore):
       </trans-unit>
     </body>
   </file>
-</xliff>'''
+</xliff>"""
         xfile = xliff.xlifffile.parsestring(xlfsource)
         assert len(xfile.units) == 2
         assert xfile.units[0].getid() == "file0\x04hello"
@@ -477,7 +533,7 @@ class TestXLIFFfile(test_base.TestTranslationStore):
         assert not newxfile.getfilenode("foo")
 
     def test_indent(self):
-        xlfsource = b'''<?xml version='1.0' encoding='UTF-8'?>
+        xlfsource = b"""<?xml version='1.0' encoding='UTF-8'?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.1" version="1.1">
   <file original="doc.txt" source-language="en-US">
     <body>
@@ -488,8 +544,8 @@ class TestXLIFFfile(test_base.TestTranslationStore):
     </body>
   </file>
 </xliff>
-'''
-        xlfsourcenote = b'''<?xml version='1.0' encoding='UTF-8'?>
+"""
+        xlfsourcenote = b"""<?xml version='1.0' encoding='UTF-8'?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.1" version="1.1">
   <file original="doc.txt" source-language="en-US">
     <body>
@@ -501,14 +557,14 @@ class TestXLIFFfile(test_base.TestTranslationStore):
     </body>
   </file>
 </xliff>
-'''
+"""
         xfile = xliff.xlifffile.parsestring(xlfsource)
         assert bytes(xfile) == xlfsource
-        xfile.units[0].addnote('Test note')
+        xfile.units[0].addnote("Test note")
         assert bytes(xfile) == xlfsourcenote
 
     def test_add_target(self):
-        xlfsource = b'''<?xml version='1.0' encoding='UTF-8'?>
+        xlfsource = b"""<?xml version='1.0' encoding='UTF-8'?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.1" version="1.1">
   <file original="doc.txt" source-language="en-US">
     <body>
@@ -517,8 +573,8 @@ class TestXLIFFfile(test_base.TestTranslationStore):
     </body>
   </file>
 </xliff>
-'''
-        xlftarget = '''<?xml version='1.0' encoding='UTF-8'?>
+"""
+        xlftarget = """<?xml version='1.0' encoding='UTF-8'?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.1" version="1.1">
   <file original="doc.txt" source-language="en-US">
     <body>
@@ -528,8 +584,8 @@ class TestXLIFFfile(test_base.TestTranslationStore):
     </body>
   </file>
 </xliff>
-'''
+"""
         xfile = xliff.xlifffile.parsestring(xlfsource)
         assert bytes(xfile) == xlfsource
         xfile.units[0].rich_target = ["Soubor"]
-        assert bytes(xfile).decode('ascii') == xlftarget
+        assert bytes(xfile).decode("ascii") == xlftarget

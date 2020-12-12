@@ -35,10 +35,10 @@ class ur(common.Common):
         ",": "،",
         ";": "؛",
         "?": "؟",
-        #This causes problems with variables, so commented out for now:
-        #"%": "٪",
+        # This causes problems with variables, so commented out for now:
+        # "%": "٪",
     }
 
     ignoretests = {
-        'all': ["simplecaps", "startcaps"],
+        "all": ["simplecaps", "startcaps"],
     }

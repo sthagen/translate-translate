@@ -1,4 +1,3 @@
-
 from io import BytesIO
 
 from pytest import mark
@@ -8,17 +7,22 @@ from translate.tools import pocount
 
 
 class TestCount:
-
     def count(self, source, expectedsource, target=None, expectedtarget=None):
         """simple helper to check the respective word counts"""
         poelement = po.pounit(source)
         if target is not None:
             poelement.target = target
         wordssource, wordstarget = statsdb.wordsinunit(poelement)
-        print('Source (expected=%d; actual=%d): "%s"' % (expectedsource, wordssource, source))
+        print(
+            'Source (expected=%d; actual=%d): "%s"'
+            % (expectedsource, wordssource, source)
+        )
         assert wordssource == expectedsource
         if target is not None:
-            print('Target (expected=%d; actual=%d): "%s"' % (expectedtarget, wordstarget, target))
+            print(
+                'Target (expected=%d; actual=%d): "%s"'
+                % (expectedtarget, wordstarget, target)
+            )
             assert wordstarget == expectedtarget
 
     def test_simple_count_zero(self):
@@ -89,10 +93,12 @@ class TestCount:
 
 
 class TestPOCount:
-    """This only tests the old (memory-based) pocount method, not the current
-    code based on statsdb."""
+    """
+    This only tests the old (memory-based) pocount method, not the current
+    code based on statsdb.
+    """
 
-    inputdata = br'''
+    inputdata = br"""
 msgid "translated unit"
 msgstr "translated unit"
 
@@ -115,44 +121,44 @@ msgstr ""
 # untranslated
 #~ msgid "obsolete untranslated unit"
 #~ msgstr ""
-'''
+"""
 
     def test_translated(self):
         pofile = BytesIO(self.inputdata)
         stats = pocount.calcstats_old(pofile)
-        assert stats['translated'] == 1
+        assert stats["translated"] == 1
 
     def test_fuzzy(self):
         pofile = BytesIO(self.inputdata)
         stats = pocount.calcstats_old(pofile)
-        assert stats['fuzzy'] == 1
+        assert stats["fuzzy"] == 1
 
     def test_untranslated(self):
         pofile = BytesIO(self.inputdata)
         stats = pocount.calcstats_old(pofile)
-        assert stats['untranslated'] == 1
+        assert stats["untranslated"] == 1
 
     def test_total(self):
         pofile = BytesIO(self.inputdata)
         stats = pocount.calcstats_old(pofile)
-        assert stats['total'] == 3
+        assert stats["total"] == 3
 
     def test_translatedsourcewords(self):
         pofile = BytesIO(self.inputdata)
         stats = pocount.calcstats_old(pofile)
-        assert stats['translatedsourcewords'] == 2
+        assert stats["translatedsourcewords"] == 2
 
     def test_fuzzysourcewords(self):
         pofile = BytesIO(self.inputdata)
         stats = pocount.calcstats_old(pofile)
-        assert stats['fuzzysourcewords'] == 2
+        assert stats["fuzzysourcewords"] == 2
 
     def test_untranslatedsourcewords(self):
         pofile = BytesIO(self.inputdata)
         stats = pocount.calcstats_old(pofile)
-        assert stats['untranslatedsourcewords'] == 2
+        assert stats["untranslatedsourcewords"] == 2
 
     def test_totalsourcewords(self):
         pofile = BytesIO(self.inputdata)
         stats = pocount.calcstats_old(pofile)
-        assert stats['totalsourcewords'] == 6
+        assert stats["totalsourcewords"] == 6

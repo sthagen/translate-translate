@@ -30,7 +30,8 @@ from translate.lang import common
 def reverse_quotes(text):
     def convertquotation(match):
         return "”%s“" % match.group(1)
-    return re.sub('“([^”]+)”', convertquotation, text)
+
+    return re.sub("“([^”]+)”", convertquotation, text)
 
 
 class nqo(common.Common):
@@ -46,7 +47,7 @@ class nqo(common.Common):
     }
 
     ignoretests = {
-        'all': ["acronyms", "simplecaps", "startcaps"],
+        "all": ["acronyms", "simplecaps", "startcaps"],
     }
 
     @classmethod

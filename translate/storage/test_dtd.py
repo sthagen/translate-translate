@@ -25,55 +25,57 @@ from translate.storage import dtd, test_monolingual
 
 def test_roundtrip_quoting():
     specials = [
-        'Fish & chips',
-        'five < six',
-        'six > five',
-        'Use &nbsp;',
+        "Fish & chips",
+        "five < six",
+        "six > five",
+        "Use &nbsp;",
         'Use &amp;nbsp;A "solution"',
         "skop 'n bal",
         '"""',
         "'''",
-        '\n',
-        '\t',
-        '\r',
-        'Escape at end \\',
-        '',
-        '\\n',
-        '\\t',
-        '\\r',
+        "\n",
+        "\t",
+        "\r",
+        "Escape at end \\",
+        "",
+        "\\n",
+        "\\t",
+        "\\r",
         '\\"',
-        '\r\n',
-        '\\r\\n',
-        '\\',
+        "\r\n",
+        "\\r\\n",
+        "\\",
         "Completed %S",
         "&blockAttackSites;",
         "&#x00A0;",
         "&intro-point2-a;",
         "&basePBMenu.label;",
-        #"Don't buy",
-        #"Don't \"buy\"",
-        "A \"thing\"",
-        "<a href=\"http"
+        # "Don't buy",
+        # "Don't \"buy\"",
+        'A "thing"',
+        '<a href="http',
     ]
     for special in specials:
         quoted_special = dtd.quotefordtd(special)
         unquoted_special = dtd.unquotefromdtd(quoted_special)
-        print("special: %r\nquoted: %r\nunquoted: %r\n" % (special,
-                                                           quoted_special,
-                                                           unquoted_special))
+        print(
+            "special: %r\nquoted: %r\nunquoted: %r\n"
+            % (special, quoted_special, unquoted_special)
+        )
         assert special == unquoted_special
 
 
 @mark.xfail(reason="Not Implemented")
 def test_quotefordtd_unimplemented_cases():
     """Test unimplemented quoting DTD cases."""
-    assert dtd.quotefordtd("Between <p> and </p>") == ('"Between &lt;p&gt; and'
-                                                       ' &lt;/p&gt;"')
+    assert dtd.quotefordtd("Between <p> and </p>") == (
+        '"Between &lt;p&gt; and' ' &lt;/p&gt;"'
+    )
 
 
 def test_quotefordtd():
     """Test quoting DTD definitions"""
-    assert dtd.quotefordtd('') == '""'
+    assert dtd.quotefordtd("") == '""'
     assert dtd.quotefordtd("") == '""'
     assert dtd.quotefordtd("Completed %S") == '"Completed &#037;S"'
     assert dtd.quotefordtd("&blockAttackSites;") == '"&blockAttackSites;"'
@@ -83,10 +85,10 @@ def test_quotefordtd():
     # The ' character isn't escaped as &apos; since the " char isn't present.
     assert dtd.quotefordtd("Don't buy") == '"Don\'t buy"'
     # The ' character is escaped as &apos; because the " character is present.
-    assert dtd.quotefordtd("Don't \"buy\"") == '"Don&apos;t &quot;buy&quot;"'
-    assert dtd.quotefordtd("A \"thing\"") == '"A &quot;thing&quot;"'
+    assert dtd.quotefordtd('Don\'t "buy"') == '"Don&apos;t &quot;buy&quot;"'
+    assert dtd.quotefordtd('A "thing"') == '"A &quot;thing&quot;"'
     # The " character is not escaped when it indicates an attribute value.
-    assert dtd.quotefordtd("<a href=\"http") == "'<a href=\"http'"
+    assert dtd.quotefordtd('<a href="http') == "'<a href=\"http'"
     # &amp;
     assert dtd.quotefordtd("Color & Light") == '"Color &amp; Light"'
     assert dtd.quotefordtd("Color & &block;") == '"Color &amp; &block;"'
@@ -121,24 +123,22 @@ def test_unquotefromdtd():
     assert dtd.unquotefromdtd("'Don&apos;t buy'") == "Don't buy"
     # "
     assert dtd.unquotefromdtd("'Don&apos;t &quot;buy&quot;'") == 'Don\'t "buy"'
-    assert dtd.unquotefromdtd('"A &quot;thing&quot;"') == "A \"thing\""
-    assert dtd.unquotefromdtd('"A &#x0022;thing&#x0022;"') == "A \"thing\""
-    assert dtd.unquotefromdtd("'<a href=\"http'") == "<a href=\"http"
+    assert dtd.unquotefromdtd('"A &quot;thing&quot;"') == 'A "thing"'
+    assert dtd.unquotefromdtd('"A &#x0022;thing&#x0022;"') == 'A "thing"'
+    assert dtd.unquotefromdtd("'<a href=\"http'") == '<a href="http'
     # other chars
     assert dtd.unquotefromdtd('"&#187;"') == "»"
 
 
 def test_android_roundtrip_quoting():
-    specials = [
-        "don't",
-        'the "thing"'
-    ]
+    specials = ["don't", 'the "thing"']
     for special in specials:
         quoted_special = dtd.quoteforandroid(special)
         unquoted_special = dtd.unquotefromandroid(quoted_special)
-        print("special: %r\nquoted: %r\nunquoted: %r\n" % (special,
-                                                           quoted_special,
-                                                           unquoted_special))
+        print(
+            "special: %r\nquoted: %r\nunquoted: %r\n"
+            % (special, quoted_special, unquoted_special)
+        )
         assert special == unquoted_special
 
 
@@ -153,7 +153,7 @@ def test_unquotefromandroid():
     assert dtd.unquotefromandroid('"Don\\&apos;t show"') == "Don't show"
     assert dtd.unquotefromandroid('"Don\\\'t show"') == "Don't show"
     assert dtd.unquotefromandroid('"Don\\u0027t show"') == "Don't show"
-    assert dtd.unquotefromandroid('"A \\&quot;thing\\&quot;"') == "A \"thing\""
+    assert dtd.unquotefromandroid('"A \\&quot;thing\\&quot;"') == 'A "thing"'
 
 
 def test_removeinvalidamp(recwarn):
@@ -163,6 +163,7 @@ def test_removeinvalidamp(recwarn):
         if expected is None:
             expected = actual
         assert dtd.removeinvalidamps("test.name", actual) == expected
+
     # No errors
     tester("Valid &entity; included")
     tester("Valid &entity.name; included")
@@ -191,14 +192,14 @@ class TestDTD(test_monolingual.TestMonolingualStore):
     def dtdparse(self, dtdsource):
         """helper that parses dtd source without requiring files"""
         if not isinstance(dtdsource, bytes):
-            dtdsource = dtdsource.encode('utf-8')
+            dtdsource = dtdsource.encode("utf-8")
         dummyfile = BytesIO(dtdsource)
         dtdfile = dtd.dtdfile(dummyfile)
         return dtdfile
 
     def dtdregen(self, dtdsource):
         """helper that converts dtd source to dtdfile object and back"""
-        return bytes(self.dtdparse(dtdsource)).decode('utf-8')
+        return bytes(self.dtdparse(dtdsource)).decode("utf-8")
 
     def test_simpleentity(self):
         """checks that a simple dtd entity definition is parsed correctly"""
@@ -239,23 +240,23 @@ class TestDTD(test_monolingual.TestMonolingualStore):
 
     def test_commententity(self):
         """check that we don't process messages in <!-- comments -->: bug 102"""
-        dtdsource = '''<!-- commenting out until bug 38906 is fixed
-<!ENTITY messagesHeader.label         "Messages"> -->'''
+        dtdsource = """<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->"""
         dtdfile = self.dtdparse(dtdsource)
         assert len(dtdfile.units) == 1
         dtdunit = dtdfile.units[0]
         print(dtdunit)
-        assert dtdunit.isnull()
+        assert dtdunit.isblank()
 
     def test_newlines_in_entity(self):
         """tests that we can handle newlines in the entity itself"""
-        dtdsource = '''<!ENTITY fileNotFound.longDesc "
+        dtdsource = """<!ENTITY fileNotFound.longDesc "
 <ul>
   <li>Check the file name for capitalisation or other typing errors.</li>
   <li>Check to see if the file was moved, renamed or deleted.</li>
 </ul>
 ">
-'''
+"""
         dtdregen = self.dtdregen(dtdsource)
         print(dtdregen)
         print(dtdsource)
@@ -300,9 +301,9 @@ certificate.">
 
     def test_localisation_notes(self):
         """test to ensure that we retain the localisation note correctly"""
-        dtdsource = '''<!--LOCALIZATION NOTE (publishFtp.label): Edit box appears beside this label -->
+        dtdsource = """<!--LOCALIZATION NOTE (publishFtp.label): Edit box appears beside this label -->
 <!ENTITY publishFtp.label "If publishing to a FTP site, enter the HTTP address to browse to:">
-'''
+"""
         dtdregen = self.dtdregen(dtdsource)
         assert dtdsource == dtdregen
 
@@ -312,7 +313,7 @@ certificate.">
         dtdregen = self.dtdregen(dtdsource)
         assert dtdsource == dtdregen
 
-    #test for bug #610
+    # test for bug #610
     def test_entitityreference_order_in_source(self):
         """checks that an &entity; in the source is retained"""
         dtdsource = '<!ENTITY % realBrandDTD SYSTEM "chrome://branding/locale/brand.dtd">\n%realBrandDTD;\n<!-- some comment -->\n'
@@ -328,7 +329,9 @@ certificate.">
         dtdsource = '<!ENTITY % realBrandDTD\n SYSTEM "chrome://branding/locale/brand.dtd">\n%realBrandDTD;\n'
         # FIXME: The following line is necessary, because of dtdfile's inability to remember the spacing of
         # the source DTD file when converting back to DTD.
-        dtdregen = self.dtdregen(dtdsource).replace('realBrandDTD SYSTEM', 'realBrandDTD\n SYSTEM')
+        dtdregen = self.dtdregen(dtdsource).replace(
+            "realBrandDTD SYSTEM", "realBrandDTD\n SYSTEM"
+        )
         print(dtdsource)
         print(dtdregen)
         assert dtdsource == dtdregen
@@ -351,7 +354,9 @@ certificate.">
         """checks that invalid quoting doesn't work - quotes can't be reopened"""
         # TODO: we should rather raise an error
         dtdsource = '<!ENTITY test.me "bananas for sale""room">\n'
-        assert dtd.unquotefromdtd(dtdsource[dtdsource.find('"'):]) == 'bananas for sale'
+        assert (
+            dtd.unquotefromdtd(dtdsource[dtdsource.find('"') :]) == "bananas for sale"
+        )
         dtdfile = self.dtdparse(dtdsource)
         assert len(dtdfile.units) == 1
         dtdunit = dtdfile.units[0]
@@ -368,52 +373,62 @@ certificate.">
     # Test for bug #68
     def test_entity_escaping(self):
         """Test entities escaping (&amp; &quot; &lt; &gt; &apos;) (bug #68)"""
-        dtdsource = ('<!ENTITY securityView.privacy.header "Privacy &amp; '
-                     'History">\n<!ENTITY rights.safebrowsing-term3 "Uncheck '
-                     'the options to &quot;&blockAttackSites.label;&quot; and '
-                     '&quot;&blockWebForgeries.label;&quot;">\n<!ENTITY '
-                     'translate.test1 \'XML encodings don&apos;t work\'>\n'
-                     '<!ENTITY translate.test2 "In HTML the text paragraphs '
-                     'are enclosed between &lt;p&gt; and &lt;/p&gt; tags.">\n')
+        dtdsource = (
+            '<!ENTITY securityView.privacy.header "Privacy &amp; '
+            'History">\n<!ENTITY rights.safebrowsing-term3 "Uncheck '
+            "the options to &quot;&blockAttackSites.label;&quot; and "
+            '&quot;&blockWebForgeries.label;&quot;">\n<!ENTITY '
+            "translate.test1 'XML encodings don&apos;t work'>\n"
+            '<!ENTITY translate.test2 "In HTML the text paragraphs '
+            'are enclosed between &lt;p&gt; and &lt;/p&gt; tags.">\n'
+        )
         dtdfile = self.dtdparse(dtdsource)
         assert len(dtdfile.units) == 4
-        #dtdunit = dtdfile.units[0]
-        #assert dtdunit.definition == '"Privacy &amp; History"'
-        #assert dtdunit.target == "Privacy & History"
-        #assert dtdunit.source == "Privacy & History"
+        # dtdunit = dtdfile.units[0]
+        # assert dtdunit.definition == '"Privacy &amp; History"'
+        # assert dtdunit.target == "Privacy & History"
+        # assert dtdunit.source == "Privacy & History"
         dtdunit = dtdfile.units[1]
-        assert dtdunit.definition == ('"Uncheck the options to &quot;'
-                                      '&blockAttackSites.label;&quot; and '
-                                      '&quot;&blockWebForgeries.label;&quot;"')
-        assert dtdunit.target == ("Uncheck the options to \""
-                                  "&blockAttackSites.label;\" and \""
-                                  "&blockWebForgeries.label;\"")
-        assert dtdunit.source == ("Uncheck the options to \""
-                                  "&blockAttackSites.label;\" and \""
-                                  "&blockWebForgeries.label;\"")
+        assert dtdunit.definition == (
+            '"Uncheck the options to &quot;'
+            "&blockAttackSites.label;&quot; and "
+            '&quot;&blockWebForgeries.label;&quot;"'
+        )
+        assert dtdunit.target == (
+            'Uncheck the options to "'
+            '&blockAttackSites.label;" and "'
+            '&blockWebForgeries.label;"'
+        )
+        assert dtdunit.source == (
+            'Uncheck the options to "'
+            '&blockAttackSites.label;" and "'
+            '&blockWebForgeries.label;"'
+        )
         dtdunit = dtdfile.units[2]
         assert dtdunit.definition == "'XML encodings don&apos;t work'"
-        assert dtdunit.target == "XML encodings don\'t work"
-        assert dtdunit.source == "XML encodings don\'t work"
-        #dtdunit = dtdfile.units[3]
-        #assert dtdunit.definition == ('"In HTML the text paragraphs are '
+        assert dtdunit.target == "XML encodings don't work"
+        assert dtdunit.source == "XML encodings don't work"
+        # dtdunit = dtdfile.units[3]
+        # assert dtdunit.definition == ('"In HTML the text paragraphs are '
         #                              'enclosed between &lt;p&gt; and &lt;/p'
         #                              '&gt; tags."')
-        #assert dtdunit.target == ("In HTML the text paragraphs are enclosed "
+        # assert dtdunit.target == ("In HTML the text paragraphs are enclosed "
         #                          "between <p> and </p> tags.")
-        #assert dtdunit.source == ("In HTML the text paragraphs are enclosed "
+        # assert dtdunit.source == ("In HTML the text paragraphs are enclosed "
         #                          "between <p> and </p> tags.")
 
     # Test for bug #68
     def test_entity_escaping_roundtrip(self):
         """Test entities escaping roundtrip (&amp; &quot; ...) (bug #68)"""
-        dtdsource = ('<!ENTITY securityView.privacy.header "Privacy &amp; '
-                     'History">\n<!ENTITY rights.safebrowsing-term3 "Uncheck '
-                     'the options to &quot;&blockAttackSites.label;&quot; and '
-                     '&quot;&blockWebForgeries.label;&quot;">\n<!ENTITY '
-                     'translate.test1 \'XML encodings don&apos;t work\'>\n'
-                     '<!ENTITY translate.test2 "In HTML the text paragraphs '
-                     'are enclosed between &lt;p&gt; and &lt;/p&gt; tags.">\n')
+        dtdsource = (
+            '<!ENTITY securityView.privacy.header "Privacy &amp; '
+            'History">\n<!ENTITY rights.safebrowsing-term3 "Uncheck '
+            "the options to &quot;&blockAttackSites.label;&quot; and "
+            '&quot;&blockWebForgeries.label;&quot;">\n<!ENTITY '
+            "translate.test1 'XML encodings don&apos;t work'>\n"
+            '<!ENTITY translate.test2 "In HTML the text paragraphs '
+            'are enclosed between &lt;p&gt; and &lt;/p&gt; tags.">\n'
+        )
         dtdregen = self.dtdregen(dtdsource)
         assert dtdsource == dtdregen
 
@@ -428,7 +443,7 @@ class TestAndroidDTD(test_monolingual.TestMonolingualStore):
         having real Android DTD files.
         """
         if not isinstance(dtdsource, bytes):
-            dtdsource = dtdsource.encode('utf-8')
+            dtdsource = dtdsource.encode("utf-8")
         dummyfile = BytesIO(dtdsource)
         dtdfile = dtd.dtdfile(dummyfile, android=True)
         return dtdfile
@@ -440,7 +455,7 @@ class TestAndroidDTD(test_monolingual.TestMonolingualStore):
         in-memory store and writing back to an Android DTD file without really
         having a real file.
         """
-        return bytes(self.dtdparse(dtdsource)).decode('utf-8')
+        return bytes(self.dtdparse(dtdsource)).decode("utf-8")
 
     # Test for bug #2480
     def test_android_single_quote_escape(self):
@@ -448,9 +463,11 @@ class TestAndroidDTD(test_monolingual.TestMonolingualStore):
 
         See bug #2480.
         """
-        dtdsource = ('<!ENTITY pref_char_encoding_off "Don\\\'t show menu">\n'
-                     '<!ENTITY sync.nodevice.label \'Don\\&apos;t show\'>\n'
-                     '<!ENTITY sync.nodevice.label "Don\\u0027t show">\n')
+        dtdsource = (
+            '<!ENTITY pref_char_encoding_off "Don\\\'t show menu">\n'
+            "<!ENTITY sync.nodevice.label 'Don\\&apos;t show'>\n"
+            '<!ENTITY sync.nodevice.label "Don\\u0027t show">\n'
+        )
         dtdfile = self.dtdparse(dtdsource)
         assert len(dtdfile.units) == 3
         dtdunit = dtdfile.units[0]
@@ -475,9 +492,11 @@ class TestAndroidDTD(test_monolingual.TestMonolingualStore):
 
         See bug #2480.
         """
-        dtdsource = ('<!ENTITY pref_char_encoding_off "Don\\\'t show menu">\n'
-                     '<!ENTITY sync.nodevice.label \'Don\\&apos;t show\'>\n'
-                     '<!ENTITY sync.nodevice.label "Don\\u0027t show">\n')
+        dtdsource = (
+            '<!ENTITY pref_char_encoding_off "Don\\\'t show menu">\n'
+            "<!ENTITY sync.nodevice.label 'Don\\&apos;t show'>\n"
+            '<!ENTITY sync.nodevice.label "Don\\u0027t show">\n'
+        )
         dtdregen = self.dtdregen(dtdsource)
         assert dtdsource == dtdregen
 
@@ -488,8 +507,8 @@ class TestAndroidDTD(test_monolingual.TestMonolingualStore):
         assert len(dtdfile.units) == 1
         dtdunit = dtdfile.units[0]
         assert dtdunit.definition == '"A \\&quot;thing\\&quot;"'
-        assert dtdunit.target == "A \"thing\""
-        assert dtdunit.source == "A \"thing\""
+        assert dtdunit.target == 'A "thing"'
+        assert dtdunit.source == 'A "thing"'
 
     def test_android_double_quote_escape_parse_and_convert_back(self):
         """Checks that Android DTD don't change after parse and convert back.

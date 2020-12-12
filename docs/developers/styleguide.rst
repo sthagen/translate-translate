@@ -10,6 +10,23 @@ to follow these guidelines.
 This Styleguide follows :pep:`8` with some clarifications. It is based almost
 verbatim on the `Flask Styleguide`_.
 
+pre-commit hooks
+----------------
+
+The Translate styleguide can be checked by `pre-commit`_. The Translate toolkit
+repository repository contains configuration for it to verify the committed
+files are sane. After installing it (it is already included in the
+:file:`requirements/dev.txt`) turn it on by running ``pre-commit install`` in
+Translate toolkit checkout. This way all your changes will be automatically
+checked.
+
+You can also trigger check manually, to check all files run:
+
+.. code-block:: sh
+
+    pre-commit run --all
+
+.. _pre-commit: https://pre-commit.com/
 
 .. _styleguide-python:
 
@@ -210,7 +227,7 @@ Like in :pep:`8`, but:
     from lxml.html import fromstring
 
     from translate.filters import checks
-    from translate.storage import versioncontrol
+    from translate.storage import base
     from translate.storage.aresource import (EOF, WHITESPACE, AndroidFile,
                                              AndroidUnit, android_decode,
                                              android_encode)

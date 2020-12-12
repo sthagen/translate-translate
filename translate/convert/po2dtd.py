@@ -63,7 +63,10 @@ def applytranslation(entity, dtdunit, inputunit, mixedentities):
                         # For the sake of diffs we keep the case of the
                         # accesskey the same if we know the translation didn't
                         # change. Casing matters in XUL.
-                        if unquotedstr == dtdunit.source and original.lower() == unquotedstr.lower():
+                        if (
+                            unquotedstr == dtdunit.source
+                            and original.lower() == unquotedstr.lower()
+                        ):
                             if original.isupper():
                                 unquotedstr = unquotedstr.upper()
                             elif original.islower():
@@ -88,13 +91,16 @@ class redtd:
     def handleinunit(self, inunit, includefuzzy):
         entities = inunit.getlocations()
         mixedentities = self.mixer.match_entities(entities)
+        self.dtdfile.require_index()
         for entity in entities:
             if entity in self.dtdfile.id_index:
                 # now we need to replace the definition of entity with msgstr
                 dtdunit = self.dtdfile.id_index[entity]  # find the dtd
                 if inunit.istranslated() or not bool(inunit.source):
                     applytranslation(entity, dtdunit, inunit, mixedentities)
-                elif self.remove_untranslated and not (includefuzzy and inunit.isfuzzy()):
+                elif self.remove_untranslated and not (
+                    includefuzzy and inunit.isfuzzy()
+                ):
                     dtdunit.entity = None
                 else:
                     applytranslation(entity, dtdunit, inunit, mixedentities)
@@ -111,7 +117,9 @@ class po2dtd:
         entities = inputunit.getlocations()
         if len(entities) > 1:
             # don't yet handle multiple entities
-            dtdunit.comments.append(("conversionnote", '<!-- CONVERSION NOTE - multiple entities -->\n'))
+            dtdunit.comments.append(
+                ("conversionnote", "<!-- CONVERSION NOTE - multiple entities -->\n")
+            )
             dtdunit.entity = entities[0]
         elif len(entities) == 1:
             dtdunit.entity = entities[0]
@@ -125,12 +133,14 @@ class po2dtd:
             if not note:
                 continue
             note = quote.unstripcomment(note)
-            if (note.find('LOCALIZATION NOTE') == -1) or (note.find('GROUP') == -1):
+            if (note.find("LOCALIZATION NOTE") == -1) or (note.find("GROUP") == -1):
                 dtdunit.comments.append(("comment", note))
         # msgidcomments are special - they're actually localization notes
         msgidcomment = inputunit._extract_msgidcomments()
         if msgidcomment:
-            locnote = quote.unstripcomment("LOCALIZATION NOTE (" + dtdunit.entity + "): " + msgidcomment)
+            locnote = quote.unstripcomment(
+                "LOCALIZATION NOTE (" + dtdunit.entity + "): " + msgidcomment
+            )
             dtdunit.comments.append(("locnote", locnote))
 
     def convertstrings(self, inputunit, dtdunit):
@@ -152,16 +162,23 @@ class po2dtd:
         outputstore = dtd.dtdfile(android=self.android)
         self.currentgroups = []
         for inputunit in inputstore.units:
-            if ((includefuzzy or not inputunit.isfuzzy()) and
-                (inputunit.istranslated() or not self.remove_untranslated)):
+            if (includefuzzy or not inputunit.isfuzzy()) and (
+                inputunit.istranslated() or not self.remove_untranslated
+            ):
                 dtdunit = self.convertunit(inputunit)
                 if dtdunit is not None:
                     outputstore.addunit(dtdunit)
         return outputstore
 
 
-def convertdtd(inputfile, outputfile, templatefile, includefuzzy=False,
-               remove_untranslated=False, outputthreshold=None):
+def convertdtd(
+    inputfile,
+    outputfile,
+    templatefile,
+    includefuzzy=False,
+    remove_untranslated=False,
+    outputthreshold=None,
+):
     inputstore = po.pofile(inputfile)
 
     if not convert.should_output_store(inputstore, outputthreshold):
@@ -176,16 +193,19 @@ def convertdtd(inputfile, outputfile, templatefile, includefuzzy=False,
     input_header = inputstore.header()
     if input_header:
         header_comment = input_header.getnotes("developer")
-        if "embedding/android" in header_comment or "mobile/android/base" in header_comment:
+        if (
+            "embedding/android" in header_comment
+            or "mobile/android/base" in header_comment
+        ):
             android_dtd = True
 
     if templatefile is None:
-        convertor = po2dtd(android=android_dtd,
-                           remove_untranslated=remove_untranslated)
+        convertor = po2dtd(android=android_dtd, remove_untranslated=remove_untranslated)
     else:
         templatestore = dtd.dtdfile(templatefile, android=android_dtd)
-        convertor = redtd(templatestore, android=android_dtd,
-                          remove_untranslated=remove_untranslated)
+        convertor = redtd(
+            templatestore, android=android_dtd, remove_untranslated=remove_untranslated
+        )
     outputstore = convertor.convertstore(inputstore, includefuzzy)
     outputstore.serialize(outputfile)
     return 1
@@ -194,12 +214,14 @@ def convertdtd(inputfile, outputfile, templatefile, includefuzzy=False,
 def main(argv=None):
     # handle command line options
     formats = {"po": ("dtd", convertdtd), ("po", "dtd"): ("dtd", convertdtd)}
-    parser = convert.ConvertOptionParser(formats, usetemplates=True, description=__doc__)
+    parser = convert.ConvertOptionParser(
+        formats, usetemplates=True, description=__doc__
+    )
     parser.add_threshold_option()
     parser.add_fuzzy_option()
     parser.add_remove_untranslated_option()
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

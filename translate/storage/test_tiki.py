@@ -1,4 +1,3 @@
-
 # tiki unit tests
 # Author: Wil Clouser <wclouser@mozilla.com>
 # Date: 2008-12-01
@@ -8,27 +7,25 @@ from translate.storage import tiki
 
 
 class TestTikiUnit:
-
     def test_locations(self):
         unit = tiki.TikiUnit("one")
-        unit.addlocation('blah')
+        unit.addlocation("blah")
         assert unit.getlocations() == []
-        unit.addlocation('unused')
-        assert unit.getlocations() == ['unused']
+        unit.addlocation("unused")
+        assert unit.getlocations() == ["unused"]
 
     def test_to_unicode(self):
         unit = tiki.TikiUnit("one")
-        unit.target = 'two'
+        unit.target = "two"
         assert str(unit) == '"one" => "two",\n'
 
         unit2 = tiki.TikiUnit("one")
-        unit2.target = 'two'
-        unit2.addlocation('untranslated')
+        unit2.target = "two"
+        unit2.addlocation("untranslated")
         assert str(unit2) == '// "one" => "two",\n'
 
 
 class TestTikiStore:
-
     def test_parse_simple(self):
         tikisource = br'"Top authors" => "Top autoren",'
         tikifile = tiki.TikiStore(tikisource)
@@ -44,9 +41,11 @@ class TestTikiStore:
         assert tikifile.units[0].target == r"test: |\n \r \t \\ \$ \"|"
 
     def test_parse_locations(self):
-        """This function will test to make sure the location matching is working.  It
+        """
+        This function will test to make sure the location matching is working.  It
         tests that locations are detected, the default "translated" case, and that
-        "unused" lines can start with //"""
+        "unused" lines can start with //
+        """
         tikisource = b"""
 "zero_source" => "zero_target",
 // ### Start of unused words

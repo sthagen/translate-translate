@@ -30,11 +30,11 @@ class th(common.Common):
 
     puncdict = {
         ". ": " ",
-        #"; ": " ", # Test interaction with XML entities
+        # "; ": " ", # Test interaction with XML entities
     }
 
     # No capitalisation. While we can't do sentence segmentation, sentencecount
     # is useless.
     ignoretests = {
-        'all': ["sentencecount", "simplecaps", "startcaps"],
+        "all": ["sentencecount", "simplecaps", "startcaps"],
     }

@@ -30,7 +30,6 @@ from translate.storage import factory
 
 
 class po2pydict:
-
     def __init__(self):
         return
 
@@ -44,19 +43,20 @@ class po2pydict:
             if unit.istranslated() or (includefuzzy and unit.isfuzzy()):
                 mydict[unit.source] = unit.target
             else:
-                mydict[unit.source] = unit.source.replace('@markmin\x01', '')
+                mydict[unit.source] = unit.source.replace("@markmin\x01", "")
 
-        str_obj.write('# -*- coding: utf-8 -*-\n')
-        str_obj.write('{\n')
+        str_obj.write("# -*- coding: utf-8 -*-\n")
+        str_obj.write("{\n")
         for source_str, trans_str in sorted(mydict.items()):
-            str_obj.write("%s: %s,\n" % (repr(source_str), repr(trans_str)))
-        str_obj.write('}\n')
+            str_obj.write("{}: {},\n".format(repr(source_str), repr(trans_str)))
+        str_obj.write("}\n")
         str_obj.seek(0)
         return str_obj
 
 
-def convertpy(inputfile, outputfile, templatefile=None, includefuzzy=False,
-              outputthreshold=None):
+def convertpy(
+    inputfile, outputfile, templatefile=None, includefuzzy=False, outputthreshold=None
+):
     inputstore = factory.getobject(inputfile)
 
     if not convert.should_output_store(inputstore, outputthreshold):
@@ -65,20 +65,19 @@ def convertpy(inputfile, outputfile, templatefile=None, includefuzzy=False,
     convertor = po2pydict()
     outputstring = convertor.convertstore(inputstore, includefuzzy)
 
-    outputfile.write(bytes(outputstring.read(), 'utf-8'))
+    outputfile.write(bytes(outputstring.read(), "utf-8"))
     return 1
 
 
 def main(argv=None):
-    formats = {
-        ("po", "py"): ("py", convertpy),
-        ("po", None): ("py", convertpy)
-    }
-    parser = convert.ConvertOptionParser(formats, usetemplates=False, description=__doc__)
+    formats = {("po", "py"): ("py", convertpy), ("po", None): ("py", convertpy)}
+    parser = convert.ConvertOptionParser(
+        formats, usetemplates=False, description=__doc__
+    )
     parser.add_threshold_option()
     parser.add_fuzzy_option()
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

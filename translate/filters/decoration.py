@@ -39,7 +39,7 @@ def spaceend(str1):
     """returns all the whitespace from the end of the string"""
     newstring = ""
     for n in range(len(str1)):
-        c = str1[-1-n]
+        c = str1[-1 - n]
         if c.isspace():
             newstring = c + newstring
         else:
@@ -64,7 +64,7 @@ def puncend(str1, punctuation):
 
     newstring = ""
     for n in range(len(str1)):
-        c = str1[-1-n]
+        c = str1[-1 - n]
         if c in punctuation or c.isspace():
             newstring = c + newstring
         else:
@@ -159,7 +159,7 @@ def findmarkedvariables(str1, startmarker, endmarker, ignorelist=[]):
                 # character as the end marker, var must be len > 1
                 endmatch = currentpos
                 for n in range(currentpos, len(str1)):
-                    if not (str1[n].isalnum() or str1[n] == '_'):
+                    if not (str1[n].isalnum() or str1[n] == "_"):
                         endmatch = n
                         break
                 if currentpos == endmatch:
@@ -191,8 +191,7 @@ def findmarkedvariables(str1, startmarker, endmarker, ignorelist=[]):
                 variable = str1[currentpos:endmatch]
                 currentpos = endmatch + len(endmarker)
             if variable is not None and variable not in ignorelist:
-                if (not variable or
-                    variable.replace("_", "").replace(".", "").isalnum()):
+                if not variable or variable.replace("_", "").replace(".", "").isalnum():
                     variables.append((startmatch, variable))
     return variables
 
@@ -208,6 +207,7 @@ def getaccelerators(accelmarker, acceptlist=None):
         accelerators = [accelerator for accelstart, accelerator in acclocs]
         badaccelerators = [accelerator for accelstart, accelerator in badlocs]
         return accelerators, badaccelerators
+
     return getmarkedaccelerators
 
 
@@ -221,6 +221,7 @@ def getvariables(startmarker, endmarker):
         varlocs = findmarkedvariables(str1, startmarker, endmarker)
         variables = [variable for accelstart, variable in varlocs]
         return variables
+
     return getmarkedvariables
 
 
@@ -230,14 +231,14 @@ def getnumbers(str1):
     assert isinstance(str1, str)
     numbers = []
     innumber = False
-    degreesign = '\xb0'
+    degreesign = "\xb0"
     lastnumber = ""
     carryperiod = ""
     for chr1 in str1:
         if chr1.isdigit():
             innumber = True
         elif innumber:
-            if not (chr1 == '.' or chr1 == degreesign):
+            if not (chr1 == "." or chr1 == degreesign):
                 innumber = False
                 if lastnumber:
                     numbers.append(lastnumber)
@@ -245,7 +246,7 @@ def getnumbers(str1):
         if innumber:
             if chr1 == degreesign:
                 lastnumber += chr1
-            elif chr1 == '.':
+            elif chr1 == ".":
                 carryperiod += chr1
             else:
                 lastnumber += carryperiod + chr1
@@ -258,12 +259,15 @@ def getnumbers(str1):
     return numbers
 
 
-_function_re = re.compile(r'''((?:
+_function_re = re.compile(
+    r"""((?:
     [\w\.]+              # function or module name - any alpha-numeric character, _, or .
     (?:(?:::|->|\.)\w+)* # (optional) C++ style Class::Method() syntax or pointer->Method() or module.function()
     \(\)                 # Must close with ()
 )+)
-''', re.VERBOSE)  # shouldn't be locale aware
+""",
+    re.VERBOSE,
+)  # shouldn't be locale aware
 # Reference functions:
 #   pam_*_item() IO::String NULL() POE::Component::Client::LDAP->new()
 #   POE::Wheel::Null mechanize.UserAgent POSIX::sigaction()
@@ -282,15 +286,17 @@ def getfunctions(str1):
 
 def getemails(str1):
     """returns the email addresses that are in a string"""
-    return re.findall(r'[\w\.\-]+@[\w\.\-]+', str1)
+    return re.findall(r"[\w\.\-]+@[\w\.\-]+", str1)
 
 
 def geturls(str1):
     """returns the URIs in a string"""
     # TODO turn this into a verbose and compiled regex
-    URLPAT = r'https?:[\w/\.:;+\-~\%#\$?=&,()]+|' + \
-             r'www\.[\w/\.:;+\-~\%#\$?=&,()]+|' + \
-             r'ftp:[\w/\.:;+\-~\%#?=&,]+'
+    URLPAT = (
+        r"https?:[\w/\.:;+\-~\%#\$?=&,()]+|"
+        + r"www\.[\w/\.:;+\-~\%#\$?=&,()]+|"
+        + r"ftp:[\w/\.:;+\-~\%#?=&,]+"
+    )
     return re.findall(URLPAT, str1)
 
 
@@ -303,4 +309,5 @@ def countaccelerators(accelmarker, acceptlist=None):
         """returns all the variables in str1 marked with a given marker"""
         acclocs, badlocs = findaccelerators(str1, accelmarker, acceptlist)
         return len(acclocs), len(badlocs)
+
     return countmarkedaccelerators

@@ -39,7 +39,7 @@ def getlanguage(code):
     try:
         if code is None:
             raise ImportError("Can't determine language code")
-        if code in ('or', 'is', 'as'):
+        if code in ("or", "is", "as"):
             internal_code = prefix + code
         else:
             internal_code = code
@@ -61,10 +61,10 @@ def get_all_languages():
     """Return all language classes."""
     import translate.lang as package
 
-    is_language_module = lambda x: not (x.startswith("test_")
-                                        or x in ("common", "data", "factory",
-                                                 "identify", "ngram", "poedit",
-                                                 "team"))
+    is_language_module = lambda x: not (
+        x.startswith("test_")
+        or x in ("common", "data", "factory", "identify", "ngram", "poedit", "team")
+    )
     lang_codes = []
     for _imp, modname, _isp in pkgutil.walk_packages(package.__path__):
         if is_language_module(modname):

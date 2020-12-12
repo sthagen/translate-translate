@@ -21,7 +21,7 @@
 # Perhaps all methods should work with a wildcard to limit searches in some
 # way (examples: *.po, base.xlf, pootle-terminology.tbx)
 
-#TODO: consider also providing directories as we currently provide files
+# TODO: consider also providing directories as we currently provide files
 
 import os
 
@@ -39,8 +39,7 @@ class Directory:
         """Iterator over (dir, filename) for all files in this directory."""
         if not self.filedata:
             self.scanfiles()
-        for filetuple in self.filedata:
-            yield filetuple
+        yield from self.filedata
 
     def getfiles(self):
         """Returns a list of (dir, filename) tuples for all the file names in
@@ -52,9 +51,8 @@ class Directory:
         """Iterator over all the units in all the files in this directory."""
         for dirname, filename in self.file_iter():
             store = factory.getobject(os.path.join(dirname, filename))
-            #TODO: don't regenerate all the storage objects
-            for unit in store.unit_iter():
-                yield unit
+            # TODO: don't regenerate all the storage objects
+            yield from store.unit_iter()
 
     def getunits(self):
         """List of all the units in all the files in this directory."""

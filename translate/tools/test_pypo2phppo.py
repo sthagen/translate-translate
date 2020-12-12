@@ -1,4 +1,3 @@
-
 # pypo2phppo unit tests
 # Author: Wil Clouser <wclouser@mozilla.com>
 # Date: 2009-12-03
@@ -10,7 +9,6 @@ from translate.tools import pypo2phppo
 
 
 class TestPyPo2PhpPo:
-
     def test_single_po(self):
         inputfile = b"""
 # This user comment refers to: {0}
@@ -23,7 +21,7 @@ msgstr "I have {1} apples and {0} oranges"
         outputfile = BytesIO()
         pypo2phppo.convertpy2php(inputfile, outputfile)
 
-        output = outputfile.getvalue().decode('utf-8')
+        output = outputfile.getvalue().decode("utf-8")
 
         assert "refers to: %1$s" in output
         assert "does too: %1$s" in output
@@ -42,7 +40,7 @@ msgstr[1] "I have {0} apples"
         """
         outputfile = BytesIO()
         pypo2phppo.convertpy2php(inputfile, outputfile)
-        output = outputfile.getvalue().decode('utf-8')
+        output = outputfile.getvalue().decode("utf-8")
 
         assert 'msgid "I have %1$s apple"' in output
         assert 'msgid_plural "I have %1$s apples"' in output
@@ -52,5 +50,6 @@ msgstr[1] "I have {0} apples"
 
 class TestPyPo2PhpPoCommand(test_convert.TestConvertCommand, TestPyPo2PhpPo):
     """Tests running actual pypo2phppo commands on files"""
+
     convertmodule = pypo2phppo
     defaultoptions = {}

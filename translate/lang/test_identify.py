@@ -1,4 +1,3 @@
-
 from pytest import raises
 
 from translate.lang.identify import LanguageIdentifier
@@ -156,29 +155,28 @@ Ethik hängt eng mit einer Dauerkrise der""",
 ,Hundeschläger' für die Dezimierung der
 Momente ihrer Erfahrung".
 zusammen.
-"""
+""",
 ]
 
 
 class TestLanguageIdentifier:
-
     def setup_class(self):
         self.langident = LanguageIdentifier()
 
     def test_identify_lang(self):
-        assert self.langident.identify_lang('') is None
-        assert self.langident.identify_lang(TEXT) == 'de'
+        assert self.langident.identify_lang("") is None
+        assert self.langident.identify_lang(TEXT) == "de"
 
     def test_identify_store(self):
         langlist = [TranslationUnit(string) for string in TEXT_LIST]
-        assert self.langident.identify_source_lang(langlist) == 'de'
+        assert self.langident.identify_source_lang(langlist) == "de"
         for i, unit in enumerate(langlist):
             unit.target = TEXT_LIST[i]
-        assert self.langident.identify_target_lang(langlist) == 'de'
+        assert self.langident.identify_target_lang(langlist) == "de"
 
     def test_bad_init_data(self):
         """Test __init__ with bad conf files and data dirs"""
         with raises(ValueError):
-            LanguageIdentifier(model_dir='missing')
+            LanguageIdentifier(model_dir="missing")
         with raises(ValueError):
-            LanguageIdentifier(conf_file='missing')
+            LanguageIdentifier(conf_file="missing")

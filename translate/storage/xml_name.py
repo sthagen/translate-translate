@@ -19,12 +19,11 @@
 
 
 class XmlNamespace:
-
     def __init__(self, namespace):
         self._namespace = namespace
 
     def name(self, tag):
-        return "{%s}%s" % (self._namespace, tag)
+        return f"{{{self._namespace}}}{tag}"
 
 
 class XmlNamer:
@@ -52,7 +51,7 @@ class XmlNamer:
     def __init__(self, dom_node):
         # Allow the user to pass a dom node of the
         # XML document nodle
-        if hasattr(dom_node, 'nsmap'):
+        if hasattr(dom_node, "nsmap"):
             self.nsmap = dom_node.nsmap
         else:
             self.nsmap = dom_node.getroot().nsmap
@@ -63,12 +62,12 @@ class XmlNamer:
         # 'short-namespace:tag'
         if tag is None:
             try:
-                namespace_shortcut, tag = namespace_shortcut.split(':')
+                namespace_shortcut, tag = namespace_shortcut.split(":")
             except ValueError:
                 # If there is no namespace in namespace_shortcut.
                 tag = namespace_shortcut.lstrip("{}")
                 return tag
-        return "{%s}%s" % (self.nsmap[namespace_shortcut], tag)
+        return "{{{}}}{}".format(self.nsmap[namespace_shortcut], tag)
 
     def namespace(self, namespace_shortcut):
         return XmlNamespace(self.nsmap[namespace_shortcut])

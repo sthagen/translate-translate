@@ -26,7 +26,6 @@ from translate.storage import po, ts2
 
 
 class po2ts:
-
     def convertstore(self, inputstore, outputfile, templatefile=None, context=None):
         """converts a .po file to .ts format (using a template .ts file if given)"""
         if templatefile is None:
@@ -39,14 +38,10 @@ class po2ts:
             source = inputunit.source
             translation = inputunit.target
             comment = inputunit.getnotes("translator")
-            if isinstance(source, bytes):
-                source = source.decode("utf-8")
-            if isinstance(translation, bytes):
-                translation = translation.decode("utf-8")
             for sourcelocation in inputunit.getlocations():
                 if context is None:
                     if "#" in sourcelocation:
-                        contextname = sourcelocation[:sourcelocation.find("#")]
+                        contextname = sourcelocation[: sourcelocation.find("#")]
                     else:
                         contextname = sourcelocation
                 else:
@@ -73,13 +68,21 @@ def convertpo(inputfile, outputfile, templatefile, context):
 
 def main(argv=None):
     from translate.convert import convert
+
     formats = {"po": ("ts", convertpo), ("po", "ts"): ("ts", convertpo)}
-    parser = convert.ConvertOptionParser(formats, usepots=False, usetemplates=True, description=__doc__)
-    parser.add_option("-c", "--context", dest="context", default=None,
-                      help="use supplied context instead of the one in the .po file comment")
+    parser = convert.ConvertOptionParser(
+        formats, usepots=False, usetemplates=True, description=__doc__
+    )
+    parser.add_option(
+        "-c",
+        "--context",
+        dest="context",
+        default=None,
+        help="use supplied context instead of the one in the .po file comment",
+    )
     parser.passthrough.append("context")
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -66,10 +66,10 @@ class RunProcessError(CalledProcessError):
 
     def __str__(self):
         """Format exception message string (avoiding TypeErrors)"""
-        output = ''
+        output = ""
         message = self._message
-        if message.count('%') != 2:
-            output += message + '\n'
+        if message.count("%") != 2:
+            output += message + "\n"
             message = self._default_message
 
         output += message % (self.cmd, self.returncode)
@@ -77,10 +77,9 @@ class RunProcessError(CalledProcessError):
 
 
 def run(cmd, expected_status=0, fail_msg=None, stdout=-1, stderr=-1):
-    """Run a command
-    """
+    """Run a command"""
     # Default is to capture (and log) std{out,error} unless run as script
-    if __name__ == '__main__' or logger.getEffectiveLevel() == logging.DEBUG:
+    if __name__ == "__main__" or logger.getEffectiveLevel() == logging.DEBUG:
         std = None
     else:
         std = PIPE
@@ -90,40 +89,46 @@ def run(cmd, expected_status=0, fail_msg=None, stdout=-1, stderr=-1):
     if stderr == -1:
         stderr = std
 
-    cmdstring = cmd if isinstance(cmd, str) else ' '.join(cmd)
-    logger.debug('>>> %s $ %s', os.getcwd(), cmdstring)
+    cmdstring = cmd if isinstance(cmd, str) else " ".join(cmd)
+    logger.debug(">>> %s $ %s", os.getcwd(), cmdstring)
     p = Popen(cmd, stdout=stdout, stderr=stderr)
     (output, error) = p.communicate()
     cmd_status = p.wait()
 
     if stdout == PIPE:
         if cmd_status != expected_status:
-            logger.info('%s', output)
+            logger.info("%s", output)
     elif stderr == PIPE:
-        logger.warning('%s', error)
+        logger.warning("%s", error)
 
     if cmd_status != expected_status:
-        raise RunProcessError(returncode=cmd_status, cmd=cmdstring,
-                              message=fail_msg)
+        raise RunProcessError(returncode=cmd_status, cmd=cmdstring, message=fail_msg)
     return cmd_status
 
 
-def build_xpi(l10nbase, srcdir, outputdir, langs, product, delete_dest=False,
-              soft_max_version=False):
-    MOZCONFIG = os.path.join(srcdir, '.mozconfig')
+def build_xpi(
+    l10nbase,
+    srcdir,
+    outputdir,
+    langs,
+    product,
+    delete_dest=False,
+    soft_max_version=False,
+):
+    MOZCONFIG = os.path.join(srcdir, ".mozconfig")
     # Backup existing .mozconfig if it exists
-    backup_name = ''
+    backup_name = ""
     if os.path.exists(MOZCONFIG):
-        backup_name = MOZCONFIG + '.tmp'
+        backup_name = MOZCONFIG + ".tmp"
         os.rename(MOZCONFIG, backup_name)
 
     # Create a temporary directory for building
-    builddir = mkdtemp('', 'buildxpi')
-    mergedir = mkdtemp('', 'mergexpi')
+    builddir = mkdtemp("", "buildxpi")
+    mergedir = mkdtemp("", "mergexpi")
 
     try:
         # Create new .mozconfig
-        content = """
+        content = f"""
 ac_add_options --disable-compile-environment
 #ac_add_options --disable-gstreamer
 #ac_add_options --disable-ogg
@@ -134,66 +139,71 @@ ac_add_options --disable-compile-environment
 #ac_add_options --disable-alsa
 #ac_add_options --disable-pulseaudio
 #ac_add_options --disable-libjpeg-turbo
-mk_add_options MOZ_OBJDIR=%(builddir)s
-ac_add_options --with-l10n-base=%(l10nbase)s
-ac_add_options --enable-application=%(product)s
-""" % \
-            {
-                'builddir': builddir,
-                'l10nbase': l10nbase,
-                'product': product
-            }
+mk_add_options MOZ_OBJDIR={builddir}
+ac_add_options --with-l10n-base={l10nbase}
+ac_add_options --enable-application={product}
+"""
 
-        with open(MOZCONFIG, 'w') as mozconf:
+        with open(MOZCONFIG, "w") as mozconf:
             mozconf.write(content)
 
         # Try to make sure that "environment shell" is defined
         # (python/mach/mach/mixin/process.py)
-        if not any(var in os.environ
-                   for var in ('SHELL', 'MOZILLABUILD', 'COMSPEC')):
-            os.environ['SHELL'] = '/bin/sh'
+        if not any(var in os.environ for var in ("SHELL", "MOZILLABUILD", "COMSPEC")):
+            os.environ["SHELL"] = "/bin/sh"
 
         # Start building process.
         # See https://developer.mozilla.org/en/Creating_a_Language_Pack for
         # more details.
         olddir = os.getcwd()
         os.chdir(srcdir)
-        run(['make', '-f', 'client.mk', 'configure'],
+        run(
+            ["make", "-f", "client.mk", "configure"],
             fail_msg="Build environment error - "
-                     "check logs, fix errors, and try again")
+            "check logs, fix errors, and try again",
+        )
 
         os.chdir(builddir)
         # Work around https://bugzilla.mozilla.org/show_bug.cgi?id=1180065
-        run(['make', '-C', 'config'],
-            fail_msg="Unable to successfully configure build for XPI!")
+        run(
+            ["make", "-C", "config"],
+            fail_msg="Unable to successfully configure build for XPI!",
+        )
 
         moz_app_version = []
         if soft_max_version:
-            with open(os.path.join(srcdir, product, 'config', 'version.txt'), 'r') as fh:
+            with open(os.path.join(srcdir, product, "config", "version.txt")) as fh:
                 version = fh.read().strip()
-            version = re.sub(r'(^[0-9]*\.[0-9]*).*', r'\1.*', version)
-            moz_app_version = ['MOZ_APP_MAXVERSION=%s' % version]
-            locale_mergedir = ['LOCALE_MERGEDIR=$(pwd)/merge-%s']
+            version = re.sub(r"(^[0-9]*\.[0-9]*).*", r"\1.*", version)
+            moz_app_version = ["MOZ_APP_MAXVERSION=%s" % version]
         # make merge-cy LOCALE_MERGEDIR=$PWD/merge-cy
         # make langpack-cy LOCALE_MERGEDIR=$PWD/merge-cy
         for lang in langs:
-            run(['make', '-C', os.path.join(product, 'locales')] +
-                ['merge-%s' % lang] + ['LOCALE_MERGEDIR=%s/merge-%s' % (mergedir, lang)] + moz_app_version,
-                fail_msg="Unable to merge XPI!")
-            run(['make', '-C', os.path.join(product, 'locales')] +
-                ['langpack-%s' % lang] + ['LOCALE_MERGEDIR=%s/merge-%s' % (mergedir, lang)] + moz_app_version,
-                fail_msg="Unable to successfully build XPI!")
+            run(
+                ["make", "-C", os.path.join(product, "locales")]
+                + ["merge-%s" % lang]
+                + [f"LOCALE_MERGEDIR={mergedir}/merge-{lang}"]
+                + moz_app_version,
+                fail_msg="Unable to merge XPI!",
+            )
+            run(
+                ["make", "-C", os.path.join(product, "locales")]
+                + ["langpack-%s" % lang]
+                + [f"LOCALE_MERGEDIR={mergedir}/merge-{lang}"]
+                + moz_app_version,
+                fail_msg="Unable to successfully build XPI!",
+            )
 
         destfiles = []
         for lang in langs:
             xpiglob = glob(
                 os.path.join(
                     builddir,
-                    product == 'mail' and 'mozilla' or '',
-                    'dist',
-                    '*',
-                    'xpi',
-                    '*.%s.langpack.xpi' % lang
+                    product == "mail" and "mozilla" or "",
+                    "dist",
+                    "*",
+                    "xpi",
+                    "*.%s.langpack.xpi" % lang,
                 )
             )[0]
             filename = os.path.split(xpiglob)[1]
@@ -218,71 +228,75 @@ ac_add_options --enable-application=%(product)s
 
 def create_option_parser():
     from argparse import ArgumentParser
-    usage = 'Usage: buildxpi.py [<options>] <lang> [<lang2> ...]'
+
+    usage = "Usage: buildxpi.py [<options>] <lang> [<lang2> ...]"
     p = ArgumentParser(usage=usage)
 
     p.add_argument(
-        '-L', '--l10n-base',
+        "-L",
+        "--l10n-base",
         type=str,
-        dest='l10nbase',
-        default='l10n',
-        help='The directory containing the <lang> subdirectory.'
+        dest="l10nbase",
+        default="l10n",
+        help="The directory containing the <lang> subdirectory.",
     )
     p.add_argument(
-        '-o', '--output-dir',
+        "-o",
+        "--output-dir",
         type=str,
-        dest='outputdir',
-        default='.',
-        help='The directory to copy the built XPI to (default: current directory).'
+        dest="outputdir",
+        default=".",
+        help="The directory to copy the built XPI to (default: current directory).",
     )
     p.add_argument(
-        '-p', '--mozproduct',
+        "-p",
+        "--mozproduct",
         type=str,
-        dest='mozproduct',
-        default='browser',
-        help='The Mozilla product name (default: "browser").'
+        dest="mozproduct",
+        default="browser",
+        help='The Mozilla product name (default: "browser").',
     )
     p.add_argument(
-        '-s', '--src',
+        "-s",
+        "--src",
         type=str,
-        dest='srcdir',
-        default='mozilla',
-        help='The directory containing the Mozilla l10n sources.'
+        dest="srcdir",
+        default="mozilla",
+        help="The directory containing the Mozilla l10n sources.",
     )
     p.add_argument(
-        '-d', '--delete-dest',
-        dest='delete_dest',
-        action='store_true',
+        "-d",
+        "--delete-dest",
+        dest="delete_dest",
+        action="store_true",
         default=False,
-        help='Delete output XPI if it already exists.'
+        help="Delete output XPI if it already exists.",
     )
 
     p.add_argument(
-        '-v', '--verbose',
-        dest='verbose',
-        action='store_true',
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
         default=False,
-        help='Be more noisy'
+        help="Be more noisy",
     )
 
     p.add_argument(
-        '--soft-max-version',
-        dest='soft_max_version',
-        action='store_true',
+        "--soft-max-version",
+        dest="soft_max_version",
+        action="store_true",
         default=False,
-        help='Override a fixed max version with one to cover the whole cycle '
-             'e.g. 24.0a1 becomes 24.0.*'
+        help="Override a fixed max version with one to cover the whole cycle "
+        "e.g. 24.0a1 becomes 24.0.*",
     )
 
-    p.add_argument(
-        "langs",
-        nargs="+"
-    )
+    p.add_argument("langs", nargs="+")
 
     return p
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = create_option_parser().parse_args()
 
     if args.verbose:
@@ -295,5 +309,5 @@ if __name__ == '__main__':
         langs=args.langs,
         product=args.mozproduct,
         delete_dest=args.delete_dest,
-        soft_max_version=args.soft_max_version
+        soft_max_version=args.soft_max_version,
     )

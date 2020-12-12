@@ -35,16 +35,17 @@ def prop2inc(pf):
             if comment.startswith("# converted from") and "#defines" in comment:
                 pass
             else:
-                for blank in pendingblanks:
-                    yield blank
+                yield from pendingblanks
                 # TODO: could convert commented # x=y back to # #define x y
                 yield comment + "\n"
         if unit.isblank():
             pendingblanks.append("\n")
         else:
-            definition = "#define %s %s\n" % (unit.name, unit.value.replace("\n", "\\n"))
-            for blank in pendingblanks:
-                yield blank
+            definition = "#define {} {}\n".format(
+                unit.name,
+                unit.value.replace("\n", "\\n"),
+            )
+            yield from pendingblanks
             yield definition
 
 
@@ -52,7 +53,10 @@ def prop2it(pf):
     """convert a properties file back to a pseudo-properties .it file"""
     for unit in pf.units:
         for comment in unit.comments:
-            if comment.startswith("# converted from") and "pseudo-properties" in comment:
+            if (
+                comment.startswith("# converted from")
+                and "pseudo-properties" in comment
+            ):
                 pass
             elif comment.startswith("# section: "):
                 yield comment.replace("# section: ", "", 1) + "\n"
@@ -61,7 +65,7 @@ def prop2it(pf):
         if unit.isblank():
             yield ""
         else:
-            definition = "%s=%s\n" % (unit.name, unit.value)
+            definition = f"{unit.name}={unit.value}\n"
             yield definition
 
 
@@ -70,13 +74,21 @@ def prop2funny(src, itencoding="cp1252"):
     header = lines[0]
     if not header.startswith("# converted from "):
         waspseudoprops = len([line for line in lines if line.startswith("# section:")])
-        wasdefines = len([line for line in lines if line.startswith("#filter") or line.startswith("#unfilter")])
+        wasdefines = len(
+            [
+                line
+                for line in lines
+                if line.startswith("#filter") or line.startswith("#unfilter")
+            ]
+        )
     else:
         waspseudoprops = "pseudo-properties" in header
         wasdefines = "#defines" in header
         lines = lines[1:]
     if not (waspseudoprops ^ wasdefines):
-        raise ValueError("could not determine file type as pseudo-properties or defines file")
+        raise ValueError(
+            "could not determine file type as pseudo-properties or defines file"
+        )
     pf = properties.propfile(personality="mozilla")
     pf.parse("\n".join(lines))
     if wasdefines:
@@ -87,8 +99,15 @@ def prop2funny(src, itencoding="cp1252"):
             yield (line + "\n").encode(itencoding)
 
 
-def po2inc(inputfile, outputfile, templatefile, encoding=None, includefuzzy=False,
-           remove_untranslated=False, outputthreshold=None):
+def po2inc(
+    inputfile,
+    outputfile,
+    templatefile,
+    encoding=None,
+    includefuzzy=False,
+    remove_untranslated=False,
+    outputthreshold=None,
+):
     """wraps po2prop but converts outputfile to properties first"""
     outputpropfile = BytesIO()
     if templatefile is not None:
@@ -97,34 +116,49 @@ def po2inc(inputfile, outputfile, templatefile, encoding=None, includefuzzy=Fals
         templatepropfile = BytesIO("".join(templateproplines).encode())
     else:
         templatepropfile = None
-    result = po2prop.convertmozillaprop(inputfile, outputpropfile,
-                                        templatepropfile,
-                                        includefuzzy=includefuzzy,
-                                        remove_untranslated=remove_untranslated,
-                                        outputthreshold=outputthreshold)
+    result = po2prop.convertmozillaprop(
+        inputfile,
+        outputpropfile,
+        templatepropfile,
+        includefuzzy=includefuzzy,
+        remove_untranslated=remove_untranslated,
+        outputthreshold=outputthreshold,
+    )
     if result:
         outputpropfile.seek(0)
         pf = properties.propfile(outputpropfile, personality="mozilla")
         outputlines = prop2inc(pf)
-        outputfile.writelines([line.encode('utf-8') for line in outputlines])
+        outputfile.writelines([line.encode("utf-8") for line in outputlines])
     return result
 
 
-def po2it(inputfile, outputfile, templatefile, encoding="cp1252", includefuzzy=False,
-          remove_untranslated=False, outputthreshold=None):
+def po2it(
+    inputfile,
+    outputfile,
+    templatefile,
+    encoding="cp1252",
+    includefuzzy=False,
+    remove_untranslated=False,
+    outputthreshold=None,
+):
     """wraps po2prop but converts outputfile to properties first"""
     outputpropfile = BytesIO()
     if templatefile is not None:
         templatelines = templatefile.readlines()
-        templateproplines = [line for line in mozfunny2prop.it2prop(templatelines, encoding=encoding)]
+        templateproplines = [
+            line for line in mozfunny2prop.it2prop(templatelines, encoding=encoding)
+        ]
         templatepropfile = BytesIO("".join(templateproplines).encode())
     else:
         templatepropfile = None
-    result = po2prop.convertmozillaprop(inputfile, outputpropfile,
-                                        templatepropfile,
-                                        includefuzzy=includefuzzy,
-                                        remove_untranslated=remove_untranslated,
-                                        outputthreshold=outputthreshold)
+    result = po2prop.convertmozillaprop(
+        inputfile,
+        outputpropfile,
+        templatepropfile,
+        includefuzzy=includefuzzy,
+        remove_untranslated=remove_untranslated,
+        outputthreshold=outputthreshold,
+    )
     if result:
         outputpropfile.seek(0)
         pf = properties.propfile(outputpropfile, personality="mozilla")
@@ -135,14 +169,25 @@ def po2it(inputfile, outputfile, templatefile, encoding="cp1252", includefuzzy=F
     return result
 
 
-def po2ini(inputfile, outputfile, templatefile, encoding="UTF-8", includefuzzy=False,
-           remove_untranslated=False, outputthreshold=None):
+def po2ini(
+    inputfile,
+    outputfile,
+    templatefile,
+    encoding="UTF-8",
+    includefuzzy=False,
+    remove_untranslated=False,
+    outputthreshold=None,
+):
     """wraps po2prop but converts outputfile to properties first using UTF-8 encoding"""
-    return po2it(inputfile=inputfile, outputfile=outputfile,
-                 templatefile=templatefile, encoding=encoding,
-                 includefuzzy=includefuzzy,
-                 remove_untranslated=remove_untranslated,
-                 outputthreshold=outputthreshold)
+    return po2it(
+        inputfile=inputfile,
+        outputfile=outputfile,
+        templatefile=templatefile,
+        encoding=encoding,
+        includefuzzy=includefuzzy,
+        remove_untranslated=remove_untranslated,
+        outputthreshold=outputthreshold,
+    )
 
 
 def main(argv=None):

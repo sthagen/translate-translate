@@ -67,14 +67,15 @@ class po2resx:
 
         # Join automatic and translator comments with a newline as per
         # convention.
-        combocomment = '\n'.join(comments)
+        combocomment = "\n".join(comments)
 
         if combocomment:
             unit.addnote(combocomment)
 
 
-def convertresx(inputfile, outputfile, templatefile, includefuzzy=False,
-                outputthreshold=None):
+def convertresx(
+    inputfile, outputfile, templatefile, includefuzzy=False, outputthreshold=None
+):
 
     inputstore = factory.getobject(inputfile)
 
@@ -92,11 +93,12 @@ def main(argv=None):
     formats = {
         ("po", "resx"): ("resx", convertresx),
     }
-    parser = convert.ConvertOptionParser(formats, usetemplates=True,
-                                         description=__doc__)
+    parser = convert.ConvertOptionParser(
+        formats, usetemplates=True, description=__doc__
+    )
     parser.add_fuzzy_option()
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

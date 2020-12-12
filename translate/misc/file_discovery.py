@@ -18,7 +18,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #
 
-__all__ = ('get_abs_data_filename', )
+__all__ = ("get_abs_data_filename",)
 
 import os
 import sys
@@ -49,16 +49,16 @@ def get_abs_data_filename(path_parts, basedirs=None):
         ]
 
     # Freedesktop standard
-    if 'XDG_DATA_HOME' in os.environ:
-        BASE_DIRS += [os.environ['XDG_DATA_HOME']]
-    if 'XDG_DATA_DIRS' in os.environ:
-        BASE_DIRS += os.environ['XDG_DATA_DIRS'].split(os.path.pathsep)
+    if "XDG_DATA_HOME" in os.environ:
+        BASE_DIRS += [os.environ["XDG_DATA_HOME"]]
+    if "XDG_DATA_DIRS" in os.environ:
+        BASE_DIRS += os.environ["XDG_DATA_DIRS"].split(os.path.pathsep)
 
     # Mac OSX app bundles
-    if 'RESOURCEPATH' in os.environ:
-        BASE_DIRS += os.environ['RESOURCEPATH'].split(os.path.pathsep)
+    if "RESOURCEPATH" in os.environ:
+        BASE_DIRS += os.environ["RESOURCEPATH"].split(os.path.pathsep)
 
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         # We know exactly what the layout is when we package for Windows, so
         # let's avoid unnecessary paths
         DATA_DIRS = [["share"]]
@@ -71,8 +71,9 @@ def get_abs_data_filename(path_parts, basedirs=None):
 
     for basepath, data_dir in ((x, y) for x in BASE_DIRS for y in DATA_DIRS):
         dir_and_filename = data_dir + path_parts
-        datafile = os.path.join(basepath or os.path.dirname(__file__),
-                                *dir_and_filename)
+        datafile = os.path.join(
+            basepath or os.path.dirname(__file__), *dir_and_filename
+        )
         if os.path.exists(datafile):
             return datafile
     raise Exception('Could not find "%s"' % (os.path.join(*path_parts)))

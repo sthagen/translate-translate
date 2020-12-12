@@ -1,4 +1,3 @@
-
 from io import BytesIO
 
 from translate.convert import po2ts, test_convert
@@ -6,7 +5,6 @@ from translate.storage import po
 
 
 class TestPO2TS:
-
     def po2ts(self, posource):
         """helper that converts po source to ts source without requiring files"""
         inputfile = BytesIO(posource.encode())
@@ -14,7 +12,7 @@ class TestPO2TS:
         convertor = po2ts.po2ts()
         output = BytesIO()
         convertor.convertstore(inputpo, output)
-        return output.getvalue().decode('utf-8')
+        return output.getvalue().decode("utf-8")
 
     def singleelement(self, storage):
         """checks that the pofile contains a single non-header element, and returns it"""
@@ -47,12 +45,12 @@ msgstr "†arget"'''
 
     def test_fullunit(self):
         """check that an entry with various settings is converted correctly"""
-        posource = '''# Translator comment
+        posource = """# Translator comment
 #. Automatic comment
 #: location.cpp:100
 msgid "Source"
 msgstr "Target"
-'''
+"""
         tsfile = self.po2ts(posource)
         print(tsfile)
         # The other section are a duplicate of test_simplentry
@@ -67,7 +65,7 @@ msgid "Source"
 msgstr "Target"'''
         tsfile = self.po2ts(posource)
         print(tsfile)
-        assert '''<translation type="unfinished">Target</translation>''' in tsfile
+        assert """<translation type="unfinished">Target</translation>""" in tsfile
 
     def test_obsolete(self):
         """test that we can take back obsolete messages"""
@@ -77,18 +75,18 @@ msgid "Source"
 msgstr "Target"'''
         tsfile = self.po2ts(posource)
         print(tsfile)
-        assert '''<translation type="obsolete">Target</translation>''' in tsfile
+        assert """<translation type="obsolete">Target</translation>""" in tsfile
 
     def test_duplicates(self):
         """test that we can handle duplicates in the same context block"""
-        posource = '''#: @@@#1
+        posource = """#: @@@#1
 msgid "English"
 msgstr "a"
 
 #: @@@#3
 msgid "English"
 msgstr "b"
-'''
+"""
         tsfile = self.po2ts(posource)
         print(tsfile)
         assert tsfile.find("English") != tsfile.rfind("English")
@@ -104,10 +102,16 @@ msgstr "Linea 1\n"
         print(tsfile)
         print(type(tsfile))
         assert "<name>linebreak.cpp</name>" in tsfile
-        assert r'''<source>Line 1
-Line 2</source>''' in tsfile
-        assert r'''<translation>Linea 1
-Linea 2</translation>''' in tsfile
+        assert (
+            r"""<source>Line 1
+Line 2</source>"""
+            in tsfile
+        )
+        assert (
+            r"""<translation>Linea 1
+Linea 2</translation>"""
+            in tsfile
+        )
 
     def test_linebreak_consecutive(self):
         """test that we can handle consecutive linebreaks"""
@@ -122,20 +126,29 @@ msgstr "Linea 1\n"
         print(tsfile)
         print(type(tsfile))
         assert "<name>linebreak.cpp</name>" in tsfile
-        assert r'''<source>Line 1
+        assert (
+            r"""<source>Line 1
 
-Line 3</source>''' in tsfile
-        assert r'''<translation>Linea 1
+Line 3</source>"""
+            in tsfile
+        )
+        assert (
+            r"""<translation>Linea 1
 
-Linea 3</translation>''' in tsfile
+Linea 3</translation>"""
+            in tsfile
+        )
 
 
 class TestPO2TSCommand(test_convert.TestConvertCommand, TestPO2TS):
     """Tests running actual po2ts commands on files"""
+
     convertmodule = po2ts
 
     def test_help(self, capsys):
         """tests getting help"""
         options = test_convert.TestConvertCommand.test_help(self, capsys)
         options = self.help_check(options, "-c CONTEXT, --context=CONTEXT")
-        options = self.help_check(options, "-t TEMPLATE, --template=TEMPLATE", last=True)
+        options = self.help_check(
+            options, "-t TEMPLATE, --template=TEMPLATE", last=True
+        )

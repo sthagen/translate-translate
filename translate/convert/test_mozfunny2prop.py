@@ -5,7 +5,6 @@ from translate.storage import po
 
 
 class TestInc2PO:
-
     def inc2po(self, incsource, inctemplate=None):
         """helper that converts .inc source to po source without requiring files"""
         inputfile = BytesIO(incsource.encode())
@@ -35,7 +34,7 @@ class TestInc2PO:
 
     def test_simpleentry(self):
         """checks that a simple inc entry converts properly to a po entry"""
-        incsource = '#define MOZ_LANGPACK_CREATOR mozilla.org\n'
+        incsource = "#define MOZ_LANGPACK_CREATOR mozilla.org\n"
         pofile = self.inc2po(incsource)
         pounit = self.singleelement(pofile)
         assert pounit.getlocations() == ["MOZ_LANGPACK_CREATOR"]
@@ -44,9 +43,9 @@ class TestInc2PO:
 
     def test_uncomment_contributors(self):
         """checks that the contributors entry is automatically uncommented"""
-        incsource = '''# If non-English locales wish to credit multiple contributors, uncomment this
+        incsource = """# If non-English locales wish to credit multiple contributors, uncomment this
 # variable definition and use the format specified.
-# #define MOZ_LANGPACK_CONTRIBUTORS <em:contributor>Joe Solon</em:contributor> <em:contributor>Suzy Solon</em:contributor>'''
+# #define MOZ_LANGPACK_CONTRIBUTORS <em:contributor>Joe Solon</em:contributor> <em:contributor>Suzy Solon</em:contributor>"""
         pofile = self.inc2po(incsource)
         pounit = self.singleelement(pofile)
         assert pounit.getlocations() == ["MOZ_LANGPACK_CONTRIBUTORS"]

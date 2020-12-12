@@ -22,20 +22,38 @@ r"""Class that manages YAML data files for translation
 import uuid
 
 from ruamel.yaml import YAML, YAMLError
-from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.comments import CommentedMap, TaggedScalar
 
 from translate.lang.data import cldr_plural_categories, plural_tags
 from translate.misc.multistring import multistring
 from translate.storage import base
 
 
+class YAMLUnitId(base.UnitId):
+    KEY_SEPARATOR = "->"
+    INDEX_SEPARATOR = "->"
+
+    def __str__(self):
+        result = super().__str__()
+        # Strip leading ->
+        if result.startswith(self.KEY_SEPARATOR):
+            return result[len(self.KEY_SEPARATOR) :]
+        return result
+
+
 class YAMLUnit(base.DictUnit):
     """A YAML entry"""
 
+    IdClass = YAMLUnitId
+    DefaultDict = dict
+
     def __init__(self, source=None, **kwargs):
-        self._id = None
+        # Ensure we have ID (for serialization)
         if source:
             self.source = source
+            self._id = hex(hash(source))
+        else:
+            self._id = str(uuid.uuid4())
         super().__init__(source)
 
     @property
@@ -50,30 +68,16 @@ class YAMLUnit(base.DictUnit):
         self._id = value
 
     def getid(self):
-        # Ensure we have ID (for serialization)
-        if self._id is None:
-            self._id = str(uuid.uuid4())
         return self._id
 
     def getlocations(self):
         return [self.getid()]
 
-    def getkey(self):
-        return self.getid().split('->')
-
     def convert_target(self):
         return self.target
 
-    def getvalue(self):
-        ret = self.convert_target()
-        for k in reversed(self.getkey()):
-            if '[' in k and k[-1] == ']':
-                k, pos = k[:-1].split('[')
-                ret = (int(pos), ret)
-                if not k:
-                    continue
-            ret = {k: ret}
-        return ret
+    def storevalues(self, output):
+        self.storevalue(output, self.convert_target())
 
 
 class YAMLFile(base.DictStore):
@@ -84,11 +88,11 @@ class YAMLFile(base.DictStore):
     def __init__(self, inputfile=None, **kwargs):
         """construct a YAML file, optionally reading in from inputfile."""
         super().__init__(**kwargs)
-        self.filename = ''
+        self.filename = ""
         self._original = self.get_root_node()
         self.dump_args = {
-            'default_flow_style': False,
-            'preserve_quotes': True,
+            "default_flow_style": False,
+            "preserve_quotes": True,
         }
         if inputfile is not None:
             self.parse(inputfile)
@@ -118,18 +122,17 @@ class YAMLFile(base.DictStore):
         for k, v in data.non_merged_items():
             if not isinstance(k, str):
                 raise base.ParseError(
-                    'Key not string: {0}/{1} ({2})'.format(prev, k, type(k))
+                    "Key not string: {}/{} ({})".format(prev, k, type(k))
                 )
 
-            for x in self._flatten(v, '->'.join((prev, k)) if prev else k):
-                yield x
+            yield from self._flatten(v, prev + [("key", k)])
 
-    def _flatten(self, data, prev=""):
-        """Flatten YAML dictionary.
-        """
+    def _flatten(self, data, prev=None):
+        """Flatten YAML dictionary."""
+        if prev is None:
+            prev = self.UnitClass.IdClass([])
         if isinstance(data, dict):
-            for x in self._parse_dict(data, prev):
-                yield x
+            yield from self._parse_dict(data, prev)
         else:
             if isinstance(data, str):
                 yield (prev, data)
@@ -137,16 +140,18 @@ class YAMLFile(base.DictStore):
                 yield (prev, str(data))
             elif isinstance(data, list):
                 for k, v in enumerate(data):
-                    key = '[{0}]'.format(k)
-                    for value in self._flatten(v, '->'.join((prev, key))):
-                        yield value
+                    yield from self._flatten(v, prev + [("index", k)])
+            elif isinstance(data, TaggedScalar):
+                yield (prev, data.value)
             elif data is None:
                 pass
             else:
-                raise ValueError("We don't handle these values:\n"
-                                 "Type: %s\n"
-                                 "Data: %s\n"
-                                 "Previous: %s" % (type(data), data, prev))
+                raise ValueError(
+                    "We don't handle these values:\n"
+                    "Type: %s\n"
+                    "Data: %s\n"
+                    "Previous: %s" % (type(data), data, prev)
+                )
 
     def preprocess(self, data):
         """Preprocess hook for child formats"""
@@ -154,30 +159,36 @@ class YAMLFile(base.DictStore):
 
     def parse(self, input):
         """parse the given file or file source string"""
-        if hasattr(input, 'name'):
+        if hasattr(input, "name"):
             self.filename = input.name
-        elif not getattr(self, 'filename', ''):
-            self.filename = ''
+        elif not getattr(self, "filename", ""):
+            self.filename = ""
         if hasattr(input, "read"):
             src = input.read()
             input.close()
             input = src
         if isinstance(input, bytes):
-            input = input.decode('utf-8')
+            input = input.decode("utf-8")
         try:
             self._original = self.yaml.load(input)
         except YAMLError as e:
-            message = e.problem if hasattr(e, 'problem') else e.message
-            if hasattr(e, 'problem_mark'):
-                message += ' {0}'.format(e.problem_mark)
+            message = e.problem if hasattr(e, "problem") else e.message
+            if hasattr(e, "problem_mark"):
+                message += f" {e.problem_mark}"
             raise base.ParseError(message)
 
         content = self.preprocess(self._original)
 
         for k, data in self._flatten(content):
             unit = self.UnitClass(data)
-            unit.setid(k)
+            unit.set_unitid(k)
             self.addunit(unit)
+
+    def removeunit(self, unit):
+        if self._original is not None:
+            units = self.preprocess(self._original)
+            unit.storevalue(units, None, unset=True)
+        super().removeunit(unit)
 
 
 class RubyYAMLUnit(YAMLUnit):
@@ -185,14 +196,14 @@ class RubyYAMLUnit(YAMLUnit):
         if not isinstance(self.target, multistring):
             return self.target
 
-        tags = plural_tags.get(self._store.targetlanguage, plural_tags['en'])
+        tags = plural_tags.get(self._store.targetlanguage, plural_tags["en"])
 
         strings = [str(s) for s in self.target.strings]
 
         # Sync plural_strings elements to plural_tags count.
         if len(strings) < len(tags):
-            strings += [''] * (len(tags) - len(strings))
-        strings = strings[:len(tags)]
+            strings += [""] * (len(tags) - len(strings))
+        strings = strings[: len(tags)]
 
         return CommentedMap(zip(tags, strings))
 
@@ -211,20 +222,17 @@ class RubyYAMLFile(YAMLFile):
 
     def get_root_node(self):
         """Returns root node for serialize"""
-        if self.targetlanguage is not None:
-            result = CommentedMap()
-            result[self.targetlanguage] = CommentedMap()
-            return result
-        return CommentedMap()
+        result = CommentedMap()
+        result[self.targetlanguage or "en"] = CommentedMap()
+        return result
 
     def _parse_dict(self, data, prev):
         # Does this look like a plural?
-        if data and all((x in cldr_plural_categories for x in data.keys())):
+        if data and all(x in cldr_plural_categories for x in data.keys()):
             # Ensure we have correct plurals ordering.
             values = [data[item] for item in cldr_plural_categories if item in data]
             yield (prev, multistring(values))
             return
 
         # Handle normal dict
-        for x in super()._parse_dict(data, prev):
-            yield x
+        yield from super()._parse_dict(data, prev)

@@ -22,13 +22,14 @@ strings in the strings attribute
 
 
 class multistring(str):
-
     def __new__(newtype, string=""):
         if isinstance(string, list):
             if not string:
                 raise ValueError("multistring must contain at least one string")
             newstring = str.__new__(newtype, string[0])
-            newstring.strings = [newstring] + [multistring.__new__(newtype, altstring) for altstring in string[1:]]
+            newstring.strings = [newstring] + [
+                multistring.__new__(newtype, altstring) for altstring in string[1:]
+            ]
         else:
             newstring = str.__new__(newtype, string)
             newstring.strings = [newstring]
@@ -43,6 +44,7 @@ class multistring(str):
         def cmp_compat(s1, s2):
             # Python 3 compatible cmp() equivalent
             return (s1 > s2) - (s1 < s2)
+
         if isinstance(otherstring, multistring):
             parentcompare = cmp_compat(str(self), otherstring)
             if parentcompare:
@@ -51,8 +53,6 @@ class multistring(str):
                 return cmp_compat(self.strings[1:], otherstring.strings[1:])
         elif isinstance(otherstring, str):
             return cmp_compat(str(self), otherstring)
-        elif isinstance(otherstring, bytes):
-            return cmp_compat(self.encode('utf-8'), otherstring)
         elif isinstance(otherstring, list) and otherstring:
             return cmp_compat(self, multistring(otherstring))
         else:
@@ -68,9 +68,7 @@ class multistring(str):
         return self.__cmp__(otherstring) == 0
 
     def __repr__(self):
-        return "multistring(%r)" % (
-            [str(item) for item in self.strings]
-        )
+        return "multistring(%r)" % ([str(item) for item in self.strings])
 
     def replace(self, old, new, count=None):
         if count is None:

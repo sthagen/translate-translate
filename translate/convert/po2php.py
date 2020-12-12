@@ -33,7 +33,6 @@ eol = "\n"
 
 
 class rephp:
-
     def __init__(self, templatefile, inputstore):
         self.templatefile = templatefile
         self.inputstore = inputstore
@@ -57,24 +56,24 @@ class rephp:
         return outputlines
 
     def convertline(self, line):
-        line = str(line, 'utf-8')
+        line = str(line, "utf-8")
         returnline = ""
 
         # handle multiline msgid if we're in one
         if self.inmultilinemsgid:
             # see if there's more
-            endpos = line.rfind("%s%s" % (self.quotechar, self.enddel))
+            endpos = line.rfind(f"{self.quotechar}{self.enddel}")
             # if there was no '; or the quote is escaped, we have to continue
-            if endpos >= 0 and line[endpos-1] != '\\':
+            if endpos >= 0 and line[endpos - 1] != "\\":
                 self.inmultilinemsgid = False
             # if we're echoing...
             if self.inecho:
                 returnline = line
         # otherwise, this could be a comment
-        elif line.strip()[:2] == '//' or line.strip()[:2] == '/*':
+        elif line.strip()[:2] == "//" or line.strip()[:2] == "/*":
             returnline = quote.rstripeol(line) + eol
-        elif line.lower().replace(" ", "").find('array(') != -1:
-            eqpos = line.find('=')
+        elif line.lower().replace(" ", "").find("array(") != -1:
+            eqpos = line.find("=")
             # If this is a nested array.
             if self.inarray:
                 self.prename += line[:eqpos].strip() + "->"
@@ -85,14 +84,14 @@ class rephp:
                 self.equaldel = "=>"
                 self.enddel = ","
             returnline = quote.rstripeol(line) + eol
-        elif self.inarray and line.find(');') != -1:
+        elif self.inarray and line.find(");") != -1:
             self.inarray = False
             self.equaldel = "="
             self.enddel = ";"
             self.prename = ""
             returnline = quote.rstripeol(line) + eol
-        elif self.inarray and line.find('),') != -1:
-            self.prename = re.sub(r'[^>]+->$', '', self.prename)
+        elif self.inarray and line.find("),") != -1:
+            self.prename = re.sub(r"[^>]+->$", "", self.prename)
             returnline = quote.rstripeol(line) + eol
         else:
             line = quote.rstripeol(line)
@@ -111,22 +110,29 @@ class rephp:
                 key = line[:equalspos].rstrip()
                 lookupkey = self.prename + key.lstrip()
                 # Calculate space around the equal sign
-                prespace = line[len(line[:equalspos].rstrip()):equalspos]
-                postspacestart = len(line[equalspos+len(self.equaldel):])
-                postspaceend = len(line[equalspos+len(self.equaldel):].lstrip())
-                postspace = line[equalspos+len(self.equaldel):equalspos+(postspacestart-postspaceend)+len(self.equaldel)]
-                self.quotechar = line[equalspos+(postspacestart-postspaceend)+len(self.equaldel)]
-                inlinecomment_pos = line.rfind("%s%s" % (self.quotechar,
-                                                         self.enddel))
+                prespace = line[len(line[:equalspos].rstrip()) : equalspos]
+                postspacestart = len(line[equalspos + len(self.equaldel) :])
+                postspaceend = len(line[equalspos + len(self.equaldel) :].lstrip())
+                postspace = line[
+                    equalspos
+                    + len(self.equaldel) : equalspos
+                    + (postspacestart - postspaceend)
+                    + len(self.equaldel)
+                ]
+                self.quotechar = line[
+                    equalspos + (postspacestart - postspaceend) + len(self.equaldel)
+                ]
+                inlinecomment_pos = line.rfind(f"{self.quotechar}{self.enddel}")
                 if inlinecomment_pos > -1:
-                    inlinecomment = line[inlinecomment_pos+2:]
+                    inlinecomment = line[inlinecomment_pos + 2 :]
                 else:
                     inlinecomment = ""
 
                 if lookupkey in self.inputstore.locationindex:
                     unit = self.inputstore.locationindex[lookupkey]
-                    if ((unit.isfuzzy() and not self.includefuzzy) or
-                        len(unit.target) == 0):
+                    if (unit.isfuzzy() and not self.includefuzzy) or len(
+                        unit.target
+                    ) == 0:
                         value = unit.source
                     else:
                         value = unit.target
@@ -145,28 +151,31 @@ class rephp:
                         "comment": inlinecomment,
                         "eol": eol,
                     }
-                    returnline = ("%(key)s%(pre)s%(del)s%(post)s%(quote)s"
-                                  "%(value)s%(quote)s%(enddel)s%(comment)s"
-                                  "%(eol)s" % params)
+                    returnline = (
+                        "%(key)s%(pre)s%(del)s%(post)s%(quote)s"
+                        "%(value)s%(quote)s%(enddel)s%(comment)s"
+                        "%(eol)s" % params
+                    )
                 else:
                     self.inecho = True
                     returnline = line + eol
 
                 # no string termination means carry string on to next line
-                endpos = line.rfind("%s%s" % (self.quotechar, self.enddel))
+                endpos = line.rfind(f"{self.quotechar}{self.enddel}")
                 # if there was no '; or the quote is escaped, we have to
                 # continue
-                if endpos == -1 or line[endpos-1] == '\\':
+                if endpos == -1 or line[endpos - 1] == "\\":
                     self.inmultilinemsgid = True
 
         if isinstance(returnline, str):
-            returnline = returnline.encode('utf-8')
+            returnline = returnline.encode("utf-8")
 
         return returnline
 
 
-def convertphp(inputfile, outputfile, templatefile, includefuzzy=False,
-               outputthreshold=None):
+def convertphp(
+    inputfile, outputfile, templatefile, includefuzzy=False, outputthreshold=None
+):
     inputstore = po.pofile(inputfile)
 
     if not convert.should_output_store(inputstore, outputthreshold):
@@ -187,12 +196,13 @@ def main(argv=None):
         ("po", "php"): ("php", convertphp),
         ("po", "html"): ("html", convertphp),
     }
-    parser = convert.ConvertOptionParser(formats, usetemplates=True,
-                                         description=__doc__)
+    parser = convert.ConvertOptionParser(
+        formats, usetemplates=True, description=__doc__
+    )
     parser.add_threshold_option()
     parser.add_fuzzy_option()
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

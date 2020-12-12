@@ -28,14 +28,13 @@ from translate.lang import common
 
 
 def guillemets(text):
-
     def convertquotation(match):
         prefix = match.group(1)
         # Let's see that we didn't perhaps match an XML tag property like
         # <a href="something">
         if prefix == "=":
             return match.group(0)
-        return "%s«\u00a0%s\u00a0»" % (prefix, match.group(2))  # \u00a0 is NBSP
+        return "{}«\u00a0{}\u00a0»".format(prefix, match.group(2))  # \u00a0 is NBSP
 
     # Check that there is an even number of double quotes, otherwise it is
     # probably not safe to convert them.
@@ -43,22 +42,20 @@ def guillemets(text):
         text = re.sub('(.|^)"([^"]+)"', convertquotation, text)
     singlecount = text.count("'")
     if singlecount:
-        if singlecount == text.count('`'):
+        if singlecount == text.count("`"):
             text = re.sub("(.|^)`([^']+)'", convertquotation, text)
         elif singlecount % 2 == 0:
             text = re.sub("(.|^)'([^']+)'", convertquotation, text)
-    text = re.sub('(.|^)“([^”]+)”', convertquotation, text)
+    text = re.sub("(.|^)“([^”]+)”", convertquotation, text)
     return text
 
 
 class fr(common.Common):
     """This class represents French."""
 
-    validaccel = ("abcdefghijklmnopqrstuvwxyz"
-                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                  "1234567890"
-                  "é"
-                  "É")
+    validaccel = (
+        "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "1234567890" "é" "É"
+    )
 
     # According to http://french.about.com/library/writing/bl-punctuation.htm,
     # in French, a space is required both before and after all two- (or more)

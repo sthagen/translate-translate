@@ -26,7 +26,6 @@ from translate.storage import csvl10n, po
 
 
 class po2csv:
-
     def convertcomments(self, inputunit):
         return " ".join(inputunit.getlocations())
 
@@ -34,9 +33,9 @@ class po2csv:
         csvunit = csvl10n.csvunit()
         if inputunit.isheader():
             return None
-            #csvunit.location = "location"
-            #csvunit.source = "source"
-            #csvunit.target = "target"
+            # csvunit.location = "location"
+            # csvunit.source = "source"
+            # csvunit.target = "target"
         elif inputunit.isblank():
             return None
         else:
@@ -62,7 +61,7 @@ class po2csv:
 
     def convertstore(self, inputstore, columnorder=None):
         if columnorder is None:
-            columnorder = ['location', 'source', 'target']
+            columnorder = ["location", "source", "target"]
         outputstore = csvl10n.csvfile(fieldnames=columnorder)
         for inputunit in inputstore.units:
             outputunit = self.convertunit(inputunit)
@@ -89,14 +88,19 @@ def convertcsv(inputfile, outputfile, templatefile, columnorder=None):
 
 def main(argv=None):
     from translate.convert import convert
+
     formats = {"po": ("csv", convertcsv)}
     parser = convert.ConvertOptionParser(formats, description=__doc__)
     parser.add_option(
-        "", "--columnorder", dest="columnorder", default=None,
-        help="specify the order and position of columns (location,source,target)")
+        "",
+        "--columnorder",
+        dest="columnorder",
+        default=None,
+        help="specify the order and position of columns (location,source,target)",
+    )
     parser.passthrough.append("columnorder")
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

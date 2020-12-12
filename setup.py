@@ -29,27 +29,32 @@ from translate import __doc__, __version__
 
 try:
     from sphinx.setup_command import BuildDoc
-    cmdclass = {'build_sphinx': BuildDoc}
+
+    cmdclass = {"build_sphinx": BuildDoc}
 except ImportError:
     cmdclass = {}
 
 
-PRETTY_NAME = 'Translate Toolkit'
+PRETTY_NAME = "Translate Toolkit"
 translateversion = __version__.sver
 
 packagesdir = get_python_lib()
-sitepackages = packagesdir.replace(sys.prefix + os.sep, '')
+sitepackages = packagesdir.replace(sys.prefix + os.sep, "")
 
-infofiles = [(join(sitepackages, 'translate'),
-             [filename for filename in ('COPYING', 'README.rst')])]
-initfiles = [(join(sitepackages, 'translate'), [join('translate', '__init__.py')])]
+infofiles = [
+    (
+        join(sitepackages, "translate"),
+        [filename for filename in ("COPYING", "README.rst")],
+    )
+]
+initfiles = [(join(sitepackages, "translate"), [join("translate", "__init__.py")])]
 testfiles = [
     (
-        join(sitepackages, 'translate', 'convert'),
+        join(sitepackages, "translate", "convert"),
         [
-            join('translate', 'convert', 'test.odt'),
-            join('translate', 'convert', 'test.idml'),
-        ]
+            join("translate", "convert", "test.odt"),
+            join("translate", "convert", "test.idml"),
+        ],
     )
 ]
 
@@ -60,7 +65,6 @@ subpackages = [
     "misc",
     "storage",
     join("storage", "placeables"),
-    join("storage", "versioncontrol"),
     join("storage", "xml_extract"),
     "search",
     "services",
@@ -72,93 +76,95 @@ packages = ["translate"]
 # This builds console scripts list. More detail please see:
 # http://python-packaging.readthedocs.org/en/latest/command-line-scripts.html#the-console-scripts-entry-point
 translatescripts = [
-    '{name}={entry}'.format(name=name, entry=entry) for name, entry in [
-        ('csv2po', 'translate.convert.csv2po:main'),
-        ('csv2tbx', 'translate.convert.csv2tbx:main'),
-        ('tbx2po', 'translate.convert.tbx2po:main'),
-        ('flatxml2po', 'translate.convert.flatxml2po:main'),
-        ('html2po', 'translate.convert.html2po:main'),
-        ('ical2po', 'translate.convert.ical2po:main'),
-        ('idml2po', 'translate.convert.idml2po:main'),
-        ('ini2po', 'translate.convert.ini2po:main'),
-        ('json2po', 'translate.convert.json2po:main'),
-        ('moz2po', 'translate.convert.moz2po:main'),
-        ('mozlang2po', 'translate.convert.mozlang2po:main'),
-        ('odf2xliff', 'translate.convert.odf2xliff:main'),
-        ('oo2po', 'translate.convert.oo2po:main'),
-        ('oo2xliff', 'translate.convert.oo2xliff:main'),
-        ('php2po', 'translate.convert.php2po:main'),
-        ('po2csv', 'translate.convert.po2csv:main'),
-        ('po2flatxml', 'translate.convert.po2flatxml:main'),
-        ('po2html', 'translate.convert.po2html:main'),
-        ('po2ical', 'translate.convert.po2ical:main'),
-        ('po2idml', 'translate.convert.po2idml:main'),
-        ('po2ini', 'translate.convert.po2ini:main'),
-        ('po2json', 'translate.convert.po2json:main'),
-        ('po2moz', 'translate.convert.po2moz:main'),
-        ('po2mozlang', 'translate.convert.po2mozlang:main'),
-        ('po2oo', 'translate.convert.po2oo:main'),
-        ('po2php', 'translate.convert.po2php:main'),
-        ('po2prop', 'translate.convert.po2prop:main'),
-        ('po2rc', 'translate.convert.po2rc:main'),
-        ('po2resx', 'translate.convert.po2resx:main'),
-        ('po2sub', 'translate.convert.po2sub:main'),
-        ('po2symb', 'translate.convert.po2symb:main'),
-        ('po2tiki', 'translate.convert.po2tiki:main'),
-        ('po2tmx', 'translate.convert.po2tmx:main'),
-        ('po2ts', 'translate.convert.po2ts:main'),
-        ('po2txt', 'translate.convert.po2txt:main'),
-        ('po2web2py', 'translate.convert.po2web2py:main'),
-        ('po2wordfast', 'translate.convert.po2wordfast:main'),
-        ('po2xliff', 'translate.convert.po2xliff:main'),
-        ('po2yaml', 'translate.convert.po2yaml:main'),
-        ('pot2po', 'translate.convert.pot2po:main'),
-        ('prop2po', 'translate.convert.prop2po:main'),
-        ('rc2po', 'translate.convert.rc2po:main'),
-        ('resx2po', 'translate.convert.resx2po:main'),
-        ('sub2po', 'translate.convert.sub2po:main'),
-        ('symb2po', 'translate.convert.symb2po:main'),
-        ('tiki2po', 'translate.convert.tiki2po:main'),
-        ('ts2po', 'translate.convert.ts2po:main'),
-        ('txt2po', 'translate.convert.txt2po:main'),
-        ('web2py2po', 'translate.convert.web2py2po:main'),
-        ('xliff2odf', 'translate.convert.xliff2odf:main'),
-        ('xliff2oo', 'translate.convert.xliff2oo:main'),
-        ('xliff2po', 'translate.convert.xliff2po:main'),
-        ('yaml2po', 'translate.convert.yaml2po:main'),
-        ('pofilter', 'translate.filters.pofilter:main'),
-        ('tmserver', 'translate.services.tmserver:main'),
-        ('build_tmdb', 'translate.tools.build_tmdb:main'),
-        ('phppo2pypo', 'translate.tools.phppo2pypo:main'),
-        ('poclean', 'translate.tools.poclean:main'),
-        ('pocompile', 'translate.tools.pocompile:main'),
-        ('poconflicts', 'translate.tools.poconflicts:main'),
-        ('pocount', 'translate.tools.pocount:main'),
-        ('podebug', 'translate.tools.podebug:main'),
-        ('pogrep', 'translate.tools.pogrep:main'),
-        ('pomerge', 'translate.tools.pomerge:main'),
-        ('porestructure', 'translate.tools.porestructure:main'),
-        ('posegment', 'translate.tools.posegment:main'),
-        ('poswap', 'translate.tools.poswap:main'),
-        ('poterminology', 'translate.tools.poterminology:main'),
-        ('pretranslate', 'translate.tools.pretranslate:main'),
-        ('pydiff', 'translate.tools.pydiff:main'),
-        ('pypo2phppo', 'translate.tools.pypo2phppo:main'),
+    f"{name}={entry}"
+    for name, entry in [
+        ("csv2po", "translate.convert.csv2po:main"),
+        ("csv2tbx", "translate.convert.csv2tbx:main"),
+        ("tbx2po", "translate.convert.tbx2po:main"),
+        ("flatxml2po", "translate.convert.flatxml2po:main"),
+        ("html2po", "translate.convert.html2po:main"),
+        ("ical2po", "translate.convert.ical2po:main"),
+        ("idml2po", "translate.convert.idml2po:main"),
+        ("ini2po", "translate.convert.ini2po:main"),
+        ("json2po", "translate.convert.json2po:main"),
+        ("moz2po", "translate.convert.moz2po:main"),
+        ("mozlang2po", "translate.convert.mozlang2po:main"),
+        ("odf2xliff", "translate.convert.odf2xliff:main"),
+        ("oo2po", "translate.convert.oo2po:main"),
+        ("oo2xliff", "translate.convert.oo2xliff:main"),
+        ("php2po", "translate.convert.php2po:main"),
+        ("po2csv", "translate.convert.po2csv:main"),
+        ("po2flatxml", "translate.convert.po2flatxml:main"),
+        ("po2html", "translate.convert.po2html:main"),
+        ("po2ical", "translate.convert.po2ical:main"),
+        ("po2idml", "translate.convert.po2idml:main"),
+        ("po2ini", "translate.convert.po2ini:main"),
+        ("po2json", "translate.convert.po2json:main"),
+        ("po2moz", "translate.convert.po2moz:main"),
+        ("po2mozlang", "translate.convert.po2mozlang:main"),
+        ("po2oo", "translate.convert.po2oo:main"),
+        ("po2php", "translate.convert.po2php:main"),
+        ("po2prop", "translate.convert.po2prop:main"),
+        ("po2rc", "translate.convert.po2rc:main"),
+        ("po2resx", "translate.convert.po2resx:main"),
+        ("po2sub", "translate.convert.po2sub:main"),
+        ("po2symb", "translate.convert.po2symb:main"),
+        ("po2tiki", "translate.convert.po2tiki:main"),
+        ("po2tmx", "translate.convert.po2tmx:main"),
+        ("po2ts", "translate.convert.po2ts:main"),
+        ("po2txt", "translate.convert.po2txt:main"),
+        ("po2web2py", "translate.convert.po2web2py:main"),
+        ("po2wordfast", "translate.convert.po2wordfast:main"),
+        ("po2xliff", "translate.convert.po2xliff:main"),
+        ("po2yaml", "translate.convert.po2yaml:main"),
+        ("pot2po", "translate.convert.pot2po:main"),
+        ("prop2po", "translate.convert.prop2po:main"),
+        ("rc2po", "translate.convert.rc2po:main"),
+        ("resx2po", "translate.convert.resx2po:main"),
+        ("sub2po", "translate.convert.sub2po:main"),
+        ("symb2po", "translate.convert.symb2po:main"),
+        ("tiki2po", "translate.convert.tiki2po:main"),
+        ("ts2po", "translate.convert.ts2po:main"),
+        ("txt2po", "translate.convert.txt2po:main"),
+        ("web2py2po", "translate.convert.web2py2po:main"),
+        ("xliff2odf", "translate.convert.xliff2odf:main"),
+        ("xliff2oo", "translate.convert.xliff2oo:main"),
+        ("xliff2po", "translate.convert.xliff2po:main"),
+        ("yaml2po", "translate.convert.yaml2po:main"),
+        ("pofilter", "translate.filters.pofilter:main"),
+        ("tmserver", "translate.services.tmserver:main"),
+        ("build_tmdb", "translate.tools.build_tmdb:main"),
+        ("phppo2pypo", "translate.tools.phppo2pypo:main"),
+        ("poclean", "translate.tools.poclean:main"),
+        ("pocompile", "translate.tools.pocompile:main"),
+        ("poconflicts", "translate.tools.poconflicts:main"),
+        ("pocount", "translate.tools.pocount:main"),
+        ("podebug", "translate.tools.podebug:main"),
+        ("pogrep", "translate.tools.pogrep:main"),
+        ("pomerge", "translate.tools.pomerge:main"),
+        ("porestructure", "translate.tools.porestructure:main"),
+        ("posegment", "translate.tools.posegment:main"),
+        ("poswap", "translate.tools.poswap:main"),
+        ("poterminology", "translate.tools.poterminology:main"),
+        ("pretranslate", "translate.tools.pretranslate:main"),
+        ("pydiff", "translate.tools.pydiff:main"),
+        ("pypo2phppo", "translate.tools.pypo2phppo:main"),
     ]
 ]
 
 translatebashscripts = [
-    join(*('tools', ) + script) for script in [
-        ('junitmsgfmt', ),
-        ('mozilla', 'build_firefox.sh'),
-        ('mozilla', 'buildxpi.py'),
-        ('mozilla', 'get_moz_enUS.py'),
-        ('pocommentclean', ),
-        ('pocompendium', ),
-        ('pomigrate2', ),
-        ('popuretext', ),
-        ('poreencode', ),
-        ('posplit', ),
+    join(*("tools",) + script)
+    for script in [
+        ("junitmsgfmt",),
+        ("mozilla", "build_firefox.sh"),
+        ("mozilla", "buildxpi.py"),
+        ("mozilla", "get_moz_enUS.py"),
+        ("pocommentclean",),
+        ("pocompendium",),
+        ("pomigrate2",),
+        ("popuretext",),
+        ("poreencode",),
+        ("posplit",),
     ]
 ]
 
@@ -172,10 +178,10 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Unix",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Localization",
 ]
@@ -213,8 +219,16 @@ else:
     class InnoScript:
         """class that builds an InnoSetup script"""
 
-        def __init__(self, name, lib_dir, dist_dir, exe_files=[],
-                     other_files=[], install_scripts=[], version="1.0"):
+        def __init__(
+            self,
+            name,
+            lib_dir,
+            dist_dir,
+            exe_files=[],
+            other_files=[],
+            install_scripts=[],
+            version="1.0",
+        ):
             self.lib_dir = lib_dir
             self.dist_dir = dist_dir
             if not self.dist_dir.endswith(os.sep):
@@ -228,9 +242,11 @@ else:
         def getcompilecommand(self):
             try:
                 import _winreg
+
                 compile_key = _winreg.OpenKey(
                     _winreg.HKEY_CLASSES_ROOT,
-                    "innosetupscriptfile\\shell\\compile\\command")
+                    "innosetupscriptfile\\shell\\compile\\command",
+                )
                 compilecommand = _winreg.QueryValue(compile_key, "")
                 compile_key.Close()
             except Exception:
@@ -240,7 +256,7 @@ else:
         def chop(self, pathname):
             """returns the path relative to self.dist_dir"""
             assert pathname.startswith(self.dist_dir)
-            return pathname[len(self.dist_dir):]
+            return pathname[len(self.dist_dir) :]
 
         def create(self, pathname=None):
             """creates the InnoSetup script"""
@@ -252,40 +268,59 @@ else:
 
             # See http://www.jrsoftware.org/isfaq.php for more InnoSetup config options.
             ofi = self.file = open(self.pathname, "w")
-            ofi.write("; WARNING: This script has been created by py2exe. Changes to this script\n")
+            ofi.write(
+                "; WARNING: This script has been created by py2exe. Changes to this script\n"
+            )
             ofi.write("; will be overwritten the next time py2exe is run!\n")
             ofi.write("[Setup]\n")
             ofi.write("AppName=%s\n" % self.name)
-            ofi.write("AppVerName=%s %s\n" % (self.name, self.version))
+            ofi.write(f"AppVerName={self.name} {self.version}\n")
             ofi.write("DefaultDirName={pf}\\%s\n" % self.name)
             ofi.write("DefaultGroupName=%s\n" % self.name)
-            ofi.write("OutputBaseFilename=%s-%s-setup\n" % (self.name, self.version))
+            ofi.write(f"OutputBaseFilename={self.name}-{self.version}-setup\n")
             ofi.write("ChangesEnvironment=yes\n")
             ofi.write("\n")
             ofi.write("[Files]\n")
             for path in self.exe_files + self.other_files:
-                ofi.write('Source: "%s"; DestDir: "{app}\\%s"; Flags: ignoreversion\n' % (path, dirname(path)))
+                ofi.write(
+                    'Source: "%s"; DestDir: "{app}\\%s"; Flags: ignoreversion\n'
+                    % (path, dirname(path))
+                )
             ofi.write("\n")
             ofi.write("[Icons]\n")
-            ofi.write('Name: "{group}\\Documentation"; Filename: "{app}\\docs\\index.html";\n')
-            ofi.write('Name: "{group}\\Translate Toolkit Command Prompt"; Filename: "cmd.exe"\n')
-            ofi.write('Name: "{group}\\Uninstall %s"; Filename: "{uninstallexe}"\n' % self.name)
+            ofi.write(
+                'Name: "{group}\\Documentation"; Filename: "{app}\\docs\\index.html";\n'
+            )
+            ofi.write(
+                'Name: "{group}\\Translate Toolkit Command Prompt"; Filename: "cmd.exe"\n'
+            )
+            ofi.write(
+                'Name: "{group}\\Uninstall %s"; Filename: "{uninstallexe}"\n'
+                % self.name
+            )
             ofi.write("\n")
             ofi.write("[Registry]\n")
             # TODO: Move the code to update the Path environment variable to a
             # Python script which will be invoked by the [Run] section (below)
             ofi.write(
                 'Root: HKCU; Subkey: "Environment"; ValueType: expandsz; '
-                'ValueName: "Path"; ValueData: "{reg:HKCU\\Environment,Path|};{app};"\n')
+                'ValueName: "Path"; ValueData: "{reg:HKCU\\Environment,Path|};{app};"\n'
+            )
             ofi.write("\n")
             if self.install_scripts:
                 ofi.write("[Run]\n")
                 for path in self.install_scripts:
-                    ofi.write('Filename: "{app}\\%s"; WorkingDir: "{app}"; Parameters: "-install"\n' % path)
+                    ofi.write(
+                        'Filename: "{app}\\%s"; WorkingDir: "{app}"; Parameters: "-install"\n'
+                        % path
+                    )
                 ofi.write("\n")
                 ofi.write("[UninstallRun]\n")
                 for path in self.install_scripts:
-                    ofi.write('Filename: "{app}\\%s"; WorkingDir: "{app}"; Parameters: "-remove"\n' % path)
+                    ofi.write(
+                        'Filename: "{app}\\%s"; WorkingDir: "{app}"; Parameters: "-remove"\n'
+                        % path
+                    )
             ofi.write("\n")
             ofi.close()
 
@@ -307,7 +342,8 @@ else:
         def reinitialize_command(self, command, reinit_subcommands=0):
             if command == "install_data":
                 install_data = BuildCommand.reinitialize_command(
-                    self, command, reinit_subcommands)
+                    self, command, reinit_subcommands
+                )
                 install_data.data_files = self.remap_data_files(install_data.data_files)
                 return install_data
             return BuildCommand.reinitialize_command(self, command, reinit_subcommands)
@@ -336,11 +372,16 @@ else:
         Windows installer using InnoSetup
         """
 
-        description = "create an executable installer for MS Windows using InnoSetup and py2exe"
-        user_options = getattr(
-            BuildCommand, 'user_options', []) + [(
-                'install-script=', None,
-                "basename of installation script to be run after installation or before deinstallation")]
+        description = (
+            "create an executable installer for MS Windows using InnoSetup and py2exe"
+        )
+        user_options = getattr(BuildCommand, "user_options", []) + [
+            (
+                "install-script=",
+                None,
+                "basename of installation script to be run after installation or before deinstallation",
+            )
+        ]
 
         def initialize_options(self):
             BuildCommand.initialize_options(self)
@@ -356,10 +397,15 @@ else:
             install_scripts = self.install_script
             if isinstance(install_scripts, str):
                 install_scripts = [install_scripts]
-            script = InnoScript(PRETTY_NAME, lib_dir, dist_dir, exe_files,
-                                self.lib_files,
-                                version=self.distribution.metadata.version,
-                                install_scripts=install_scripts)
+            script = InnoScript(
+                PRETTY_NAME,
+                lib_dir,
+                dist_dir,
+                exe_files,
+                self.lib_files,
+                version=self.distribution.metadata.version,
+                install_scripts=install_scripts,
+            )
             print("*** creating the inno setup script***")
             script.create()
             print("*** compiling the inno setup script***")
@@ -376,30 +422,41 @@ else:
             py2exeoptions["packages"] = ["translate", "encodings"]
             py2exeoptions["compressed"] = True
             py2exeoptions["excludes"] = [
-                "Tkconstants", "Tkinter", "tcl",
+                "Tkconstants",
+                "Tkinter",
+                "tcl",
                 "enchant",  # Need to do more to support spell checking on Windows
                 # strange things unnecessarily included with some versions of pyenchant:
-                "win32ui", "_win32sysloader", "win32pipe", "py2exe", "win32com",
-                "pywin", "isapi", "_tkinter", "win32api",
+                "win32ui",
+                "_win32sysloader",
+                "win32pipe",
+                "py2exe",
+                "win32com",
+                "pywin",
+                "isapi",
+                "_tkinter",
+                "win32api",
             ]
             version = attrs.get("version", translateversion)
             py2exeoptions["dist_dir"] = "translate-toolkit-%s" % version
             py2exeoptions["includes"] = ["lxml", "lxml._elementpath"]
             options = {"py2exe": py2exeoptions}
-            baseattrs['options'] = options
+            baseattrs["options"] = options
             if py2exe:
                 # http://www.py2exe.org/index.cgi/ListOfOptions
                 consolescripts = []
                 for entry_point in translatescripts:
-                    module = entry_point.partition('=')[2].rpartition(':')[0]
-                    script_path = module.replace('.', os.sep) + '.py'
+                    module = entry_point.partition("=")[2].rpartition(":")[0]
+                    script_path = module.replace(".", os.sep) + ".py"
                     consolescripts.append(script_path)
-                baseattrs['console'] = consolescripts
-                baseattrs['zipfile'] = "translate.zip"
-                baseattrs['cmdclass'] = cmdclass.update({
-                    "py2exe": build_exe_map,
-                    "innosetup": BuildInstaller,
-                })
+                baseattrs["console"] = consolescripts
+                baseattrs["zipfile"] = "translate.zip"
+                baseattrs["cmdclass"] = cmdclass.update(
+                    {
+                        "py2exe": build_exe_map,
+                        "innosetup": BuildInstaller,
+                    }
+                )
                 options["innosetup"] = py2exeoptions.copy()
                 options["innosetup"]["install_script"] = []
             baseattrs.update(attrs)
@@ -432,16 +489,16 @@ def parse_requirements(file_name):
     Copied from cburgmer/pdfserver.
     """
     requirements = []
-    with open(file_name, 'r') as fh:
+    with open(file_name) as fh:
         for line in fh:
             # Ignore comments, blank lines and included requirements files
-            if re.match(r'(\s*#)|(\s*$)|(-r .*$)', line):
+            if re.match(r"(\s*#)|(\s*$)|(-r .*$)", line):
                 continue
 
-            if re.match(r'\s*-e\s+', line):
-                requirements.append(re.sub(r'\s*-e\s+.*#egg=(.*)$', r'\1', line))
-            elif not re.match(r'\s*-f\s+', line):
-                requirements.append(line.rstrip('\n'))
+            if re.match(r"\s*-e\s+", line):
+                requirements.append(re.sub(r"\s*-e\s+.*#egg=(.*)$", r"\1", line))
+            elif not re.match(r"\s*-f\s+", line):
+                requirements.append(line.rstrip("\n"))
 
     return requirements
 
@@ -451,12 +508,12 @@ def getdatafiles():
 
     def listfiles(srcdir):
         return (
-            join(sitepackages, 'translate', srcdir),
-            [join(srcdir, f)
-             for f in os.listdir(srcdir) if isfile(join(srcdir, f))])
+            join(sitepackages, "translate", srcdir),
+            [join(srcdir, f) for f in os.listdir(srcdir) if isfile(join(srcdir, f))],
+        )
 
     docfiles = []
-    for subdir in ['docs', 'share']:
+    for subdir in ["docs", "share"]:
         docwalk = os.walk(subdir)
         for docs in docwalk:
             files = listfiles(docs[0])
@@ -468,7 +525,10 @@ def getdatafiles():
 
 def buildmanifest_in(f, scripts):
     """This writes the required files to a MANIFEST.in file"""
-    f.write("# MANIFEST.in: the below autogenerated by setup.py from translate %s\n" % translateversion)
+    f.write(
+        "# MANIFEST.in: the below autogenerated by setup.py from translate %s\n"
+        % translateversion
+    )
     f.write("# things needed by translate setup.py to rebuild\n")
     f.write("# informational fs\n")
     for infof in ("README.rst", "COPYING", "*.txt"):
@@ -494,17 +554,28 @@ def standardsetup(name, version, custompackages=[], customdatafiles=[]):
     try:
         with open("MANIFEST.in", "w") as manifest_in:
             buildmanifest_in(manifest_in, translatebashscripts)
-    except IOError as e:
-        sys.stderr.write("warning: could not recreate MANIFEST.in, continuing anyway. (%s)\n" % e)
+    except OSError as e:
+        sys.stderr.write(
+            "warning: could not recreate MANIFEST.in, continuing anyway. (%s)\n" % e
+        )
 
     for subpackage in subpackages:
-        initfiles.append((join(sitepackages, "translate", subpackage),
-                          [join("translate", subpackage, "__init__.py")]))
+        initfiles.append(
+            (
+                join(sitepackages, "translate", subpackage),
+                [join("translate", subpackage, "__init__.py")],
+            )
+        )
         packages.append("translate.%s" % subpackage)
 
     datafiles = getdatafiles()
-    dosetup(name, version, packages + custompackages, datafiles + customdatafiles,
-            translatebashscripts)
+    dosetup(
+        name,
+        version,
+        packages + custompackages,
+        datafiles + customdatafiles,
+        translatebashscripts,
+    )
 
 
 def dosetup(name, version, packages, datafiles, scripts, ext_modules=[]):
@@ -516,7 +587,7 @@ def dosetup(name, version, packages, datafiles, scripts, ext_modules=[]):
     setup(
         name=name,
         version=version,
-        python_requires=">=3.5",
+        python_requires=">=3.6",
         license="GNU General Public License (GPL)",
         description=description,
         long_description=long_description,
@@ -534,13 +605,13 @@ def dosetup(name, version, packages, datafiles, scripts, ext_modules=[]):
         packages=packages,
         data_files=datafiles,
         entry_points={
-            'console_scripts': translatescripts,
+            "console_scripts": translatescripts,
         },
         scripts=scripts,
         ext_modules=ext_modules,
         cmdclass=cmdclass,
-        install_requires=parse_requirements('requirements/required.txt'),
-        **kwargs
+        install_requires=parse_requirements("requirements/required.txt"),
+        **kwargs,
     )
 
 

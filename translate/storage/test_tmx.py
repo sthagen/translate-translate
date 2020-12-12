@@ -8,7 +8,7 @@ class TestTMXUnit(test_base.TestTranslationUnit):
 
 
 class TestTMXUnitFromParsedString(TestTMXUnit):
-    tmxsource = '''<?xml version="1.0" encoding="utf-8"?>
+    tmxsource = """<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE tmx
   SYSTEM 'tmx14.dtd'>
 <tmx version="1.4">
@@ -20,7 +20,7 @@ class TestTMXUnitFromParsedString(TestTMXUnit):
                         </tuv>
                 </tu>
         </body>
-</tmx>'''
+</tmx>"""
 
     def setup_method(self, method):
         store = tmx.tmxfile.parsestring(self.tmxsource)
@@ -40,13 +40,17 @@ class TestTMXfile(test_base.TestTranslationStore):
     def test_translate(self):
         tmxfile = tmx.tmxfile()
         assert tmxfile.translate("Anything") is None
-        tmxfile.addtranslation("A string of characters", "en", "'n String karakters", "af")
+        tmxfile.addtranslation(
+            "A string of characters", "en", "'n String karakters", "af"
+        )
         assert tmxfile.translate("A string of characters") == "'n String karakters"
 
     def test_addtranslation(self):
         """tests that addtranslation() stores strings correctly"""
         tmxfile = tmx.tmxfile()
-        tmxfile.addtranslation("A string of characters", "en", "'n String karakters", "af")
+        tmxfile.addtranslation(
+            "A string of characters", "en", "'n String karakters", "af"
+        )
         newfile = self.tmxparse(bytes(tmxfile))
         print(bytes(tmxfile))
         assert newfile.translate("A string of characters") == "'n String karakters"
@@ -54,8 +58,9 @@ class TestTMXfile(test_base.TestTranslationStore):
     def test_withcomment(self):
         """tests that addtranslation() stores string's comments correctly"""
         tmxfile = tmx.tmxfile()
-        tmxfile.addtranslation("A string of chars",
-                               "en", "'n String karakters", "af", "comment")
+        tmxfile.addtranslation(
+            "A string of chars", "en", "'n String karakters", "af", "comment"
+        )
         newfile = self.tmxparse(bytes(tmxfile))
         print(bytes(tmxfile))
         assert newfile.findunit("A string of chars").getnotes() == "comment"
@@ -63,7 +68,9 @@ class TestTMXfile(test_base.TestTranslationStore):
     def test_withnewlines(self):
         """test addtranslation() with newlines"""
         tmxfile = tmx.tmxfile()
-        tmxfile.addtranslation("First line\nSecond line", "en", "Eerste lyn\nTweede lyn", "af")
+        tmxfile.addtranslation(
+            "First line\nSecond line", "en", "Eerste lyn\nTweede lyn", "af"
+        )
         newfile = self.tmxparse(bytes(tmxfile))
         print(bytes(tmxfile))
         assert newfile.translate("First line\nSecond line") == "Eerste lyn\nTweede lyn"
@@ -73,12 +80,12 @@ class TestTMXfile(test_base.TestTranslationStore):
         tmxfile = tmx.tmxfile()
         tmxfile.addtranslation("Mail & News", "en", "Nuus & pos", "af")
         tmxfile.addtranslation("Five < ten", "en", "Vyf < tien", "af")
-        xmltext = bytes(tmxfile).decode('utf-8')
+        xmltext = bytes(tmxfile).decode("utf-8")
         print("The generated xml:")
         print(xmltext)
-        assert tmxfile.translate('Mail & News') == 'Nuus & pos'
-        assert xmltext.index('Mail &amp; News')
-        assert xmltext.find('Mail & News') == -1
-        assert tmxfile.translate('Five < ten') == 'Vyf < tien'
-        assert xmltext.index('Five &lt; ten')
-        assert xmltext.find('Five < ten') == -1
+        assert tmxfile.translate("Mail & News") == "Nuus & pos"
+        assert xmltext.index("Mail &amp; News")
+        assert xmltext.find("Mail & News") == -1
+        assert tmxfile.translate("Five < ten") == "Vyf < tien"
+        assert xmltext.index("Five &lt; ten")
+        assert xmltext.find("Five < ten") == -1

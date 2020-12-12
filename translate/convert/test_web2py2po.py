@@ -4,7 +4,6 @@ from translate.storage.test_base import first_translatable, headerless_len
 
 
 class TestWEB2PY2PO:
-
     def web2py2po(self, web2py_source):
         """helper that converts po source to web2py source without requiring files"""
         input_web2py = eval(web2py_source)
@@ -20,11 +19,11 @@ class TestWEB2PY2PO:
 
     def test_basic(self):
         """test a basic web2py to po conversion"""
-        input_web2py = '''# -*- coding: utf-8 -*-
+        input_web2py = """# -*- coding: utf-8 -*-
 {
 'A simple string': 'Du texte simple',
 }
-'''
+"""
 
         po_out = self.web2py2po(input_web2py)
         pounit = self.singleelement(po_out)
@@ -33,11 +32,11 @@ class TestWEB2PY2PO:
 
     def test_unicode(self):
         """test a web2py to po conversion with unicode"""
-        input_web2py = '''# -*- coding: utf-8 -*-
+        input_web2py = """# -*- coding: utf-8 -*-
 {
 'Foobar': 'Fúbär',
 }
-'''
+"""
 
         po_out = self.web2py2po(input_web2py)
         pounit = self.singleelement(po_out)
@@ -46,11 +45,11 @@ class TestWEB2PY2PO:
 
     def test_markmin(self):
         """test removal of @markmin in po to web2py conversion"""
-        input_web2py = '''# -*- coding: utf-8 -*-
+        input_web2py = """# -*- coding: utf-8 -*-
 {
 '@markmin\\x01Hello **world**!': 'Hello **world**!',
 }
-'''
+"""
 
         po_out = self.web2py2po(input_web2py)
         pounit = self.singleelement(po_out)

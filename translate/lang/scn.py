@@ -22,8 +22,7 @@
 """
 
 
-from translate.filters.checks import (CheckerConfig, FilterFailure,
-                                      TranslationChecker)
+from translate.filters.checks import CheckerConfig, FilterFailure, TranslationChecker
 from translate.filters.decorators import critical
 from translate.lang import common
 
@@ -88,7 +87,11 @@ class SicilianChecker(TranslationChecker):
 
         words1 = self.filteraccelerators(str1).split()
         words2 = self.filteraccelerators(str2).split()
-        stopwords = ["%s (%s)" % (word, errors[word]) for word in words2 if word.lower() in errors.keys() and word not in words1]
+        stopwords = [
+            "{} ({})".format(word, errors[word])
+            for word in words2
+            if word.lower() in errors.keys() and word not in words1
+        ]
 
         if stopwords:
             raise FilterFailure("Please translate: %s" % (", ".join(stopwords)))
@@ -110,13 +113,13 @@ class SicilianChecker(TranslationChecker):
         :param str2: the target (translated) string
         :return: True if there are no words with endings not in respect of vocalism (or if they appear in source string as well)
         """
-        exceptions = ['me', 'to', 'so', 'po', 'no', 'jo', 'se', 'nne']
+        exceptions = ["me", "to", "so", "po", "no", "jo", "se", "nne"]
 
         stopwords = []
 
         for word in self.config.lang.words(str2):
             if word not in str1 and word.lower() not in exceptions:
-                if word.lower().endswith(('e', 'o')) and word.lower() not in stopwords:
+                if word.lower().endswith(("e", "o")) and word.lower() not in stopwords:
                     stopwords.append(word.lower())
 
         if stopwords:
@@ -140,10 +143,12 @@ class SicilianChecker(TranslationChecker):
         for word in self.config.lang.words(str2):
             for suffix in suffixes.keys():
                 if word not in str1 and word.lower().endswith(suffix):
-                    stopwords.append("%s (-%s)" % (word, suffixes[suffix]))
+                    stopwords.append("{} (-{})".format(word, suffixes[suffix]))
 
         if stopwords:
-            raise FilterFailure("Please use the correct word endings: %s" % (", ".join(stopwords)))
+            raise FilterFailure(
+                "Please use the correct word endings: %s" % (", ".join(stopwords))
+            )
         return True
 
 
@@ -153,5 +158,5 @@ class scn(common.Common):
     checker = SicilianChecker()
 
     ignoretests = {
-        'all': ['doublewords'],
+        "all": ["doublewords"],
     }

@@ -20,9 +20,7 @@
 
 from lxml import etree
 
-from translate.lang import data
-from translate.misc.xml_helpers import (getText, getXMLlang, getXMLspace,
-                                        namespaced)
+from translate.misc.xml_helpers import getText, getXMLlang, getXMLspace, namespaced
 from translate.storage import base
 
 
@@ -32,12 +30,12 @@ class LISAunit(base.TranslationUnit):
     languages possible.
     """
 
-    #The name of the root element of this unit type:(termEntry, tu, trans-unit)
+    # The name of the root element of this unit type:(termEntry, tu, trans-unit)
     rootNode = ""
     # The name of the per language element of this unit type:(termEntry, tu,
     # trans-unit)
     languageNode = ""
-    #The name of the innermost element of this unit type:(term, seg)
+    # The name of the innermost element of this unit type:(term, seg)
     textNode = ""
 
     namespace = None
@@ -55,7 +53,7 @@ class LISAunit(base.TranslationUnit):
             self._state_n = 0
             return
         self.xmlelement = etree.Element(self.namespaced(self.rootNode))
-        #add descrip, note, etc.
+        # add descrip, note, etc.
         super().__init__(source)
 
     def __eq__(self, other):
@@ -67,14 +65,15 @@ class LISAunit(base.TranslationUnit):
         if len(languageNodes) != len(otherlanguageNodes):
             return False
         for i in range(len(languageNodes)):
-            mytext = self.getNodeText(languageNodes[i],
-                                      getXMLspace(self.xmlelement,
-                                                  self._default_xml_space))
-            othertext = other.getNodeText(otherlanguageNodes[i],
-                                          getXMLspace(self.xmlelement,
-                                                      self._default_xml_space))
+            mytext = self.getNodeText(
+                languageNodes[i], getXMLspace(self.xmlelement, self._default_xml_space)
+            )
+            othertext = other.getNodeText(
+                otherlanguageNodes[i],
+                getXMLspace(self.xmlelement, self._default_xml_space),
+            )
             if mytext != othertext:
-                #TODO:^ maybe we want to take children and notes into account
+                # TODO:^ maybe we want to take children and notes into account
                 return False
         return True
 
@@ -99,21 +98,21 @@ class LISAunit(base.TranslationUnit):
 
     def get_source_dom(self):
         return self.getlanguageNode(lang=None, index=0)
+
     source_dom = property(get_source_dom, set_source_dom)
 
     @property
     def source(self):
-        return self.getNodeText(self.source_dom,
-                                getXMLspace(self.xmlelement,
-                                            self._default_xml_space))
+        return self.getNodeText(
+            self.source_dom, getXMLspace(self.xmlelement, self._default_xml_space)
+        )
 
     @source.setter
     def source(self, source):
-        self.setsource(source, sourcelang='en')
+        self.setsource(source, sourcelang="en")
 
-    def setsource(self, text, sourcelang='en'):
+    def setsource(self, text, sourcelang="en"):
         self._rich_source = None
-        text = data.forceunicode(text)
         self.source_dom = self.createlanguageNode(sourcelang, text, "source")
 
     def set_target_dom(self, dom_node, append=False):
@@ -131,25 +130,26 @@ class LISAunit(base.TranslationUnit):
             return self.getlanguageNode(lang=lang)
         else:
             return self.getlanguageNode(lang=None, index=1)
+
     target_dom = property(get_target_dom)
 
     def gettarget(self, lang=None):
         """retrieves the "target" text (second entry), or the entry in the
         specified language, if it exists
         """
-        return self.getNodeText(self.get_target_dom(lang),
-                                getXMLspace(self.xmlelement,
-                                            self._default_xml_space))
+        return self.getNodeText(
+            self.get_target_dom(lang),
+            getXMLspace(self.xmlelement, self._default_xml_space),
+        )
 
-    def settarget(self, target, lang='xx', append=False):
+    def settarget(self, target, lang="xx", append=False):
         """Sets the "target" string (second language), or alternatively appends
         to the list
         """
-        #XXX: we really need the language - can't really be optional, and we
+        # XXX: we really need the language - can't really be optional, and we
         # need to propagate it
         if self._rich_target is not None:
             self._rich_target = None
-        target = data.forceunicode(target)
         # Firstly deal with reinitialising to None or setting to identical
         # string
         if self.target == target:
@@ -185,8 +185,7 @@ class LISAunit(base.TranslationUnit):
         return None
 
     def getlanguageNodes(self):
-        """Returns a list of all nodes that contain per language information.
-        """
+        """Returns a list of all nodes that contain per language information."""
         return list(self.xmlelement.iterchildren(self.namespaced(self.languageNode)))
 
     def getlanguageNode(self, lang=None, index=None):
@@ -223,17 +222,20 @@ class LISAunit(base.TranslationUnit):
 
     def __str__(self):
         # 'unicode' encoding keeps the unicode status of the output
-        return etree.tostring(self.xmlelement, pretty_print=True,
-                              encoding='unicode')
+        return etree.tostring(self.xmlelement, pretty_print=True, encoding="unicode")
 
     def _set_property(self, name, value):
         self.xmlelement.attrib[name] = value
 
-    xid = property(lambda self: self.xmlelement.attrib[self.namespaced('xid')],
-                   lambda self, value: self._set_property(self.namespaced('xid'), value))
+    xid = property(
+        lambda self: self.xmlelement.attrib[self.namespaced("xid")],
+        lambda self, value: self._set_property(self.namespaced("xid"), value),
+    )
 
-    rid = property(lambda self: self.xmlelement.attrib[self.namespaced('rid')],
-                   lambda self, value: self._set_property(self.namespaced('rid'), value))
+    rid = property(
+        lambda self: self.xmlelement.attrib[self.namespaced("rid")],
+        lambda self, value: self._set_property(self.namespaced("rid"), value),
+    )
 
     @classmethod
     def createfromxmlElement(cls, element):
@@ -246,17 +248,18 @@ class LISAfile(base.TranslationStore):
     """A class representing a file store for one of the LISA file formats."""
 
     UnitClass = LISAunit
-    #The root node of the XML document:
+    # The root node of the XML document:
     rootNode = ""
-    #The root node of the content section:
+    # The root node of the content section:
     bodyNode = ""
-    #The XML skeleton to use for empty construction:
+    # The XML skeleton to use for empty construction:
     XMLskeleton = ""
 
     namespace = None
 
-    def __init__(self, inputfile=None, sourcelanguage='en',
-                 targetlanguage=None, **kwargs):
+    def __init__(
+        self, inputfile=None, sourcelanguage="en", targetlanguage=None, **kwargs
+    ):
         super().__init__(**kwargs)
         if inputfile is not None:
             self.parse(inputfile)
@@ -264,7 +267,7 @@ class LISAfile(base.TranslationStore):
         else:
             # We strip out newlines to ensure that spaces in the skeleton
             # doesn't interfere with the the pretty printing of lxml
-            self.parse(self.XMLskeleton.replace("\n", "").encode('utf-8'))
+            self.parse(self.XMLskeleton.replace("\n", "").encode("utf-8"))
             self.setsourcelanguage(sourcelanguage)
             self.settargetlanguage(targetlanguage)
             self.addheader()
@@ -290,7 +293,7 @@ class LISAfile(base.TranslationStore):
         again.
         """
         self.namespace = self.document.getroot().nsmap.get(None, None)
-        self.body = self.document.find('//%s' % self.namespaced(self.bodyNode))
+        self.body = self.document.find("//%s" % self.namespaced(self.bodyNode))
 
     def addsourceunit(self, source):
         """Adds and returns a new unit with the given string as first entry."""
@@ -304,15 +307,20 @@ class LISAfile(base.TranslationStore):
         if new:
             self.body.append(unit.xmlelement)
 
+    def removeunit(self, unit):
+        super().removeunit(unit)
+        unit.xmlelement.getparent().remove(unit.xmlelement)
+
     def serialize(self, out=None):
         """Converts to a string containing the file's XML"""
-        self.document.write(out, pretty_print=True, xml_declaration=True,
-                            encoding='utf-8')
+        self.document.write(
+            out, pretty_print=True, xml_declaration=True, encoding="utf-8"
+        )
 
     def parse(self, xml):
         """Populates this object from the given xml string"""
-        if not hasattr(self, 'filename'):
-            self.filename = getattr(xml, 'name', '')
+        if not hasattr(self, "filename"):
+            self.filename = getattr(xml, "name", "")
         if hasattr(xml, "read"):
             xml.seek(0)
             posrc = xml.read()
@@ -322,6 +330,8 @@ class LISAfile(base.TranslationStore):
         self.encoding = self.document.docinfo.encoding
         self.initbody()
         assert self.document.getroot().tag == self.namespaced(self.rootNode)
-        for entry in self.document.getroot().iterdescendants(self.namespaced(self.UnitClass.rootNode)):
+        for entry in self.document.getroot().iterdescendants(
+            self.namespaced(self.UnitClass.rootNode)
+        ):
             term = self.UnitClass.createfromxmlElement(entry)
             self.addunit(term, new=False)

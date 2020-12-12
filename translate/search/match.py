@@ -41,7 +41,7 @@ def _sort_matches(matches, match_info):
     same.
     """
     matches.sort(key=lambda x: len(x.source), reverse=True)
-    matches.sort(key=lambda x: match_info[x.source]['pos'])
+    matches.sort(key=lambda x: match_info[x.source]["pos"])
 
 
 class matcher:
@@ -51,7 +51,15 @@ class matcher:
 
     sort_reverse = False
 
-    def __init__(self, store, max_candidates=10, min_similarity=75, max_length=70, comparer=None, usefuzzy=False):
+    def __init__(
+        self,
+        store,
+        max_candidates=10,
+        min_similarity=75,
+        max_length=70,
+        comparer=None,
+        usefuzzy=False,
+    ):
         """max_candidates is the maximum number of candidates that should be
         assembled, min_similarity is the minimum similarity that must be
         attained to be included in the result, comparer is an optional Comparer
@@ -67,7 +75,7 @@ class matcher:
 
     def usable(self, unit):
         """Returns whether this translation unit is usable for TM"""
-        #TODO: We might want to consider more attributes, such as approved, reviewed, etc.
+        # TODO: We might want to consider more attributes, such as approved, reviewed, etc.
         source = unit.source
         target = unit.target
         if source and target and (self.usefuzzy or not unit.isfuzzy()):
@@ -161,8 +169,8 @@ class matcher:
                  percentage in the notes.
         """
         bestcandidates = [(0.0, None)] * self.MAX_CANDIDATES
-        #We use self.MIN_SIMILARITY, but if we already know we have max_candidates
-        #that are better, we can adjust min_similarity upwards for speedup
+        # We use self.MIN_SIMILARITY, but if we already know we have max_candidates
+        # that are better, we can adjust min_similarity upwards for speedup
         min_similarity = self.MIN_SIMILARITY
 
         # We want to limit our search in self.candidates, so we want to ignore
@@ -201,9 +209,9 @@ class matcher:
                     min_similarity = lowestscore
                     stoplength = self.getstoplength(min_similarity, text)
 
-        #Remove the empty ones:
+        # Remove the empty ones:
         bestcandidates = [item for item in bestcandidates if item[0] != 0]
-        #Sort for use as a general list, and reverse so the best one is at index 0
+        # Sort for use as a general list, and reverse so the best one is at index 0
         bestcandidates.sort(key=itemgetter(0), reverse=True)
         return self.buildunits(bestcandidates)
 
@@ -236,10 +244,10 @@ class matcher:
 # The tuples define a regular expression to search for, and with what it
 # should be replaced.
 ignorepatterns = [
-    (r"y\s*$", "ie"),          # category/categories, identify/identifies, apply/applied
-    (r"[\s-]+", ""),           # down time / downtime, pre-order / preorder
-    ("-", " "),               # pre-order / pre order
-    (" ", "-"),               # pre order / pre-order
+    (r"y\s*$", "ie"),  # category/categories, identify/identifies, apply/applied
+    (r"[\s-]+", ""),  # down time / downtime, pre-order / preorder
+    ("-", " "),  # pre-order / pre order
+    (" ", "-"),  # pre order / pre-order
 ]
 ignorepatterns_re = [(re.compile(a), b) for (a, b) in ignorepatterns]
 
@@ -251,10 +259,18 @@ class terminologymatcher(matcher):
 
     sort_reverse = True
 
-    def __init__(self, store, max_candidates=10, min_similarity=75, max_length=500, comparer=None):
+    def __init__(
+        self, store, max_candidates=10, min_similarity=75, max_length=500, comparer=None
+    ):
         if comparer is None:
             comparer = terminology.TerminologyComparer(max_length)
-        super().__init__(store, max_candidates, min_similarity=10, max_length=max_length, comparer=comparer)
+        super().__init__(
+            store,
+            max_candidates,
+            min_similarity=10,
+            max_length=max_length,
+            comparer=comparer,
+        )
         self.addpercentage = False
         self.match_info = {}
 
@@ -302,7 +318,7 @@ class terminologymatcher(matcher):
         with the original unit to retain comments, etc.
         """
         text_l = len(text)
-        if text_l < self.getstartlength(0, ''):  # parameters unused
+        if text_l < self.getstartlength(0, ""):  # parameters unused
             # impossible to return anything
             return []
         text = text.lower()
@@ -332,7 +348,7 @@ class terminologymatcher(matcher):
             if (source, cand.target) in known:
                 continue
             if comparer.similarity(text, source, self.MIN_SIMILARITY):
-                match_info[source] = {'pos': comparer.match_info[source]['pos']}
+                match_info[source] = {"pos": comparer.match_info[source]["pos"]}
                 matches.append(cand)
                 known.add((source, cand.target))
 
@@ -340,7 +356,7 @@ class terminologymatcher(matcher):
         lastend = 0
         _sort_matches(matches, match_info)
         for match in matches:
-            start_pos = match_info[match.source]['pos']
+            start_pos = match_info[match.source]["pos"]
             if start_pos < lastend:
                 continue
             end = start_pos + len(match.source)
@@ -352,12 +368,12 @@ class terminologymatcher(matcher):
                 if m is match:
                     continue
                 m_info = match_info[m.source]
-                m_end = m_info['pos']
+                m_end = m_info["pos"]
                 if m_end > start_pos:
                     # we past valid possibilities in the list
                     break
                 m_end += len(m.source)
-                if start_pos == m_info['pos'] and end == m_end:
+                if start_pos == m_info["pos"] and end == m_end:
                     # another match for the same term
                     final_matches.append(m)
 
@@ -374,12 +390,12 @@ def unit2dict(unit):
         "source": unit.source,
         "target": unit.target,
         "quality": _parse_quality(unit.getnotes()),
-        "context": unit.getcontext()
+        "context": unit.getcontext(),
     }
 
 
 def _parse_quality(comment):
     """Extracts match quality from po comments."""
-    quality = re.search('([0-9]+)%', comment)
+    quality = re.search("([0-9]+)%", comment)
     if quality:
         return quality.group(1)

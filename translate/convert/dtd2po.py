@@ -33,16 +33,15 @@ def is_css_entity(entity):
     """Says if the given entity is likely to contain CSS that should not be
     translated.
     """
-    if '.' in entity:
-        prefix, suffix = entity.rsplit('.', 1)
-        if (suffix in ["height", "width", "unixWidth", "macWidth", "size"] or
-            suffix.startswith("style")):
+    if "." in entity:
+        prefix, suffix = entity.rsplit(".", 1)
+        suffixes = ["height", "width", "unixWidth", "macWidth", "size"]
+        if suffix in suffixes or suffix.startswith("style"):
             return True
     return False
 
 
 class dtd2po:
-
     def __init__(self, blankmsgstr=False, duplicatestyle="msgctxt"):
         self.currentgroup = None
         self.blankmsgstr = blankmsgstr
@@ -56,11 +55,11 @@ class dtd2po:
             po_unit.addlocation(entity)
         for commenttype, comment in dtd_unit.comments:
             # handle groups
-            if (commenttype == "locgroupstart"):
-                groupcomment = comment.replace('BEGIN', 'GROUP')
+            if commenttype == "locgroupstart":
+                groupcomment = comment.replace("BEGIN", "GROUP")
                 self.currentgroup = groupcomment
-            elif (commenttype == "locgroupend"):
-                groupcomment = comment.replace('END', 'GROUP')
+            elif commenttype == "locgroupend":
+                groupcomment = comment.replace("END", "GROUP")
                 self.currentgroup = None
             # handle automatic comment
             if commenttype == "automaticcomment":
@@ -70,11 +69,12 @@ class dtd2po:
                 po_unit.addnote(quote.stripcomment(comment), origin="developer")
         # handle group stuff
         if self.currentgroup is not None:
-            po_unit.addnote(quote.stripcomment(self.currentgroup),
-                            origin="translator")
+            po_unit.addnote(quote.stripcomment(self.currentgroup), origin="translator")
         if is_css_entity(entity):
-            po_unit.addnote("Do not translate this.  Only change the numeric values if you need this dialogue box to appear bigger",
-                            origin="developer")
+            po_unit.addnote(
+                "Do not translate this.  Only change the numeric values if you need this dialogue box to appear bigger",
+                origin="developer",
+            )
 
     def convertstrings(self, dtd_unit, po_unit):
         # extract the string, get rid of quoting
@@ -82,7 +82,7 @@ class dtd2po:
         # escape backslashes... but not if they're for a newline
         # unquoted = unquoted.replace("\\", "\\\\").replace("\\\\n", "\\n")
         # now split the string into lines and quote them
-        lines = unquoted.split('\n')
+        lines = unquoted.split("\n")
         while lines and not lines[0].strip():
             del lines[0]
         while lines and not lines[-1].strip():
@@ -91,9 +91,10 @@ class dtd2po:
         # start and end quotes
         if len(lines) > 1:
             po_unit.source = "".join(
-                [lines[0].rstrip() + ' '] +
-                [line.strip() + ' ' for line in lines[1:-1]] +
-                [lines[-1].lstrip()])
+                [lines[0].rstrip() + " "]
+                + [line.strip() + " " for line in lines[1:-1]]
+                + [lines[-1].lstrip()]
+            )
         elif lines:
             po_unit.source = lines[0]
         else:
@@ -112,19 +113,19 @@ class dtd2po:
         for commentnum in range(len(dtd_unit.comments)):
             commenttype, locnote = dtd_unit.comments[commentnum]
             # if this is a localization note
-            if commenttype == 'locnote':
+            if commenttype == "locnote":
                 # parse the locnote into the entity and the actual note
-                typeend = quote.findend(locnote, 'LOCALIZATION NOTE')
+                typeend = quote.findend(locnote, "LOCALIZATION NOTE")
                 # parse the id
-                idstart = locnote.find('(', typeend)
+                idstart = locnote.find("(", typeend)
                 if idstart == -1:
                     continue
-                idend = locnote.find(')', (idstart + 1))
-                entity = locnote[idstart+1:idend].strip()
+                idend = locnote.find(")", (idstart + 1))
+                entity = locnote[idstart + 1 : idend].strip()
                 # parse the actual note
-                actualnotestart = locnote.find(':', (idend + 1))
-                actualnoteend = locnote.find('-->', idend)
-                actualnote = locnote[actualnotestart+1:actualnoteend].strip()
+                actualnotestart = locnote.find(":", (idend + 1))
+                actualnoteend = locnote.find("-->", idend)
+                actualnote = locnote[actualnotestart + 1 : actualnoteend].strip()
                 # if it's for this entity, process it
                 if dtd_unit.getid() == entity:
                     # if it says don't translate (and nothing more),
@@ -139,8 +140,7 @@ class dtd2po:
                     else:
                         # convert it into an automatic comment, to be
                         # processed by convertcomments
-                        dtd_unit.comments[commentnum] = ("automaticcomment",
-                                                         actualnote)
+                        dtd_unit.comments[commentnum] = ("automaticcomment", actualnote)
         # do a standard translation
         self.convertcomments(dtd_unit, po_unit)
         self.convertstrings(dtd_unit, po_unit)
@@ -181,8 +181,10 @@ class dtd2po:
             # The mix failed before
             return self.convertunit(unit)
 
-        #assert alreadymixed is None
-        labelentity, accesskeyentity = self.mixer.find_mixed_pair(self.mixedentities, store, unit)
+        # assert alreadymixed is None
+        labelentity, accesskeyentity = self.mixer.find_mixed_pair(
+            self.mixedentities, store, unit
+        )
         labeldtd = store.id_index.get(labelentity, None)
         accesskeydtd = store.id_index.get(accesskeyentity, None)
         po_unit = self.convertmixedunit(labeldtd, accesskeydtd)
@@ -208,8 +210,7 @@ class dtd2po:
             x_accelerator_marker="&",
             x_merge_on="location",
         )
-        targetheader.addnote("extracted from %s" % dtd_store.filename,
-                             "developer")
+        targetheader.addnote("extracted from %s" % dtd_store.filename, "developer")
 
         dtd_store.makeindex()
         self.mixedentities = self.mixer.match_entities(dtd_store.id_index)
@@ -229,13 +230,14 @@ class dtd2po:
             x_accelerator_marker="&",
             x_merge_on="location",
         )
-        targetheader.addnote("extracted from %s, %s" %
-                             (origdtdfile.filename,
-                              translateddtdfile.filename),
-                             "developer")
+        targetheader.addnote(
+            "extracted from %s, %s"
+            % (origdtdfile.filename, translateddtdfile.filename),
+            "developer",
+        )
 
         origdtdfile.makeindex()
-        #TODO: self.mixedentities is overwritten below, so this is useless:
+        # TODO: self.mixedentities is overwritten below, so this is useless:
         self.mixedentities = self.mixer.match_entities(origdtdfile.id_index)
         translateddtdfile.makeindex()
         self.mixedentities = self.mixer.match_entities(translateddtdfile.id_index)
@@ -243,8 +245,7 @@ class dtd2po:
         for origdtd in origdtdfile.units:
             if not origdtd.istranslatable():
                 continue
-            origpo = self.convertdtdunit(origdtdfile, origdtd,
-                                         mixbucket="orig")
+            origpo = self.convertdtdunit(origdtdfile, origdtd, mixbucket="orig")
             orig_entity = origdtd.getid()
             if orig_entity in self.mixedentities:
                 mixedentitydict = self.mixedentities[orig_entity]
@@ -267,9 +268,9 @@ class dtd2po:
                 continue
             if orig_entity in translateddtdfile.id_index:
                 translateddtd = translateddtdfile.id_index[orig_entity]
-                translatedpo = self.convertdtdunit(translateddtdfile,
-                                                   translateddtd,
-                                                   mixbucket=mixbucket)
+                translatedpo = self.convertdtdunit(
+                    translateddtdfile, translateddtd, mixbucket=mixbucket
+                )
             else:
                 translatedpo = None
             if origpo is not None:
@@ -280,16 +281,19 @@ class dtd2po:
         return target_store
 
 
-def convertdtd(inputfile, outputfile, templatefile, pot=False,
-               duplicatestyle="msgctxt"):
+def convertdtd(
+    inputfile, outputfile, templatefile, pot=False, duplicatestyle="msgctxt"
+):
     """reads in inputfile and templatefile using dtd, converts using dtd2po,
     writes to outputfile
     """
     android_dtd = False
     if hasattr(inputfile, "name"):
         # Check if it is an Android DTD file.
-        if ("embedding/android" in inputfile.name or
-            "mobile/android/base" in inputfile.name):
+        if (
+            "embedding/android" in inputfile.name
+            or "mobile/android/base" in inputfile.name
+        ):
             android_dtd = True
     inputstore = dtd.dtdfile(inputfile, android=android_dtd)
     convertor = dtd2po(blankmsgstr=pot, duplicatestyle=duplicatestyle)
@@ -306,16 +310,18 @@ def convertdtd(inputfile, outputfile, templatefile, pot=False,
 
 def main(argv=None):
     from translate.convert import convert
+
     formats = {
         "dtd": ("po", convertdtd),
         ("dtd", "dtd"): ("po", convertdtd),
     }
-    parser = convert.ConvertOptionParser(formats, usetemplates=True,
-                                         usepots=True, description=__doc__)
+    parser = convert.ConvertOptionParser(
+        formats, usetemplates=True, usepots=True, description=__doc__
+    )
     parser.add_duplicates_option()
     parser.passthrough.append("pot")
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -35,42 +35,48 @@ from translate.storage import base
 try:
     from aeidon import Subtitle, documents, newlines
     from aeidon.encodings import detect
-    from aeidon.files import (AdvSubStationAlpha, MicroDVD, SubRip,
-                              SubStationAlpha, new)
+    from aeidon.files import AdvSubStationAlpha, MicroDVD, SubRip, SubStationAlpha, new
     from aeidon.util import detect_format as determine
 except ImportError:
     try:
         from gaupol import FormatDeterminer, documents
         from gaupol.encodings import detect
-        from gaupol.files import (AdvSubStationAlpha, MicroDVD, SubRip,
-                                  SubStationAlpha, new)
+        from gaupol.files import (
+            AdvSubStationAlpha,
+            MicroDVD,
+            SubRip,
+            SubStationAlpha,
+            new,
+        )
         from gaupol.newlines import newlines
         from gaupol.subtitle import Subtitle
+
         _determiner = FormatDeterminer()
         determine = _determiner.determine
     except ImportError:
-        raise ImportError('\naeidon or gaupol package required for Subtitle support')
+        raise ImportError("\naeidon or gaupol package required for Subtitle support")
 
 
 class SubtitleUnit(base.TranslationUnit):
     """A subtitle entry that is translatable"""
 
     def __init__(self, source=None, **kwargs):
-        self._start = None
-        self._end = None
-        self._duration = None
+        self._start = "00:00:00.000"
+        self._end = "00:00:00.000"
+        self._duration = 0.0
         if source:
             self.source = source
+            self.target = source
         super().__init__(source)
 
     def getnotes(self, origin=None):
-        if origin in ['programmer', 'developer', 'source code', None]:
+        if origin in ["programmer", "developer", "source code", None]:
             return "visible for %d seconds" % self._duration
         else:
-            return ''
+            return ""
 
     def getlocations(self):
-        return ["%s-->%s" % (self._start, self._end)]
+        return [f"{self._start}-->{self._end}"]
 
     def getid(self):
         return self.getlocations()[0]
@@ -117,10 +123,10 @@ class SubtitleFile(base.TranslationStore):
             raise base.ParseError(e)
 
     def _parsefile(self, storefile):
-        if hasattr(storefile, 'name'):
+        if hasattr(storefile, "name"):
             self.filename = storefile.name
             storefile.close()
-        elif hasattr(storefile, 'filename'):
+        elif hasattr(storefile, "filename"):
             self.filename = storefile.filename
             storefile.close()
         elif isinstance(storefile, str):
@@ -141,17 +147,15 @@ class SubtitleFile(base.TranslationStore):
     def parse(self, input):
         if isinstance(input, bytes):
             # Gaupol does not allow parsing from strings
-            kwargs = {
-                'delete': False
-            }
+            kwargs = {"delete": False}
             if self.filename:
-                kwargs['suffix'] = self.filename
+                kwargs["suffix"] = self.filename
 
             temp_file = NamedTemporaryFile(**kwargs)
             temp_file.close()
 
             try:
-                with open(temp_file.name, 'wb') as fh:
+                with open(temp_file.name, "wb") as fh:
                     fh.write(input)
                 self._parsefile(temp_file.name)
             finally:
@@ -170,12 +174,12 @@ class SubRipFile(SubtitleFile):
     """specialized class for SubRipFile's only"""
 
     Name = "SubRip subtitles file"
-    Extensions = ['srt']
+    Extensions = ["srt"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self._subtitlefile is None:
-            self._subtitlefile = SubRip(self.filename or '', self.encoding)
+            self._subtitlefile = SubRip(self.filename or "", self.encoding)
         if self._subtitlefile.newline is None:
             self._subtitlefile.newline = newlines.UNIX
 
@@ -184,12 +188,12 @@ class MicroDVDFile(SubtitleFile):
     """specialized class for SubRipFile's only"""
 
     Name = "MicroDVD subtitles file"
-    Extensions = ['sub']
+    Extensions = ["sub"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self._subtitlefile is None:
-            self._subtitlefile = MicroDVD(self.filename or '', self.encoding)
+            self._subtitlefile = MicroDVD(self.filename or "", self.encoding)
         if self._subtitlefile.newline is None:
             self._subtitlefile.newline = newlines.UNIX
 
@@ -198,12 +202,12 @@ class AdvSubStationAlphaFile(SubtitleFile):
     """specialized class for SubRipFile's only"""
 
     Name = "Advanced Substation Alpha subtitles file"
-    Extensions = ['ass']
+    Extensions = ["ass"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self._subtitlefile is None:
-            self._subtitlefile = AdvSubStationAlpha(self.filename or '', self.encoding)
+            self._subtitlefile = AdvSubStationAlpha(self.filename or "", self.encoding)
         if self._subtitlefile.newline is None:
             self._subtitlefile.newline = newlines.UNIX
 
@@ -212,11 +216,11 @@ class SubStationAlphaFile(SubtitleFile):
     """specialized class for SubRipFile's only"""
 
     Name = "Substation Alpha subtitles file"
-    Extensions = ['ssa']
+    Extensions = ["ssa"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self._subtitlefile is None:
-            self._subtitlefile = SubStationAlpha(self.filename or '', self.encoding)
+            self._subtitlefile = SubStationAlpha(self.filename or "", self.encoding)
         if self._subtitlefile.newline is None:
             self._subtitlefile.newline = newlines.UNIX

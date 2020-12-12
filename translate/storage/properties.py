@@ -129,13 +129,14 @@ Name and Value pairs:
 import collections
 import re
 from codecs import iterencode
+from copy import deepcopy
+
+from lxml import etree
 
 from translate.lang import data
 from translate.misc import quote
 from translate.misc.multistring import multistring
 from translate.storage import base
-from copy import deepcopy
-from lxml import etree
 
 
 labelsuffixes = (".label", ".title")
@@ -186,11 +187,11 @@ def is_comment_one_line(line):
     :rtype: bool
     """
     stripped = line.strip()
-    line_starters = ('#', '!', '//', ';')
+    line_starters = ("#", "!", "//", ";")
     for starter in line_starters:
         if stripped.startswith(starter):
             return True
-    if stripped.startswith('/*') and stripped.endswith('*/'):
+    if stripped.startswith("/*") and stripped.endswith("*/"):
         return True
     return False
 
@@ -204,7 +205,7 @@ def is_comment_start(line):
     :rtype: bool
     """
     stripped = line.strip()
-    return stripped.startswith('/*') and not stripped.endswith('*/')
+    return stripped.startswith("/*") and not stripped.endswith("*/")
 
 
 def is_comment_end(line):
@@ -216,7 +217,7 @@ def is_comment_end(line):
     :rtype: bool
     """
     stripped = line.strip()
-    return not stripped.startswith('/*') and stripped.endswith('*/')
+    return not stripped.startswith("/*") and stripped.endswith("*/")
 
 
 def _key_strip(key):
@@ -230,7 +231,7 @@ def _key_strip(key):
     newkey = key.rstrip()
     # If string now ends in \ we put back the whitespace that was escaped
     if newkey[-1:] == "\\":
-        newkey += key[len(newkey):len(newkey)+1]
+        newkey += key[len(newkey) : len(newkey) + 1]
     return newkey.lstrip()
 
 
@@ -252,7 +253,7 @@ class Dialect:
     """Settings for the various behaviours in key=value files."""
 
     name = None
-    default_encoding = 'iso-8859-1'
+    default_encoding = "iso-8859-1"
     delimiters = None
     pair_terminator = ""
     key_wrap_char = ""
@@ -294,14 +295,16 @@ class Dialect:
         # Find the position of each delimiter type
         for delimiter, pos in delimiters.items():
             start_pos = len(line) - len(line.lstrip())  # Skip initial whitespace
-            if cls.key_wrap_char != '' and line[start_pos] == cls.key_wrap_char:
+            if cls.key_wrap_char != "" and line[start_pos] == cls.key_wrap_char:
                 # Skip the key if it is delimited by some char
                 start_pos += 1
-                while (line[start_pos] != cls.key_wrap_char or line[start_pos-1] == "\\"):
+                while (
+                    line[start_pos] != cls.key_wrap_char or line[start_pos - 1] == "\\"
+                ):
                     start_pos += 1
             pos = line.find(delimiter, start_pos)
             while pos != -1:
-                if delimiters[delimiter] == -1 and line[pos-1] != "\\":
+                if delimiters[delimiter] == -1 and line[pos - 1] != "\\":
                     delimiters[delimiter] = pos
                     break
                 pos = line.find(delimiter, pos + 1)
@@ -317,13 +320,15 @@ class Dialect:
         if mindelimiter is None and delimiters.get(" ", -1) != -1:
             # Use space delimiter if we found nothing else
             return (" ", delimiters[" "])
-        if (mindelimiter is not None and
-            " " in delimiters and
-            delimiters[" "] < delimiters[mindelimiter]):
+        if (
+            mindelimiter is not None
+            and " " in delimiters
+            and delimiters[" "] < delimiters[mindelimiter]
+        ):
             # If space delimiter occurs earlier than ":" or "=" then it is the
             # delimiter only if there are non-whitespace characters between it and
             # the other detected delimiter.
-            if len(line[delimiters[" "]:delimiters[mindelimiter]].strip()) > 0:
+            if len(line[delimiters[" "] : delimiters[mindelimiter]].strip()) > 0:
                 return (" ", delimiters[" "])
         return (mindelimiter, minpos)
 
@@ -431,18 +436,18 @@ class DialectGaia(DialectMozilla):
 
 @register_dialect
 class DialectGwt(DialectJava):
-    plural_regex = re.compile(r'([^\[\]]*)(?:\[(.*)\])?')
+    plural_regex = re.compile(r"([^\[\]]*)(?:\[(.*)\])?")
     name = "gwt"
     default_encoding = "utf-8"
     delimiters = ["="]
 
     gwt_plural_categories = [
-        ('', "other"),
-        ('none', "zero"),
-        ('one', 'one'),
-        ('two', 'two'),
-        ('few', 'few'),
-        ('many', 'many'),
+        ("", "other"),
+        ("none", "zero"),
+        ("one", "one"),
+        ("two", "two"),
+        ("few", "few"),
+        ("many", "many"),
     ]
 
     gwt2cldr = collections.OrderedDict(gwt_plural_categories)
@@ -459,7 +464,7 @@ class DialectGwt(DialectJava):
         variant = cls.gwt2cldr.get(variant)
         # Some sanity checks
         if not variant:
-            raise Exception("Key \"%s\" variant \"%s\" is invalid" % (key, variant))
+            raise Exception(f'Key "{key}" variant "{variant}" is invalid')
         return (key, variant)
 
     @classmethod
@@ -472,8 +477,8 @@ class DialectGwt(DialectJava):
 
         # Some sanity checks
         if not variant:
-            raise Exception("Key \"%s\" variant \"%s\" is invalid" % (key, variant))
-        return "%s[%s]" % (key, variant)
+            raise Exception(f'Key "{key}" variant "{variant}" is invalid')
+        return f"{key}[{variant}]"
 
     @classmethod
     def encode(cls, string, encoding=None):
@@ -499,8 +504,8 @@ class DialectStrings(Dialect):
     pair_terminator = ";"
     key_wrap_char = '"'
     value_wrap_char = '"'
-    out_ending = ';'
-    out_delimiter_wrappers = ' '
+    out_ending = ";"
+    out_delimiter_wrappers = " "
     drop_comments = ["/* No comment provided by engineer. */"]
 
     @classmethod
@@ -509,17 +514,17 @@ class DialectStrings(Dialect):
         newkey = key.rstrip().rstrip('"')
         # If string now ends in \ we put back the char that was escaped
         if newkey[-1:] == "\\":
-            newkey += key[len(newkey):len(newkey)+1]
+            newkey += key[len(newkey) : len(newkey) + 1]
         ret = newkey.lstrip().lstrip('"')
         return ret.replace('\\"', '"')
 
     @classmethod
     def value_strip(cls, value):
         """Strip unneeded characters from the value"""
-        newvalue = value.rstrip().rstrip(';').rstrip('"')
+        newvalue = value.rstrip().rstrip(";").rstrip('"')
         # If string now ends in \ we put back the char that was escaped
         if newvalue[-1:] == "\\":
-            newvalue += value[len(newvalue):len(newvalue)+1]
+            newvalue += value[len(newvalue) : len(newvalue) + 1]
         ret = newvalue.lstrip().lstrip('"')
         return ret.replace('\\"', '"')
 
@@ -530,7 +535,7 @@ class DialectStrings(Dialect):
     @classmethod
     def is_line_continuation(self, line):
         l = line.rstrip()
-        if l and l[-1] == ';':
+        if l and l[-1] == ";":
             return False
         return True
 
@@ -546,20 +551,20 @@ class DialectStringsUtf8(DialectStrings):
 
 
 class proppluralunit(base.TranslationUnit):
-    KEY = 'other'
+    KEY = "other"
 
     def __init__(self, source="", personality="java"):
         """Construct a blank propunit."""
         self.personality = get_dialect(personality)
-        super(proppluralunit, self).__init__(source)
+        super().__init__(source)
         self.units = collections.OrderedDict()
         self.name = ""
 
     @staticmethod
     def _get_language_mapping(lang):
         if lang:
-            locale = lang.replace('_', '-').split('-')[0]
-            cldr_mapping = data.plural_tags.get(locale, data.plural_tags['en'])
+            locale = lang.replace("_", "-").split("-")[0]
+            cldr_mapping = data.plural_tags.get(locale, data.plural_tags["en"])
             if cldr_mapping:
                 return cldr_mapping
         return None
@@ -635,7 +640,10 @@ class proppluralunit(base.TranslationUnit):
         strings = self._get_strings(strings, mapping)
         units = self._get_units(mapping)
         if len(strings) != len(units):
-            raise Exception('Not same plural counts between "%s" and "%s"' % (str(strings), str(units)))
+            raise Exception(
+                'Not same plural counts between "%s" and "%s"'
+                % (str(strings), str(units))
+            )
 
         for a, b in zip(strings, units):
             b.target = a
@@ -671,7 +679,10 @@ class proppluralunit(base.TranslationUnit):
         strings = self._get_strings(strings, mapping)
         units = self._get_units(mapping)
         if len(strings) != len(units):
-            raise Exception('Not same plural counts between "%s" and "%s"' % (str(strings), str(units)))
+            raise Exception(
+                'Not same plural counts between "%s" and "%s"'
+                % (str(strings), str(units))
+            )
 
         for a, b in zip(strings, units):
             b.source = a
@@ -765,7 +776,7 @@ class DialectJoomla(Dialect):
     name = "joomla"
     default_encoding = "utf-8"
     delimiters = ["="]
-    out_delimiter_wrappers = ''
+    out_delimiter_wrappers = ""
 
     @classmethod
     def value_strip(cls, value):
@@ -786,7 +797,9 @@ class DialectJoomla(Dialect):
         """Encode the string"""
         if not string:
             return string
-        return '"%s"' % string.replace("\n", r"\n").replace("\t", r"\t").replace('"', '"_QQ_"')
+        return '"%s"' % string.replace("\n", r"\n").replace("\t", r"\t").replace(
+            '"', '"_QQ_"'
+        )
 
 
 class propunit(base.TranslationUnit):
@@ -806,18 +819,20 @@ class propunit(base.TranslationUnit):
         self.source = source
         # a pair of symbols to enclose delimiter on the output
         # (a " " can be used for the sake of convenience)
-        self.out_delimiter_wrappers = getattr(self.personality,
-                                              'out_delimiter_wrappers', '')
+        self.out_delimiter_wrappers = getattr(
+            self.personality, "out_delimiter_wrappers", ""
+        )
         # symbol that should end every property sentence
         # (e.g. ";" is required for Mac OS X strings)
-        self.out_ending = getattr(self.personality, 'out_ending', '')
+        self.out_ending = getattr(self.personality, "out_ending", "")
         self.explicitely_missing = False
         self.output_missing = False
 
     @property
     def missing(self):
-        return self.explicitely_missing\
-            or (not bool(self.translation) and not bool(self.source))
+        return self.explicitely_missing or (
+            not bool(self.translation) and not bool(self.source)
+        )
 
     @missing.setter
     def missing(self, missing):
@@ -845,8 +860,7 @@ class propunit(base.TranslationUnit):
     @source.setter
     def source(self, source):
         self._rich_source = None
-        self.value = self.personality.encode(data.forceunicode(source) or "",
-                                             self.encoding)
+        self.value = self.personality.encode(source or "", self.encoding)
 
     @property
     def target(self):
@@ -855,9 +869,7 @@ class propunit(base.TranslationUnit):
     @target.setter
     def target(self, target):
         self._rich_target = None
-        target = data.forceunicode(target)
-        self.translation = self.personality.encode(target or "",
-                                                   self.encoding)
+        self.translation = self.personality.encode(target or "", self.encoding)
         self.explicitely_missing = not bool(target)
 
     @property
@@ -872,8 +884,7 @@ class propunit(base.TranslationUnit):
         return self.getoutput()
 
     def getoutput(self):
-        """Convert the element back into formatted lines for a .properties file
-        """
+        """Convert the element back into formatted lines for a .properties file"""
         notes = self.getnotes()
         if notes:
             notes += "\n"
@@ -881,24 +892,23 @@ class propunit(base.TranslationUnit):
             return notes + "\n"
         else:
             self.value = self.personality.encode(self.source, self.encoding)
-            self.translation = self.personality.encode(self.target,
-                                                       self.encoding)
+            self.translation = self.personality.encode(self.target, self.encoding)
             # encode key, if needed
             key = self.name
             kwc = self.personality.key_wrap_char
             if kwc:
-                key = key.replace(kwc, '\\%s' % kwc)
-                key = '%s%s%s' % (kwc, key, kwc)
+                key = key.replace(kwc, "\\%s" % kwc)
+                key = f"{kwc}{key}{kwc}"
             # encode value, if needed
             value = self.translation or self.value
             vwc = self.personality.value_wrap_char
             if vwc:
-                value = value.replace(vwc, '\\%s' % vwc)
-                value = '%s%s%s' % (vwc, value, vwc)
+                value = value.replace(vwc, "\\%s" % vwc)
+                value = f"{vwc}{value}{vwc}"
             wrappers = self.out_delimiter_wrappers
-            delimiter = '%s%s%s' % (wrappers, self.delimiter, wrappers)
+            delimiter = f"{wrappers}{self.delimiter}{wrappers}"
             ending = self.out_ending
-            missing_prefix = ''
+            missing_prefix = ""
             if self.missing and self.output_missing:
                 missing_prefix = self.get_missing_part()
             out_dict = {
@@ -909,21 +919,23 @@ class propunit(base.TranslationUnit):
                 "value": value,
                 "ending": ending,
             }
-            return "%(notes)s%(missing_prefix)s%(key)s%(del)s%(value)s%(ending)s\n" % out_dict
+            return (
+                "%(notes)s%(missing_prefix)s%(key)s%(del)s%(value)s%(ending)s\n"
+                % out_dict
+            )
 
     def getlocations(self):
         return [self.name]
 
     def addnote(self, text, origin=None, position="append"):
-        if origin in ['programmer', 'developer', 'source code', None]:
-            text = data.forceunicode(text)
+        if origin in ["programmer", "developer", "source code", None]:
             self.comments.append(text)
         else:
             return super().addnote(text, origin=origin, position=position)
 
     def getnotes(self, origin=None):
-        if origin in ['programmer', 'developer', 'source code', None]:
-            return '\n'.join(self.comments)
+        if origin in ["programmer", "developer", "source code", None]:
+            return "\n".join(self.comments)
         else:
             return super().getnotes(origin)
 
@@ -931,8 +943,7 @@ class propunit(base.TranslationUnit):
         self.comments = []
 
     def isblank(self):
-        """returns whether this is a blank element, containing only comments.
-        """
+        """returns whether this is a blank element, containing only comments."""
         return not (self.name or self.value)
 
     def istranslatable(self):
@@ -964,7 +975,7 @@ class xwikiunit(propunit):
     @classmethod
     def strip_missing_part(cls, line):
         """Remove the missing prefix from the line."""
-        return line.replace(cls.get_missing_part(), '')
+        return line.replace(cls.get_missing_part(), "")
 
     @classmethod
     def represents_missing(cls, line):
@@ -982,7 +993,7 @@ class propfile(base.TranslationStore):
         super().__init__()
         self.personality = get_dialect(personality)
         self.encoding = encoding or self.personality.default_encoding
-        self.filename = getattr(inputfile, 'name', '')
+        self.filename = getattr(inputfile, "name", "")
         if inputfile is not None:
             propsrc = inputfile.read()
             inputfile.close()
@@ -990,14 +1001,15 @@ class propfile(base.TranslationStore):
             self.makeindex()
 
     def parse(self, propsrc):
-        """Read the source of a properties file in and include them as units.
-        """
+        """Read the source of a properties file in and include them as units."""
         text, encoding = self.detect_encoding(
-            propsrc, default_encodings=[self.personality.default_encoding,
-                                        'utf-8', 'utf-16'])
+            propsrc,
+            default_encodings=[self.personality.default_encoding, "utf-8", "utf-16"],
+        )
         if not text and propsrc:
-            raise IOError("Cannot detect encoding for %s." % (self.filename or
-                                                              "given string"))
+            raise OSError(
+                "Cannot detect encoding for %s." % (self.filename or "given string")
+            )
         self.encoding = encoding
         propsrc = text
 
@@ -1012,12 +1024,12 @@ class propfile(base.TranslationStore):
             if inmultilinevalue:
                 newunit.value += line.lstrip()
                 # see if there's more
-                inmultilinevalue = self.personality.is_line_continuation(
-                    newunit.value)
+                inmultilinevalue = self.personality.is_line_continuation(newunit.value)
                 # if we're still waiting for more...
                 if inmultilinevalue:
                     newunit.value = self.personality.strip_line_continuation(
-                        newunit.value)
+                        newunit.value
+                    )
                 if not inmultilinevalue:
                     # we're finished, add it to the list...
                     newunit.value = self.personality.value_strip(newunit.value)
@@ -1025,9 +1037,12 @@ class propfile(base.TranslationStore):
                     newunit = self.UnitClass("", self.personality.name)
             # otherwise, this could be a comment
             # FIXME handle // inline comments
-            elif ((inmultilinecomment or is_comment_one_line(line) or
-                  is_comment_start(line) or is_comment_end(line))
-                  and not self.UnitClass.represents_missing(line)):
+            elif (
+                inmultilinecomment
+                or is_comment_one_line(line)
+                or is_comment_start(line)
+                or is_comment_end(line)
+            ) and not self.UnitClass.represents_missing(line):
                 # add a comment
                 if line not in self.personality.drop_comments:
                     newunit.comments.append(line)
@@ -1064,17 +1079,25 @@ class propfile(base.TranslationStore):
                     newunit.name = self.personality.key_strip(line[:delimiter_pos])
                     newunit.missing = ismissing
                     if self.personality.is_line_continuation(
-                            line[delimiter_pos+1:].lstrip()):
+                        line[delimiter_pos + 1 :].lstrip()
+                    ):
                         inmultilinevalue = True
-                        newunit.value = line[delimiter_pos+1:].lstrip()[:-1]
+                        newunit.value = line[delimiter_pos + 1 :].lstrip()[:-1]
                         newunit.value = self.personality.strip_line_continuation(
-                            line[delimiter_pos+1:].lstrip())
+                            line[delimiter_pos + 1 :].lstrip()
+                        )
                     else:
-                        newunit.value = self.personality.value_strip(line[delimiter_pos+1:])
+                        newunit.value = self.personality.value_strip(
+                            line[delimiter_pos + 1 :]
+                        )
                         self.addunit(newunit)
                         newunit = self.UnitClass("", self.personality.name)
         # see if there is a leftover one...
-        if inmultilinevalue or len(newunit.comments) > 0 and not(len(newunit.comments) == 1 and not(newunit.comments[0])):
+        if (
+            inmultilinevalue
+            or len(newunit.comments) > 0
+            and not (len(newunit.comments) == 1 and not (newunit.comments[0]))
+        ):
             self.addunit(newunit)
 
         self.fold()
@@ -1101,86 +1124,88 @@ class propfile(base.TranslationStore):
     def serialize(self, out):
         """Write the units back to file."""
         # Thanks to iterencode, a possible BOM is written only once
-        for chunk in iterencode((unit.getoutput() for unit in self.units), self.encoding):
+        for chunk in iterencode(
+            (unit.getoutput() for unit in self.units), self.encoding
+        ):
             out.write(chunk)
 
 
 class xwikifile(propfile):
     Name = "XWiki Properties"
-    Extensions = ['properties']
+    Extensions = ["properties"]
     UnitClass = xwikiunit
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "xwiki"
-        kwargs['encoding'] = "iso-8859-1"
+        kwargs["personality"] = "xwiki"
+        kwargs["encoding"] = "iso-8859-1"
         super().__init__(*args, **kwargs)
 
 
 class javafile(propfile):
     Name = "Java Properties"
-    Extensions = ['properties']
+    Extensions = ["properties"]
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "java"
-        kwargs['encoding'] = "auto"
+        kwargs["personality"] = "java"
+        kwargs["encoding"] = "auto"
         super().__init__(*args, **kwargs)
 
 
 class javautf8file(propfile):
     Name = "Java Properties (UTF-8)"
-    Extensions = ['properties']
+    Extensions = ["properties"]
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "java-utf8"
-        kwargs['encoding'] = "utf-8"
+        kwargs["personality"] = "java-utf8"
+        kwargs["encoding"] = "utf-8"
         super().__init__(*args, **kwargs)
 
 
 class javautf16file(propfile):
     Name = "Java Properties (UTF-16)"
-    Extensions = ['properties']
+    Extensions = ["properties"]
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "java-utf16"
-        kwargs['encoding'] = "utf-16"
+        kwargs["personality"] = "java-utf16"
+        kwargs["encoding"] = "utf-16"
         super().__init__(*args, **kwargs)
 
 
 class gwtfile(propfile):
     Name = "Gwt Properties"
-    Extensions = ['properties']
+    Extensions = ["properties"]
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "gwt"
-        kwargs['encoding'] = "utf-8"
-        super(gwtfile, self).__init__(*args, **kwargs)
+        kwargs["personality"] = "gwt"
+        kwargs["encoding"] = "utf-8"
+        super().__init__(*args, **kwargs)
 
 
 class stringsfile(propfile):
     Name = "OS X Strings"
-    Extensions = ['strings']
+    Extensions = ["strings"]
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "strings"
+        kwargs["personality"] = "strings"
         super().__init__(*args, **kwargs)
 
 
 class stringsutf8file(stringsfile):
     Name = "OS X Strings (UTF-8)"
-    Extensions = ['strings']
+    Extensions = ["strings"]
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "strings-utf8"
-        kwargs['encoding'] = "utf-8"
+        kwargs["personality"] = "strings-utf8"
+        kwargs["encoding"] = "utf-8"
         super().__init__(*args, **kwargs)
 
 
 class joomlafile(propfile):
     Name = "Joomla Translations"
-    Extensions = ['ini']
+    Extensions = ["ini"]
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "joomla"
+        kwargs["personality"] = "joomla"
         super().__init__(*args, **kwargs)
 
 
@@ -1191,7 +1216,7 @@ class XWikiPageProperties(xwikifile):
     """
 
     Name = "XWiki Page Properties"
-    Extensions = ['xml']
+    Extensions = ["xml"]
     XML_HEADER = """<?xml version="1.1" encoding="UTF-8"?>
 
 <!--
@@ -1225,8 +1250,8 @@ class XWikiPageProperties(xwikifile):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs['personality'] = "xwiki"
-        kwargs['encoding'] = "utf-8"
+        kwargs["personality"] = "xwiki"
+        kwargs["encoding"] = "utf-8"
         self.root = None
         super(xwikifile, self).__init__(*args, **kwargs)
 
@@ -1270,7 +1295,7 @@ class XWikiPageProperties(xwikifile):
         xml_content = etree.tostring(newroot, encoding=self.encoding, method="xml")
         out.write(self.XML_HEADER.encode(self.encoding))
         out.write(xml_content)
-        out.write(b'\n')
+        out.write(b"\n")
 
     def serialize(self, out):
         if self.root is None:
@@ -1278,8 +1303,9 @@ class XWikiPageProperties(xwikifile):
         newroot = deepcopy(self.root)
         # We add a line break to ensure to have a line break before
         # closing of content tag.
-        newroot.find("content").text = "".join(unit.getoutput() for unit in self.units)\
-                                       .strip() + "\n"
+        newroot.find("content").text = (
+            "".join(unit.getoutput() for unit in self.units).strip() + "\n"
+        )
         self.set_xwiki_xml_attributes(newroot)
         self.write_xwiki_xml(newroot, out)
 
@@ -1297,15 +1323,13 @@ class XWikiFullPage(XWikiPageProperties):
     def parse(self, propsrc):
         if propsrc != b"\n":
             self.root = etree.XML(propsrc, self.get_parser())
-            content = ""\
-                .join(self.root.find("content").itertext())\
-                .replace("\n", "\\n")
+            content = "".join(self.root.find("content").itertext()).replace("\n", "\\n")
             title = "".join(self.root.find("title").itertext())
             forparsing = ""
             if content != "":
-                forparsing += "content={}\n".format(content)
+                forparsing += f"content={content}\n"
             if title != "":
-                forparsing += "title={}\n".format(title)
+                forparsing += f"title={title}\n"
             self.extract_language()
             super(XWikiPageProperties, self).parse(forparsing.encode(self.encoding))
 
@@ -1323,7 +1347,8 @@ class XWikiFullPage(XWikiPageProperties):
         if unit_title is not None:
             newroot.find("title").text = self.output_unit(unit_title)
         if unit_content is not None:
-            newroot.find("content").text = self.output_unit(unit_content) \
-                .replace("\\n", "\n")
+            newroot.find("content").text = self.output_unit(unit_content).replace(
+                "\\n", "\n"
+            )
         self.set_xwiki_xml_attributes(newroot)
         self.write_xwiki_xml(newroot, out)

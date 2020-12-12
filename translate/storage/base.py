@@ -21,6 +21,7 @@
 import codecs
 import logging
 import pickle
+from collections import OrderedDict
 from io import BytesIO
 
 from translate.misc.multistring import multistring
@@ -30,18 +31,17 @@ from translate.storage.workflow import StateEnum as states
 
 # Simple BOM based encoding detection
 ENCODING_BOMS = (
-    (codecs.BOM_UTF8, 'utf-8-sig'),
-    (codecs.BOM_UTF16, 'utf-16'),
-    (codecs.BOM_UTF16_BE, 'utf-16-be'),
-    (codecs.BOM_UTF16_LE, 'utf-16-le'),
-    (codecs.BOM_UTF32, 'utf-32'),
-    (codecs.BOM_UTF32_BE, 'utf-32-be'),
-    (codecs.BOM_UTF32_LE, 'utf-32-le'),
+    (codecs.BOM_UTF8, "utf-8-sig"),
+    (codecs.BOM_UTF16, "utf-16"),
+    (codecs.BOM_UTF16_BE, "utf-16-be"),
+    (codecs.BOM_UTF16_LE, "utf-16-le"),
+    (codecs.BOM_UTF32, "utf-32"),
+    (codecs.BOM_UTF32_BE, "utf-32-be"),
+    (codecs.BOM_UTF32_LE, "utf-32-le"),
 )
 
 
 class ParseError(Exception):
-
     def __init__(self, inner_exc):
         self.inner_exc = inner_exc
 
@@ -132,7 +132,11 @@ class TranslationUnit:
         :return: Returns *True* if the supplied :class:`TranslationUnit`
                  equals this unit.
         """
-        return self.source == other.source and self.target == other.target
+        return (
+            self.source == other.source
+            and self.target == other.target
+            and self.getid() == other.getid()
+        )
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -143,9 +147,13 @@ class TranslationUnit:
     def __str__(self):
         """Converts to a string representation. Most often overriden by subclasses."""
         # no point in showing store object.
-        return ", ".join([
-            "%s: %s" % (k, self.__dict__[k]) for k in sorted(self.__dict__.keys()) if k != '_store'
-        ])
+        return ", ".join(
+            [
+                "{}: {}".format(k, self.__dict__[k])
+                for k in sorted(self.__dict__.keys())
+                if k != "_store"
+            ]
+        )
 
     @classmethod
     def rich_to_multistring(cls, elem_list):
@@ -202,12 +210,12 @@ class TranslationUnit:
 
     @rich_source.setter
     def rich_source(self, value):
-        if not hasattr(value, '__iter__'):
-            raise ValueError('value must be iterable')
+        if not hasattr(value, "__iter__"):
+            raise ValueError("value must be iterable")
         if len(value) < 1:
-            raise ValueError('value must have at least one element.')
+            raise ValueError("value must have at least one element.")
         if not isinstance(value[0], StringElem):
-            raise ValueError('value[0] must be of type StringElem.')
+            raise ValueError("value[0] must be of type StringElem.")
         self._rich_source = list(value)
         multi = self.rich_to_multistring(value)
         if self.source != multi:
@@ -224,12 +232,12 @@ class TranslationUnit:
 
     @rich_target.setter
     def rich_target(self, value):
-        if not hasattr(value, '__iter__'):
-            raise ValueError('value must be iterable')
+        if not hasattr(value, "__iter__"):
+            raise ValueError("value must be iterable")
         if len(value) < 1:
-            raise ValueError('value must have at least one element.')
+            raise ValueError("value must have at least one element.")
         if not isinstance(value[0], StringElem):
-            raise ValueError('value[0] must be of type StringElem.')
+            raise ValueError("value[0] must be of type StringElem.")
         self._rich_target = list(value)
         self.target = self.rich_to_multistring(value)
 
@@ -335,13 +343,13 @@ class TranslationUnit:
                        - 'developer', 'programmer', 'source code' (synonyms)
         """
         if position == "append" and getattr(self, "notes", None):
-            self.notes += '\n' + text
+            self.notes += "\n" + text
         else:
             self.notes = text
 
     def removenotes(self, origin=None):
         """Remove all the translator's notes."""
-        self.notes = ''
+        self.notes = ""
 
     def adderror(self, errorname, errortext):
         """Adds an error message to this unit.
@@ -422,7 +430,7 @@ class TranslationUnit:
 
     def hasplural(self):
         """Tells whether or not this specific unit has plural strings."""
-        #TODO: Reconsider
+        # TODO: Reconsider
         return False
 
     def getsourcelanguage(self):
@@ -431,8 +439,7 @@ class TranslationUnit:
     def gettargetlanguage(self):
         return self._store.gettargetlanguage()
 
-    def merge(self, otherunit, overwrite=False, comments=True,
-              authoritative=False):
+    def merge(self, otherunit, overwrite=False, comments=True, authoritative=False):
         """Do basic format agnostic merging."""
         if not self.target or overwrite:
             self.rich_target = otherunit.rich_target
@@ -455,6 +462,7 @@ class TranslationUnit:
         newunit = cls(unit.source)
         newunit.target = unit.target
         newunit.markfuzzy(unit.isfuzzy())
+        newunit.setid(unit.getid())
         locations = unit.getlocations()
         if locations:
             newunit.addlocations(locations)
@@ -473,7 +481,7 @@ class TranslationUnit:
             if state_range[0] <= n < state_range[1]:
                 return state_id
         if self.STATE:
-            raise ValueError('No state containing value %s' % (n))
+            raise ValueError("No state containing value %s" % (n))
         else:
             return n
 
@@ -494,8 +502,7 @@ class TranslationUnit:
 
 
 class TranslationStore:
-    """Base class for stores for multiple translation units of type UnitClass.
-    """
+    """Base class for stores for multiple translation units of type UnitClass."""
 
     UnitClass = TranslationUnit
     """The class of units that will be instantiated and used by this class"""
@@ -511,7 +518,7 @@ class TranslationStore:
     """Indicates if format can store suggestions and alternative translation
     for a unit"""
 
-    default_encoding = 'utf-8'
+    default_encoding = "utf-8"
     sourcelanguage = None
     targetlanguage = None
 
@@ -521,20 +528,23 @@ class TranslationStore:
         if unitclass:
             self.UnitClass = unitclass
         self._encoding = encoding
+        self.locationindex = {}
+        self.sourceindex = {}
+        self.id_index = {}
 
     @property
     def encoding(self):
         # self._encoding is either defined by __init__ or auto-detected from parsed file
-        if self._encoding == 'auto':
-            return 'utf-8'
+        if self._encoding == "auto":
+            return "utf-8"
         return self._encoding or self.default_encoding
 
     @encoding.setter
     def encoding(self, value):
         if value == "CHARSET" or value is None:
             return
-        if value == 'ascii':
-            value = 'utf-8'
+        if value == "ascii":
+            value = "utf-8"
         self._encoding = value
 
     def getsourcelanguage(self):
@@ -555,7 +565,7 @@ class TranslationStore:
 
     def getprojectstyle(self):
         """Get the project type for this store."""
-        return getattr(self, '_project_style', None)
+        return getattr(self, "_project_style", None)
 
     def setprojectstyle(self, project_style):
         """Set the project type for this store."""
@@ -563,8 +573,7 @@ class TranslationStore:
 
     def unit_iter(self):
         """Iterator over all the units in this store."""
-        for unit in self.units:
-            yield unit
+        yield from self.units
 
     def getunits(self):
         """Return a list of all units in this store."""
@@ -581,6 +590,18 @@ class TranslationStore:
         """
         unit._store = self
         self.units.append(unit)
+
+    def removeunit(self, unit):
+        """Remove the given unit to the object's list of units.
+
+        This method should always be used rather than trying to modify the
+        list manually.
+
+        :type unit: :class:`TranslationUnit`
+        :param unit: The unit that will be added.
+        """
+        self.units.remove(unit)
+        self.remove_unit_from_index(unit)
 
     def addsourceunit(self, source):
         """Add and returns a new unit with the given source string.
@@ -601,13 +622,9 @@ class TranslationStore:
 
         :rtype: :class:`TranslationUnit` or None
         """
-        if len(getattr(self, "sourceindex", [])):
-            if source in self.sourceindex:
-                return self.sourceindex[source][0]
-        else:
-            for unit in self.units:
-                if unit.source == source:
-                    return unit
+        self.require_index()
+        if source in self.sourceindex:
+            return self.sourceindex[source][0]
         return None
 
     def findunits(self, source):
@@ -615,17 +632,9 @@ class TranslationStore:
 
         :rtype: :class:`TranslationUnit` or None
         """
-        if len(getattr(self, "sourceindex", [])):
-            if source in self.sourceindex:
-                return self.sourceindex[source]
-        else:
-            #FIXME: maybe we should generate index here instead since
-            #we'll scan all units anyway
-            result = []
-            for unit in self.units:
-                if unit.source == source:
-                    result.append(unit)
-            return result
+        self.require_index()
+        if source in self.sourceindex:
+            return self.sourceindex[source]
         return None
 
     def translate(self, source):
@@ -642,26 +651,25 @@ class TranslationStore:
     def remove_unit_from_index(self, unit):
         """Remove a unit from source and locaton indexes"""
 
-        def remove_unit(source):
+        def remove_source(source):
             if source in self.sourceindex:
-                try:
-                    self.sourceindex[source].remove(unit)
-                    if len(self.sourceindex[source]) == 0:
-                        del(self.sourceindex[source])
-                except ValueError:
-                    pass
+                self.sourceindex[source].remove(unit)
+                if len(self.sourceindex[source]) == 0:
+                    del self.sourceindex[source]
 
         if unit.hasplural():
             for source in unit.source.strings:
-                remove_unit(source)
+                remove_source(source)
         else:
-            remove_unit(unit.source)
+            remove_source(unit.source)
 
         for location in unit.getlocations():
-            if (location in self.locationindex and
-                self.locationindex[location] is not None and
-                self.locationindex[location] == unit):
-                del(self.locationindex[location])
+            if (
+                location in self.locationindex
+                and self.locationindex[location] is not None
+                and self.locationindex[location] == unit
+            ):
+                del self.locationindex[location]
 
     def add_unit_to_index(self, unit):
         """Add a unit to source and location idexes"""
@@ -682,7 +690,7 @@ class TranslationStore:
         for location in unit.getlocations():
             # If locations aren't unique, keep the first unit.
             if location not in self.locationindex:
-                #FIXME: maybe better store a list of units like sourceindex in
+                # FIXME: maybe better store a list of units like sourceindex in
                 # case there are several units with the same location.
                 self.locationindex[location] = unit
 
@@ -700,7 +708,7 @@ class TranslationStore:
 
     def require_index(self):
         """make sure source index exists"""
-        if not hasattr(self, "id_index"):
+        if not self.id_index:
             self.makeindex()
 
     def getids(self, filename=None):
@@ -711,7 +719,7 @@ class TranslationStore:
     def __getstate__(self):
         odict = self.__dict__.copy()
         # fileobj is generally not picklable
-        odict['fileobj'] = None
+        odict["fileobj"] = None
         return odict
 
     def __bytes__(self):
@@ -763,10 +771,7 @@ class TranslationStore:
         """
         for bom, encoding in ENCODING_BOMS:
             if text.startswith(bom):
-                return {
-                    'encoding': encoding,
-                    'confidence': 1.0
-                }
+                return {"encoding": encoding, "confidence": 1.0}
         return None
 
     def detect_encoding(self, text, default_encodings=None):
@@ -775,7 +780,7 @@ class TranslationStore:
         or by trying to decode the file.
         """
         if not default_encodings:
-            default_encodings = ['utf-8']
+            default_encodings = ["utf-8"]
         try:
             import chardet
         except ImportError:
@@ -783,37 +788,40 @@ class TranslationStore:
         else:
             # many false complaints with ellipse (…) (see bug 1825)
             detected_encoding = chardet.detect(text.replace(b"\xe2\x80\xa6", b""))
-            if detected_encoding['confidence'] < 0.48:
+            if detected_encoding["confidence"] < 0.48:
                 detected_encoding = None
-            elif detected_encoding['encoding'] == 'ascii':
-                detected_encoding['encoding'] = self.encoding
+            elif detected_encoding["encoding"] == "ascii":
+                detected_encoding["encoding"] = self.encoding
             else:
-                detected_encoding['encoding'] = detected_encoding['encoding'].lower()
+                detected_encoding["encoding"] = detected_encoding["encoding"].lower()
 
         encodings = []
         # Purposefully accessed the internal _encoding, as encoding is never 'auto'
-        if self._encoding == 'auto':
-            if detected_encoding and detected_encoding['encoding'] not in encodings:
-                encodings.append(detected_encoding['encoding'])
+        if self._encoding == "auto":
+            if detected_encoding and detected_encoding["encoding"] not in encodings:
+                encodings.append(detected_encoding["encoding"])
             for encoding in default_encodings:
                 if encoding not in encodings:
                     encodings.append(encoding)
         elif detected_encoding:
-            if '-' in detected_encoding['encoding']:
-                encoding, suffix = detected_encoding['encoding'].rsplit('-', 1)
+            if "-" in detected_encoding["encoding"]:
+                encoding, suffix = detected_encoding["encoding"].rsplit("-", 1)
             else:
-                encoding = detected_encoding['encoding']
+                encoding = detected_encoding["encoding"]
                 suffix = None
 
             # Different charset, just with BOM
-            if encoding == self.encoding and suffix == 'sig':
-                encodings.append(detected_encoding['encoding'])
-            elif detected_encoding['encoding'] != self.encoding:
-                logging.warning("trying to parse %s with encoding: %s but "
-                                "detected encoding is %s (confidence: %s)",
-                                self.filename, self.encoding,
-                                detected_encoding['encoding'],
-                                detected_encoding['confidence'])
+            if encoding == self.encoding and suffix == "sig":
+                encodings.append(detected_encoding["encoding"])
+            elif detected_encoding["encoding"] != self.encoding:
+                logging.warning(
+                    "trying to parse %s with encoding: %s but "
+                    "detected encoding is %s (confidence: %s)",
+                    self.filename,
+                    self.encoding,
+                    detected_encoding["encoding"],
+                    detected_encoding["confidence"],
+                )
             encodings.append(self.encoding)
         else:
             encodings.append(self.encoding)
@@ -826,8 +834,8 @@ class TranslationStore:
             except UnicodeDecodeError:
                 r_text = None
                 r_encoding = None
-        if r_encoding == 'ascii':
-            r_encoding = 'utf-8'
+        if r_encoding == "ascii":
+            r_encoding = "utf-8"
         return r_text, r_encoding
 
     def parse(self, data):
@@ -837,26 +845,24 @@ class TranslationStore:
     def savefile(self, storefile):
         """Write the string representation to the given file (or filename)."""
         if isinstance(storefile, str):
-            storefile = open(storefile, 'wb')
+            storefile = open(storefile, "wb")
         self.fileobj = storefile
         self._assignname()
         self.serialize(storefile)
         storefile.close()
 
     def save(self):
-        """Save to the file that data was originally read from, if available.
-        """
+        """Save to the file that data was originally read from, if available."""
         fileobj = getattr(self, "fileobj", None)
         if not fileobj:
             if hasattr(self, "filename"):
-                fileobj = open(self.filename, 'wb')
+                fileobj = open(self.filename, "wb")
         else:
             fileobj.close()
-            filename = getattr(fileobj, "name",
-                               getattr(fileobj, "filename", None))
+            filename = getattr(fileobj, "name", getattr(fileobj, "filename", None))
             if not filename:
                 raise ValueError("No file or filename to save to")
-            fileobj = open(filename, 'wb')
+            fileobj = open(filename, "wb")
         self.savefile(fileobj)
 
     @classmethod
@@ -865,9 +871,9 @@ class TranslationStore:
         to an object.
         """
         if isinstance(storefile, str):
-            storefile = open(storefile, 'rb')
-        mode = getattr(storefile, "mode", 'rb')
-        #For some reason GzipFile returns 1, so we have to test for that here
+            storefile = open(storefile, "rb")
+        mode = getattr(storefile, "mode", "rb")
+        # For some reason GzipFile returns 1, so we have to test for that here
         if mode == 1 or "r" in mode:
             storestring = storefile.read()
             storefile.close()
@@ -889,38 +895,112 @@ class TranslationStore:
         return "id"
 
 
+class UnitId:
+    KEY_SEPARATOR = "."
+    INDEX_SEPARATOR = ""
+
+    def __init__(self, parts):
+        self.parts = parts
+
+    def __str__(self):
+        def fmt(element, key):
+            if element == "key":
+                return f"{self.KEY_SEPARATOR}{key}"
+            elif element == "index":
+                return f"{self.INDEX_SEPARATOR}[{key}]"
+            else:
+                raise ValueError(f"Unsupported element: {element}")
+
+        return "".join([fmt(*part) for part in self.parts])
+
+    def __add__(self, other):
+        if not isinstance(other, list):
+            raise ValueError("Not supported type for add: {}".format(type(other)))
+        return self.__class__(self.parts + other)
+
+    @classmethod
+    def from_string(cls, text):
+        result = []
+        # Strip possible leading separator
+        if text.startswith(cls.KEY_SEPARATOR):
+            text = text[len(cls.KEY_SEPARATOR) :]
+        for item in text.split(cls.KEY_SEPARATOR):
+            if "[" in item and item[-1] == "]":
+                item, pos = item[:-1].split("[")
+                if item:
+                    result.append(("key", item))
+                result.append(("index", int(pos)))
+            else:
+                result.append(("key", item))
+        return cls(result)
+
+
 class DictUnit(TranslationUnit):
+    IdClass = UnitId
+    DefaultDict = OrderedDict
+
+    def __init__(self, source=None):
+        super().__init__(source)
+        self._unitid = None
+
+    def storevalue(self, output, value, override_key=None, unset=False):
+        target = output
+        if self._unitid is None:
+            self._unitid = self.IdClass.from_string(self._id)
+        parts = self._unitid.parts
+        for pos, part in enumerate(parts[:-1]):
+            element, key = part
+            default = [] if parts[pos + 1][0] == "index" else self.DefaultDict()
+            if element == "index":
+                while len(target) <= key and not unset:
+                    target.append(default.copy())
+            elif element == "key":
+                if key not in target or isinstance(target[key], str):
+                    target[key] = default
+            else:
+                raise ValueError(f"Unsupported element: {element}")
+            target = target[key]
+        if override_key:
+            element, key = "key", override_key
+        else:
+            element, key = parts[-1]
+        if element == "key":
+            if unset:
+                del target[key]
+            else:
+                target[key] = value
+        elif element == "index":
+            if len(target) <= key:
+                if not unset:
+                    target.append(value)
+            else:
+                if unset:
+                    del target[key]
+                else:
+                    target[key] = value
+        else:
+            raise ValueError(f"Unsupported element: {element}")
+
+    def storevalues(self, output):
+        self.storevalue(output, self.value)
+
     def getvalue(self):
         """Returns dictionary for serialization."""
-        raise NotImplementedError()
+        result = {}
+        self.storevalues(result)
+        return result
+
+    def set_unitid(self, unitid):
+        self.setid(str(unitid))
+        self._unitid = unitid
 
 
 class DictStore(TranslationStore):
-    def serialize_merge(self, d1, d2):
-        for k in d2:
-            if k in d1:
-                if isinstance(d1[k], dict) and isinstance(d2[k], dict):
-                    self.serialize_merge(d1[k], d2[k])
-                elif isinstance(d1[k], list) and isinstance(d2[k], tuple):
-                    if isinstance(d2[k][1], dict):
-                        if len(d1[k]) > d2[k][0]:
-                            d1[k][d2[k][0]].update(d2[k][1])
-                        else:
-                            d1[k].append(d2[k][1])
-                    else:
-                        if len(d1[k]) > d2[k][0]:
-                            d1[k][d2[k][0]] = d2[k][1]
-                        else:
-                            d1[k].append(d2[k][1])
-                elif isinstance(d1[k], list) and isinstance(d2[k], list):
-                    d1[k].extend(d2[k])
-                else:
-                    d1[k] = d2[k]
-            elif isinstance(d2[k], tuple):
-                d1[k] = [d2[k][1]]
-            else:
-                d1[k] = d2[k]
+    def get_root_node(self):
+        if self.units and self.units[0].getid().startswith("["):
+            return []
+        return OrderedDict()
 
     def serialize_units(self, output):
         for unit in self.unit_iter():
-            self.serialize_merge(output, unit.getvalue())
+            unit.storevalues(output)

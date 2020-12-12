@@ -24,20 +24,17 @@
 .. note:: Orignal code from http://thomas.mangin.me.uk/data/source/ngram.py
 """
 
-
 import glob
-import io
 import re
 import sys
 from os import path
 
 
 nb_ngrams = 400
-white_space_re = re.compile(r'\s+')
+white_space_re = re.compile(r"\s+")
 
 
 class _NGram:
-
     def __init__(self, arg=None):
         if isinstance(arg, str):
             self.addText(arg)
@@ -49,13 +46,10 @@ class _NGram:
             self.ngrams = dict()
 
     def addText(self, text):
-        if isinstance(text, bytes):
-            text = text.decode('utf-8')
-
         ngrams = dict()
 
         for word in white_space_re.split(text):
-            word = '_%s_' % word
+            word = "_%s_" % word
             size = len(word)
             for i in range(size - 1):
                 for s in (1, 2, 3, 4):
@@ -102,19 +96,18 @@ class _NGram:
 
 
 class NGram:
-
-    def __init__(self, folder, ext='.lm'):
+    def __init__(self, folder, ext=".lm"):
         self.ngrams = {}
-        folder = path.join(folder, '*' + ext)
+        folder = path.join(folder, "*" + ext)
         size = len(ext)
 
         for fname in glob.glob(path.normcase(folder)):
             lang = path.split(fname)[-1][:-size]
             ngrams = {}
             try:
-                with io.open(fname, encoding='utf-8') as fp:
+                with open(fname, encoding="utf-8") as fp:
                     for i, line in enumerate(fp):
-                        ngram, _t, _f = line.partition('\t')
+                        ngram, _t, _f = line.partition("\t")
                         ngrams[ngram] = i
             except UnicodeDecodeError:
                 continue
@@ -127,7 +120,7 @@ class NGram:
 
     def classify(self, text):
         ngram = _NGram(text)
-        r = 'guess'
+        r = "guess"
 
         min = sys.maxsize
 
@@ -138,42 +131,42 @@ class NGram:
                 r = lang
 
         if min > 0.8 * (nb_ngrams ** 2):
-            r = ''
+            r = ""
         return r
 
 
 class Generate:
-
-    def __init__(self, folder, ext='.txt'):
+    def __init__(self, folder, ext=".txt"):
         self.ngrams = dict()
-        folder = path.join(folder, '*' + ext)
+        folder = path.join(folder, "*" + ext)
         size = len(ext)
 
         for fname in glob.glob(path.normcase(folder)):
             lang = path.split(fname)[-1][:-size]
             n = _NGram()
 
-            with io.open(fname, encoding='utf-8') as fp:
+            with open(fname, encoding="utf-8") as fp:
                 for line in fp:
                     n.addText(line)
 
             n.normalise()
             self.ngrams[lang] = n
 
-    def save(self, folder, ext='.lm'):
+    def save(self, folder, ext=".lm"):
         for lang in self.ngrams.keys():
             fname = path.join(folder, lang + ext)
-            with io.open(fname, mode='w', encoding='utf-8') as fp:
+            with open(fname, mode="w", encoding="utf-8") as fp:
                 for v, k in self.ngrams[lang].sorted_by_score():
                     fp.write("%s\t %d\n" % (k, v))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Should you want to generate your own .lm files
-    #conf = Generate('/tmp')
-    #conf.save('/tmp')
+    # conf = Generate('/tmp')
+    # conf.save('/tmp')
 
     text = sys.stdin.readline()
     from translate.misc.file_discovery import get_abs_data_filename
-    lm = NGram(get_abs_data_filename('langmodels'))
+
+    lm = NGram(get_abs_data_filename("langmodels"))
     print(lm.classify(text))

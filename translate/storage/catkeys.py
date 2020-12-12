@@ -68,8 +68,8 @@ FIELDNAMES_HEADER_DEFAULTS = {
 }
 """Default or minimum header entries for a catkeys file"""
 
-_unescape_map = {"\\r": "\r", "\\t": "\t", '\\n': '\n', '\\\\': '\\'}
-_escape_map = dict([(value, key) for (key, value) in _unescape_map.items()])
+_unescape_map = {"\\r": "\r", "\\t": "\t", "\\n": "\n", "\\\\": "\\"}
+_escape_map = {value: key for (key, value) in _unescape_map.items()}
 # We don't yet do escaping correctly, just for lack of time to do it.  The
 # current implementation is just based on something simple that will work with
 # investaged files.  The only escapes found were "\n", "\t", "\\n"
@@ -121,15 +121,16 @@ class CatkeysHeader:
         """Set a human readable target language"""
         if not newlang or newlang not in data.languages:
             return
-        #XXX assumption about the current structure of the languages dict in data
-        self._header_dict['language'] = data.languages[newlang][0].lower()
+        # XXX assumption about the current structure of the languages dict in data
+        self._header_dict["language"] = data.languages[newlang][0].lower()
+
     targetlanguage = property(None, settargetlanguage)
 
     def setchecksum(self, checksum):
         """Set the checksum for the file"""
         if not checksum:
             return
-        self._header_dict['checksum'] = str(checksum)
+        self._header_dict["checksum"] = str(checksum)
 
 
 class CatkeysUnit(base.TranslationUnit):
@@ -158,6 +159,7 @@ class CatkeysUnit(base.TranslationUnit):
             if value is None:
                 value = ""
             self._dict[key] = value
+
     dict = property(getdict, setdict)
 
     def _get_source_or_target(self, key):
@@ -177,21 +179,21 @@ class CatkeysUnit(base.TranslationUnit):
 
     @property
     def source(self):
-        return self._get_source_or_target('source')
+        return self._get_source_or_target("source")
 
     @source.setter
     def source(self, source):
         self._rich_source = None
-        self._set_source_or_target('source', source)
+        self._set_source_or_target("source", source)
 
     @property
     def target(self):
-        return self._get_source_or_target('target')
+        return self._get_source_or_target("target")
 
     @target.setter
     def target(self, target):
         self._rich_target = None
-        self._set_source_or_target('target', target)
+        self._set_source_or_target("target", target)
 
     def getnotes(self, origin=None):
         if not origin or origin in ["programmer", "developer", "source code"]:
@@ -209,9 +211,9 @@ class CatkeysUnit(base.TranslationUnit):
         notes = self.getnotes()
         id = self.source
         if notes:
-            id = "%s\04%s" % (notes, id)
+            id = f"{notes}\04{id}"
         if context:
-            id = "%s\04%s" % (context, id)
+            id = f"{context}\04{id}"
         return id
 
     def markfuzzy(self, present=True):
@@ -219,22 +221,26 @@ class CatkeysUnit(base.TranslationUnit):
             self.target = ""
 
     def settargetlang(self, newlang):
-        self._dict['target-lang'] = newlang
+        self._dict["target-lang"] = newlang
+
     targetlang = property(None, settargetlang)
 
     def __str__(self):
         return str(self._dict)
 
     def istranslated(self):
-        if not self._dict.get('source', None):
+        if not self._dict.get("source", None):
             return False
-        return bool(self._dict.get('target', None))
+        return bool(self._dict.get("target", None))
 
-    def merge(self, otherunit, overwrite=False, comments=True,
-              authoritative=False):
+    def merge(self, otherunit, overwrite=False, comments=True, authoritative=False):
         """Do basic format agnostic merging."""
         # We can't go fuzzy, so just do nothing
-        if self.source != otherunit.source or self.getcontext() != otherunit.getcontext() or otherunit.isfuzzy():
+        if (
+            self.source != otherunit.source
+            or self.getcontext() != otherunit.getcontext()
+            or otherunit.isfuzzy()
+        ):
             return
         if not self.istranslated() or overwrite:
             self.rich_target = otherunit.rich_target
@@ -251,7 +257,7 @@ class CatkeysFile(base.TranslationStore):
     def __init__(self, inputfile=None, **kwargs):
         """Construct a catkeys store, optionally reading in from inputfile."""
         super().__init__(**kwargs)
-        self.filename = ''
+        self.filename = ""
         self.header = CatkeysHeader()
         if inputfile is not None:
             self.parse(inputfile)
@@ -261,16 +267,18 @@ class CatkeysFile(base.TranslationStore):
 
     def parse(self, input):
         """parse the given file or file source string"""
-        if hasattr(input, 'name'):
+        if hasattr(input, "name"):
             self.filename = input.name
-        elif not getattr(self, 'filename', ''):
-            self.filename = ''
+        elif not getattr(self, "filename", ""):
+            self.filename = ""
         if hasattr(input, "read"):
             tmsrc = input.read()
             input.close()
             input = tmsrc
         input = input.decode(self.encoding)
-        reader = csv.DictReader(input.split("\n"), fieldnames=FIELDNAMES, dialect="catkeys")
+        reader = csv.DictReader(
+            input.split("\n"), fieldnames=FIELDNAMES, dialect="catkeys"
+        )
         for idx, line in enumerate(reader):
             if idx == 0:
                 header = dict(zip(FIELDNAMES_HEADER, [line[key] for key in FIELDNAMES]))
@@ -286,7 +294,14 @@ class CatkeysFile(base.TranslationStore):
         # Calculate/update fingerprint
         self.header.setchecksum(self._compute_fingerprint())
         # No real headers, the first line contains metadata
-        writer.writerow(dict(zip(FIELDNAMES, [self.header._header_dict[key] for key in FIELDNAMES_HEADER])))
+        writer.writerow(
+            dict(
+                zip(
+                    FIELDNAMES,
+                    [self.header._header_dict[key] for key in FIELDNAMES_HEADER],
+                )
+            )
+        )
         for unit in self.units:
             writer.writerow(unit.dict)
         out.write(output.getvalue().encode(self.encoding))
@@ -302,7 +317,7 @@ class CatkeysFile(base.TranslationStore):
             https://github.com/haiku/haiku/blob/b65adbdfbc322bb7d86d74049389c688e9962f15/src/kits/locale/HashMapCatalog.cpp#L93
             """
             h = startValue
-            array = string.encode('utf-8')
+            array = string.encode("utf-8")
 
             for byte in array:
                 if byte > 127:

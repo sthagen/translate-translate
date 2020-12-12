@@ -66,9 +66,9 @@ class TikiUnit(base.TranslationUnit):
 
     def __str__(self):
         """Returns a string formatted to be inserted into a tiki language.php file."""
-        ret = '"%s" => "%s",' % (self.source, self.target)
+        ret = f'"{self.source}" => "{self.target}",'
         if self.location == ["untranslated"]:
-            ret = '// ' + ret
+            ret = "// " + ret
         return ret + "\n"
 
     def addlocation(self, location):
@@ -77,7 +77,7 @@ class TikiUnit(base.TranslationUnit):
 
         :param location: Where the string is located in the file.  Must be a valid location.
         """
-        if location in ['unused', 'untranslated', 'possiblyuntranslated', 'translated']:
+        if location in ["unused", "untranslated", "possiblyuntranslated", "translated"]:
             self.location.append(location)
 
     def getlocations(self):
@@ -96,7 +96,7 @@ class TikiStore(base.TranslationStore):
         :param inputfile: Either a string or a filehandle of the source file
         """
         super().__init__()
-        self.filename = getattr(inputfile, 'name', '')
+        self.filename = getattr(inputfile, "name", "")
         if inputfile is not None:
             self.parse(inputfile)
 
@@ -123,12 +123,15 @@ class TikiStore(base.TranslationStore):
         out.write(b"// ### Start of unused words\n")
         for unit in _unused:
             out.write(str(unit).encode(self.encoding))
-        out.write(b"// ### end of unused words\n\n"
-                  b"// ### start of untranslated words\n")
+        out.write(
+            b"// ### end of unused words\n\n" b"// ### start of untranslated words\n"
+        )
         for unit in _untranslated:
             out.write(str(unit).encode(self.encoding))
-        out.write(b"// ### end of untranslated words\n\n"
-                  b"// ### start of possibly untranslated words\n")
+        out.write(
+            b"// ### end of untranslated words\n\n"
+            b"// ### start of possibly untranslated words\n"
+        )
         for unit in _possiblyuntranslated:
             out.write(str(unit).encode(self.encoding))
         out.write(b"// ### end of possibly untranslated words\n\n")
@@ -139,7 +142,10 @@ class TikiStore(base.TranslationStore):
 
     def _tiki_header(self):
         """Returns a tiki-file header string."""
-        return "<?php // -*- coding:utf-8 -*-\n// Generated from po2tiki on %s\n\n$lang=Array(\n" % datetime.datetime.now()
+        return (
+            "<?php // -*- coding:utf-8 -*-\n// Generated from po2tiki on %s\n\n$lang=Array(\n"
+            % datetime.datetime.now()
+        )
 
     def _tiki_footer(self):
         """Returns a tiki-file footer string."""

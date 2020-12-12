@@ -21,14 +21,14 @@
 import os
 
 
-#from translate.convert import prop2po, po2prop, odf2xliff, xliff2odf
+# from translate.convert import prop2po, po2prop, odf2xliff, xliff2odf
 
 
-__all__ = ('converters', 'UnknownExtensionError', 'UnsupportedConversionError')
+__all__ = ("converters", "UnknownExtensionError", "UnsupportedConversionError")
 
 # Turn into property to support lazy loading of things?
 converters = {}
-#for module in (prop2po, po2prop, odf2xliff, xliff2odf):
+# for module in (prop2po, po2prop, odf2xliff, xliff2odf):
 #    if not hasattr(module, 'formats'):
 #        continue
 #    for extension in module.formats:
@@ -38,25 +38,23 @@ converters = {}
 
 
 class UnknownExtensionError(Exception):
-
     def __init__(self, afile):
         self.file = afile
 
     def __str__(self):
-        return 'Unable to find extension for file: %s' % (self.file)
+        return "Unable to find extension for file: %s" % (self.file)
 
 
 class UnsupportedConversionError(Exception):
-
     def __init__(self, in_ext=None, out_ext=None, templ_ext=None):
         self.in_ext = in_ext
         self.out_ext = out_ext
         self.templ_ext = templ_ext
 
     def __str__(self):
-        msg = "Unsupported conversion from %s to %s" % (self.in_ext, self.out_ext)
+        msg = f"Unsupported conversion from {self.in_ext} to {self.out_ext}"
         if self.templ_ext:
-            msg += ' with template %s' % (self.templ_ext)
+            msg += " with template %s" % (self.templ_ext)
         return msg
 
 
@@ -141,23 +139,23 @@ def convert(inputfile, template=None, options=None, convert_options=None):
     if options is None:
         options = {}
     else:
-        if 'in_ext' in options:
-            in_ext = options['in_ext']
-        if 'out_ext' in options:
-            out_ext = options['out_ext']
-        if template and 'templ_ext' in options:
-            templ_ext = options['templ_ext']
+        if "in_ext" in options:
+            in_ext = options["in_ext"]
+        if "out_ext" in options:
+            out_ext = options["out_ext"]
+        if template and "templ_ext" in options:
+            templ_ext = options["templ_ext"]
 
         # If we still do not have extensions, try and get it from the *_fname options
-        if not in_ext and 'in_fname' in options:
-            in_ext = get_extension(options['in_fname'])
-        if template and not templ_ext and 'templ_fname' in options:
-            templ_ext = get_extension(options['templ_fname'])
+        if not in_ext and "in_fname" in options:
+            in_ext = get_extension(options["in_fname"])
+        if template and not templ_ext and "templ_fname" in options:
+            templ_ext = get_extension(options["templ_fname"])
 
     # If we still do not have extensions, get it from the file names
-    if not in_ext and hasattr(inputfile, 'name'):
+    if not in_ext and hasattr(inputfile, "name"):
         in_ext = get_extension(inputfile.name)
-    if template and not templ_ext and hasattr(template, 'name'):
+    if template and not templ_ext and hasattr(template, "name"):
         templ_ext = get_extension(template.name)
 
     if not in_ext:
@@ -189,11 +187,16 @@ def convert(inputfile, template=None, options=None, convert_options=None):
     #      (eg. TranslationStore.savefile()). Therefore none of mkstemp()'s
     #      security features are being utilised.
     import tempfile
-    tempfd, tempfname = tempfile.mkstemp(prefix='ttk_convert', suffix=os.extsep + out_ext)
+
+    tempfd, tempfname = tempfile.mkstemp(
+        prefix="ttk_convert", suffix=os.extsep + out_ext
+    )
     os.close(tempfd)
 
     if convert_options is None:
         convert_options = {}
-    with open(tempfname, 'w') as output_file:
-        get_converter(in_ext, out_ext, templ_ext)(inputfile, output_file, template, **convert_options)
+    with open(tempfname, "w") as output_file:
+        get_converter(in_ext, out_ext, templ_ext)(
+            inputfile, output_file, template, **convert_options
+        )
     return output_file, out_ext

@@ -5,13 +5,28 @@ from translate.storage import rc
 
 def test_escaping():
     """test escaping Windows Resource files to Python strings"""
-    assert rc.escape_to_python('''First line \
-second line''') == "First line second line"
-    assert rc.escape_to_python("A newline \\n in a string") == "A newline \n in a string"
+    assert (
+        rc.escape_to_python(
+            """First line \
+second line"""
+        )
+        == "First line second line"
+    )
+    assert (
+        rc.escape_to_python("A newline \\n in a string") == "A newline \n in a string"
+    )
     assert rc.escape_to_python("A tab \\t in a string") == "A tab \t in a string"
-    assert rc.escape_to_python("A backslash \\\\ in a string") == "A backslash \\ in a string"
-    assert rc.escape_to_python(r'''First line " \
- "second line''') == "First line second line"
+    assert (
+        rc.escape_to_python("A backslash \\\\ in a string")
+        == "A backslash \\ in a string"
+    )
+    assert (
+        rc.escape_to_python(
+            r"""First line " \
+ "second line"""
+        )
+        == "First line second line"
+    )
 
 
 class TestRcFile:
@@ -382,3 +397,55 @@ END
         assert rc_file.units[0].source == "Select Media Type"
         assert rc_file.units[1].source == "OK"
         assert rc_file.units[2].source == "Cancel"
+
+    def test_multiline(self):
+        rc_source = r"""
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+BEGIN
+    IDS_ADJACENT_STRINGS    "Line1\n"
+                            "Line2"
+END
+"""
+        rc_file = self.source_parse(rc_source)
+        assert len(rc_file.units) == 1
+        assert rc_file.units[0].source == "Line1\nLine2"
+
+    def test_str(self):
+        rc_source = r"""
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+BEGIN
+    IDS_STRINGS    "Line1"
+END
+"""
+        rc_file = self.source_parse(rc_source)
+        assert len(rc_file.units) == 1
+        assert str(rc_file.units[0]) == "STRINGTABLE.IDS_STRINGS=Line1\n"
+
+    def test_empty(self):
+        rc_source = """
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+IDD_DIALOG DIALOG 0, 0, 339, 179
+CAPTION "Caption"
+BEGIN
+    CONTROL         "", IDC_HEADSEPARATOR, "Static", SS_BLACKFRAME | SS_SUNKEN, 0, 28, 339, 1
+END
+"""
+        rc_file = self.source_parse(rc_source)
+        assert len(rc_file.units) == 1
+
+    def test_utf_8(self):
+        rc_source = """#pragma code_page(65001)
+
+STRINGTABLE
+BEGIN
+    IDS_COPIED              "✔ Copied"
+END
+"""
+        rc_file = self.source_parse(rc_source)
+        assert len(rc_file.units) == 1
+        assert rc_file.units[0].source == "✔ Copied"

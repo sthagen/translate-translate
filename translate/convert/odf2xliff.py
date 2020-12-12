@@ -27,8 +27,7 @@ from io import BytesIO
 from translate.convert import convert
 from translate.storage import factory
 from translate.storage.odf_io import open_odf
-from translate.storage.odf_shared import (inline_elements,
-                                          no_translate_content_elements)
+from translate.storage.odf_shared import inline_elements, no_translate_content_elements
 from translate.storage.xml_extract.extract import ParseState, build_store
 
 
@@ -38,7 +37,7 @@ def convertodf(inputfile, outputfile, templates):
     store = factory.getobject(outputfile)
 
     try:
-        store.setfilename(store.getfilenode('NoName'), inputfile.name)
+        store.setfilename(store.getfilenode("NoName"), inputfile.name)
     except Exception:
         print("couldn't set origin filename")
 
@@ -93,5 +92,5 @@ def main(argv=None):
     parser.run(argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -4,7 +4,6 @@ from translate.misc import multistring
 
 
 class TestMultistring:
-
     def test_constructor(self):
         t = multistring.multistring
         s1 = t("test")
@@ -23,11 +22,11 @@ class TestMultistring:
         t = multistring.multistring
         s1 = t("test")
         assert repr(s1) == "multistring(['test'])"
-        assert eval('multistring.%s' % repr(s1)) == s1
+        assert eval("multistring.%s" % repr(s1)) == s1
 
         s2 = t(["test", "mé"])
         assert repr(s2) == "multistring(['test', 'mé'])"
-        assert eval('multistring.%s' % repr(s2)) == s2
+        assert eval("multistring.%s" % repr(s2)) == s2
 
     def test_replace(self):
         t = multistring.multistring

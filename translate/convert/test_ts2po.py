@@ -1,11 +1,9 @@
-
 from io import BytesIO
 
 from translate.convert import test_convert, ts2po
 
 
 class TestTS2PO:
-
     def ts2po(self, tssource):
         converter = ts2po.ts2po()
         tsfile = BytesIO(tssource.encode())
@@ -16,7 +14,7 @@ class TestTS2PO:
 
     def test_blank(self):
         """tests blank conversion"""
-        tssource = '''<!DOCTYPE TS><TS>
+        tssource = """<!DOCTYPE TS><TS>
 <context>
     <name>MainWindowBase</name>
     <message>
@@ -25,7 +23,7 @@ class TestTS2PO:
     </message>
 </context>
 </TS>
-'''
+"""
         pofile = self.ts2po(tssource)
         assert len(pofile.units) == 2
         assert pofile.units[1].source == "Project:"
@@ -35,7 +33,7 @@ class TestTS2PO:
 
     def test_basic(self):
         """tests basic conversion"""
-        tssource = '''<!DOCTYPE TS><TS>
+        tssource = """<!DOCTYPE TS><TS>
 <context>
     <name>AboutDialog</name>
     <message>
@@ -44,7 +42,7 @@ class TestTS2PO:
     </message>
 </context>
 </TS>
-'''
+"""
         pofile = self.ts2po(tssource)
         assert len(pofile.units) == 2
         assert pofile.units[1].source == "&About"
@@ -53,7 +51,7 @@ class TestTS2PO:
 
     def test_unfinished(self):
         """tests unfinished conversion"""
-        tssource = '''<!DOCTYPE TS><TS>
+        tssource = """<!DOCTYPE TS><TS>
 <context>
     <name>MainWindowBase</name>
     <message>
@@ -62,7 +60,7 @@ class TestTS2PO:
     </message>
 </context>
 </TS>
-'''
+"""
         pofile = self.ts2po(tssource)
         assert len(pofile.units) == 2
         assert pofile.units[1].source == "Project:"
@@ -72,7 +70,7 @@ class TestTS2PO:
 
     def test_multiline(self):
         """tests multiline message conversion"""
-        tssource = '''<!DOCTYPE TS><TS>
+        tssource = """<!DOCTYPE TS><TS>
 <context>
     <name>@default</name>
     <message>
@@ -83,7 +81,7 @@ new line</translation>
     </message>
 </context>
 </TS>
-'''
+"""
         pofile = self.ts2po(tssource)
         assert len(pofile.units) == 2
         assert pofile.units[1].source == "Source with\nnew line"
@@ -92,7 +90,7 @@ new line</translation>
 
     def test_obsolete(self):
         """test the handling of obsolete TS entries"""
-        tssource = '''<!DOCTYPE TS><TS>
+        tssource = """<!DOCTYPE TS><TS>
 <context>
     <name>Obsoleted</name>
     <message>
@@ -101,7 +99,7 @@ new line</translation>
     </message>
 </context>
 </TS>
-'''
+"""
         pofile = self.ts2po(tssource)
         assert pofile.units[1].getnotes("developer") == "(obsolete)"
         # Test that we aren't following the old style
@@ -110,7 +108,7 @@ new line</translation>
     def test_comment(self):
         """test that we can handle disambiguation identifiers."""
         # Example from https://www.gnu.org/software/gettext/manual/html_node/Contexts.html
-        tssource = '''<!DOCTYPE TS><TS>
+        tssource = """<!DOCTYPE TS><TS>
 <context>
     <name>FileMenu</name>
     <message>
@@ -120,13 +118,13 @@ new line</translation>
     </message>
 </context>
 </TS>
-'''
+"""
         pofile = self.ts2po(tssource)
         assert pofile.units[1].getcontext() == "Menu|File|"
 
     def test_extracomment(self):
         """test that we can handle '//:' comments from developers to translators."""
-        tssource = '''<!DOCTYPE TS><TS>
+        tssource = """<!DOCTYPE TS><TS>
 <context>
     <name>AboutDialog</name>
     <message>
@@ -136,13 +134,17 @@ new line</translation>
     </message>
 </context>
 </TS>
-'''
+"""
         pofile = self.ts2po(tssource)
-        assert pofile.units[1].getnotes() == "Appears in the Help menu (on Windows and Linux) or the app menu (on macOS)."
+        assert (
+            pofile.units[1].getnotes()
+            == "Appears in the Help menu (on Windows and Linux) or the app menu (on macOS)."
+        )
 
 
 class TestTS2POCommand(test_convert.TestConvertCommand, TestTS2PO):
     """Tests running actual ts2po commands on files"""
+
     convertmodule = ts2po
 
     def test_help(self, capsys):

@@ -55,9 +55,18 @@ implemented as outlined in the PHP documentation for the
 
 import re
 
-from phply.phpast import (Array, ArrayElement, ArrayOffset, Assignment,
-                          BinaryOp, FunctionCall, InlineHTML, Node, Return,
-                          Variable)
+from phply.phpast import (
+    Array,
+    ArrayElement,
+    ArrayOffset,
+    Assignment,
+    BinaryOp,
+    FunctionCall,
+    InlineHTML,
+    Node,
+    Return,
+    Variable,
+)
 from phply.phplex import FilteredLexer, full_lexer
 from phply.phpparse import make_parser
 
@@ -67,16 +76,18 @@ from translate.storage import base
 
 def wrap_production(func):
     """Decorator for production functions to store lexer positions."""
+
     def prod(n):
         func(n)
         if isinstance(n[0], Node):
-            startpos = min([getattr(i, 'lexpos', 0) for i in n.slice[1:]])
-            endpos = max([getattr(i, 'endlexpos', 0) for i in n.slice[1:]])
+            startpos = min([getattr(i, "lexpos", 0) for i in n.slice[1:]])
+            endpos = max([getattr(i, "endlexpos", 0) for i in n.slice[1:]])
             n[0].lexpositions = startpos, endpos
         elif isinstance(n[0], list) and n[0] and isinstance(n[0][-1], ArrayElement):
-            startpos = min([getattr(i, 'lexpos', 0) for i in n.slice[1:]])
-            endpos = max([getattr(i, 'endlexpos', 0) for i in n.slice[1:]])
+            startpos = min([getattr(i, "lexpos", 0) for i in n.slice[1:]])
+            endpos = max([getattr(i, "endlexpos", 0) for i in n.slice[1:]])
             n[0][-1].lexpositions = startpos, endpos
+
     return prod
 
 
@@ -101,29 +112,32 @@ class PHPLexer(FilteredLexer):
         comments = []
         # Process all tokens to end of statement
         while self.tokens[self.pos].lexpos < end:
-            if self.tokens[self.pos].type in ('COMMENT', 'DOC_COMMENT'):
+            if self.tokens[self.pos].type in ("COMMENT", "DOC_COMMENT"):
                 comments.append(self.tokens[self.pos].value.strip())
             self.pos += 1
         # Skip end of statement
         self.pos += 1
         # Proceed comments till newline
         length = len(self.tokens)
-        while self.pos < length and self.tokens[self.pos].type in ('COMMENT', 'WHITESPACE'):
+        while self.pos < length and self.tokens[self.pos].type in (
+            "COMMENT",
+            "WHITESPACE",
+        ):
             token_type = self.tokens[self.pos].type
             token_value = self.tokens[self.pos].value
             self.pos += 1
-            if token_type == 'WHITESPACE':
-                if '\n' in token_value:
+            if token_type == "WHITESPACE":
+                if "\n" in token_value:
                     break
                 continue
             comments.append(token_value.strip())
-            if '\n' in token_value:
+            if "\n" in token_value:
                 break
         return comments
 
     def extract_name(self, terminator, start, end):
         """Extract current value name."""
-        result = ''
+        result = ""
         pos = self.pos
         while self.tokens[pos].lexpos < start:
             pos += 1
@@ -136,20 +150,24 @@ class PHPLexer(FilteredLexer):
     def extract_quote(self):
         """Extract quote style."""
         pos = max(self.pos, self.codepos)
-        while self.tokens[pos].type not in ('QUOTE', 'CONSTANT_ENCAPSED_STRING', 'START_NOWDOC'):
+        while self.tokens[pos].type not in (
+            "QUOTE",
+            "CONSTANT_ENCAPSED_STRING",
+            "START_NOWDOC",
+        ):
             pos += 1
-        if self.tokens[pos].type == 'QUOTE':
+        if self.tokens[pos].type == "QUOTE":
             return '"'
-        return '\''
+        return "'"
 
     def extract_array(self):
         pos = max(self.pos, self.codepos)
-        while self.tokens[pos].type not in ('ARRAY', 'LBRACKET'):
+        while self.tokens[pos].type not in ("ARRAY", "LBRACKET"):
             pos += 1
         self.codepos = pos
-        if self.tokens[pos].type == 'ARRAY':
-            return ''
-        return '[]'
+        if self.tokens[pos].type == "ARRAY":
+            return ""
+        return "[]"
 
 
 def phpencode(text, quotechar="'"):
@@ -171,9 +189,14 @@ def phpencode(text, quotechar="'"):
         # lose some "blah\nblah" layouts but that's probably not the most
         # frequent use case. See bug 588
         escapes = [
-            ("\\", "\\\\"), ("\r", "\\r"), ("\t", "\\t"),
-            ("\v", "\\v"), ("\f", "\\f"), ("\\\\$", "\\$"),
-            ('"', '\\"'), ("\\\\", "\\"),
+            ("\\", "\\\\"),
+            ("\r", "\\r"),
+            ("\t", "\\t"),
+            ("\v", "\\v"),
+            ("\f", "\\f"),
+            ("\\\\$", "\\$"),
+            ('"', '\\"'),
+            ("\\\\", "\\"),
         ]
         for a, b in escapes:
             text = text.replace(a, b)
@@ -190,9 +213,9 @@ def phpdecode(text, quotechar="'"):
     def decode_octal_hex(match):
         r"""decode Octal \NNN and Hex values"""
         if "octal" in match.groupdict():
-            return match.groupdict()['octal'].encode('latin-1').decode(escape_encoding)
+            return match.groupdict()["octal"].encode("latin-1").decode(escape_encoding)
         elif "hex" in match.groupdict():
-            return match.groupdict()['hex'].encode('latin-1').decode(escape_encoding)
+            return match.groupdict()["hex"].encode("latin-1").decode(escape_encoding)
         else:
             return match.group
 
@@ -202,8 +225,13 @@ def phpdecode(text, quotechar="'"):
         # We do not escape \$ as it is used by variables and we can't
         # roundtrip that item.
         escapes = [
-            ('\\"', '"'), ("\\\\", "\\"), ("\\n", "\n"), ("\\r", "\r"),
-            ("\\t", "\t"), ("\\v", "\v"), ("\\f", "\f"),
+            ('\\"', '"'),
+            ("\\\\", "\\"),
+            ("\\n", "\n"),
+            ("\\r", "\r"),
+            ("\\t", "\t"),
+            ("\\v", "\v"),
+            ("\\f", "\f"),
         ]
         for a, b in escapes:
             text = text.replace(a, b)
@@ -219,7 +247,7 @@ class phpunit(base.TranslationUnit):
 
     def __init__(self, source=""):
         """Construct a blank phpunit."""
-        self.escape_type = '\''
+        self.escape_type = "'"
         super().__init__(source)
         self.name = "$TTK_PLACEHOLDER"
         self.value = ""
@@ -253,22 +281,22 @@ class phpunit(base.TranslationUnit):
     def get_raw_value(self):
         return self.translation or self.value
 
-    def getoutput(self, indent='', name=None):
+    def getoutput(self, indent="", name=None):
         """Convert the unit back into formatted lines for a php file."""
-        if '->' in self.name and name == "[]":
+        if "->" in self.name and name == "[]":
             fmt = "{1}{2}{1},\n"
-        elif '->' in self.name:
-            fmt = '{0} => {1}{2}{1},\n'
-        elif self.name.startswith('define'):
-            fmt = '{0}, {1}{2}{1});\n'
+        elif "->" in self.name:
+            fmt = "{0} => {1}{2}{1},\n"
+        elif self.name.startswith("define"):
+            fmt = "{0}, {1}{2}{1});\n"
         else:
-            fmt = '{0} = {1}{2}{1};\n'
+            fmt = "{0} = {1}{2}{1};\n"
         out = fmt.format(
             name if name else self.name,
             self.escape_type,
             phpencode(self.get_raw_value(), self.escape_type),
         )
-        joiner = '\n' + indent
+        joiner = "\n" + indent
         return indent + joiner.join(self._comments + [out])
 
     def addlocation(self, location):
@@ -278,7 +306,7 @@ class phpunit(base.TranslationUnit):
         return [self.name]
 
     def addnote(self, text, origin=None, position="append"):
-        if origin in ['programmer', 'developer', 'source code', None]:
+        if origin in ["programmer", "developer", "source code", None]:
             if position == "append":
                 self._comments.append(text)
             else:
@@ -287,8 +315,8 @@ class phpunit(base.TranslationUnit):
             return super().addnote(text, origin=origin, position=position)
 
     def getnotes(self, origin=None):
-        if origin in ['programmer', 'developer', 'source code', None]:
-            return '\n'.join(self._comments)
+        if origin in ["programmer", "developer", "source code", None]:
+            return "\n".join(self._comments)
         else:
             return super().getnotes(origin)
 
@@ -314,7 +342,7 @@ class phpfile(base.TranslationStore):
     def __init__(self, inputfile=None, **kwargs):
         """Construct a phpfile, optionally reading in from inputfile."""
         super().__init__(**kwargs)
-        self.filename = getattr(inputfile, 'name', '')
+        self.filename = getattr(inputfile, "name", "")
         if inputfile is not None:
             phpsrc = inputfile.read()
             inputfile.close()
@@ -322,6 +350,7 @@ class phpfile(base.TranslationStore):
 
     def serialize(self, out):
         """Convert the units back to lines."""
+
         def write(text):
             out.write(text.encode(self.encoding))
 
@@ -330,50 +359,50 @@ class phpfile(base.TranslationStore):
                 return
             childs = set()
             # Default to classic array
-            init = 'array('
-            close = ')'
+            init = "array("
+            close = ")"
             name = arrname
             # Handle [] style array
-            if name.endswith('[]'):
-                init = '['
-                close = ']'
+            if name.endswith("[]"):
+                init = "["
+                close = "]"
                 name = name[:-2]
             # Handle return, assignment or sub array
-            if '->' in arrname:
-                separator = ' =>'
-                name = name.rsplit('->', 1)[-1]
-            elif name == 'return':
-                separator = ''
+            if "->" in arrname:
+                separator = " =>"
+                name = name.rsplit("->", 1)[-1]
+            elif name == "return":
+                separator = ""
             else:
-                separator = ' ='
+                separator = " ="
             # Write array start
-            write('{}{}{} {}\n'.format(' ' * indent, name, separator, init))
+            write("{}{}{} {}\n".format(" " * indent, name, separator, init))
             indent += 4
-            prefix = '{}->'.format(arrname)
+            prefix = f"{arrname}->"
             pref_len = len(prefix)
             for item in self.units:
                 if not item.name.startswith(prefix):
                     continue
                 name = item.name[pref_len:]
-                if '->' in name:
-                    handle_array(item, prefix + name.split('->', 1)[0], childs, indent)
+                if "->" in name:
+                    handle_array(item, prefix + name.split("->", 1)[0], childs, indent)
                 else:
-                    write(item.getoutput(' ' * indent, name))
+                    write(item.getoutput(" " * indent, name))
             # Write array end
-            write('{}{}{}\n'.format(
-                ' ' * (indent - 4),
-                close,
-                ',' if '->' in arrname else ';'
-            ))
+            write(
+                "{}{}{}\n".format(
+                    " " * (indent - 4), close, "," if "->" in arrname else ";"
+                )
+            )
             handled.add(arrname)
 
-        write('<?php\n')
+        write("<?php\n")
 
         # List of handled arrays
         handled = set()
         for unit in self.units:
-            if '->' in unit.name:
-                handle_array(unit, unit.name.split('->', 1)[0], handled)
+            if "->" in unit.name:
+                handle_array(unit, unit.name.split("->", 1)[0], handled)
             else:
                 write(unit.getoutput())
 
@@ -383,11 +412,12 @@ class phpfile(base.TranslationStore):
         newunit.addlocation(name)
         newunit.source = value
         for comment in comments:
-            newunit.addnote(comment, 'developer')
+            newunit.addnote(comment, "developer")
         self.addunit(newunit)
 
     def parse(self, phpsrc):
         """Read the source of a PHP file in and include them as units."""
+
         def handle_array(prefix, nodes, lexer):
             prefix += lexer.extract_array()
             for item in nodes:
@@ -396,15 +426,15 @@ class phpfile(base.TranslationStore):
                     name = []
                 else:
                     # To update lexer current position
-                    lexer.extract_name('DOUBLE_ARROW', *item.lexpositions)
+                    lexer.extract_name("DOUBLE_ARROW", *item.lexpositions)
                     if isinstance(item.key, BinaryOp):
-                        name = '\'{0}\''.format(concatenate(item.key))
+                        name = "'{}'".format(concatenate(item.key))
                     elif isinstance(item.key, (int, float)):
-                        name = '{0}'.format(item.key)
+                        name = f"{item.key}"
                     else:
-                        name = '\'{0}\''.format(item.key)
+                        name = f"'{item.key}'"
                 if prefix:
-                    name = '{0}->{1}'.format(prefix, name)
+                    name = f"{prefix}->{name}"
                 if isinstance(item.value, Array):
                     handle_array(name, item.value.nodes, lexer)
                 elif isinstance(item.value, str):
@@ -430,19 +460,19 @@ class phpfile(base.TranslationStore):
         tree = parser.parse(phpsrc.decode(self.encoding), lexer=lexer, tracking=True)
         # Handle text without PHP start
         if len(tree) == 1 and isinstance(tree[0], InlineHTML):
-            return self.parse(b'<?php\n' + phpsrc)
+            return self.parse(b"<?php\n" + phpsrc)
         for item in tree:
             if isinstance(item, FunctionCall):
-                if item.name == 'define':
+                if item.name == "define":
                     self.create_and_add_unit(
-                        lexer.extract_name('COMMA', *item.lexpositions),
+                        lexer.extract_name("COMMA", *item.lexpositions),
                         item.params[1].node,
                         lexer.extract_quote(),
                         lexer.extract_comments(item.lexpositions[1]),
                     )
             elif isinstance(item, Assignment):
                 if isinstance(item.node, ArrayOffset):
-                    name = lexer.extract_name('EQUALS', *item.lexpositions)
+                    name = lexer.extract_name("EQUALS", *item.lexpositions)
                     if isinstance(item.expr, Array):
                         handle_array(name, item.expr.nodes, lexer)
                     elif isinstance(item.expr, str):
@@ -452,7 +482,7 @@ class phpfile(base.TranslationStore):
                             lexer.extract_quote(),
                             lexer.extract_comments(item.lexpositions[1]),
                         )
-                    elif isinstance(item.expr, BinaryOp) and item.expr.op == '.':
+                    elif isinstance(item.expr, BinaryOp) and item.expr.op == ".":
                         self.create_and_add_unit(
                             name,
                             concatenate(item.expr),
@@ -460,7 +490,7 @@ class phpfile(base.TranslationStore):
                             lexer.extract_comments(item.lexpositions[1]),
                         )
                 elif isinstance(item.node, Variable):
-                    name = lexer.extract_name('EQUALS', *item.lexpositions)
+                    name = lexer.extract_name("EQUALS", *item.lexpositions)
                     if isinstance(item.expr, Array):
                         handle_array(name, item.expr.nodes, lexer)
                     elif isinstance(item.expr, str):
@@ -470,7 +500,7 @@ class phpfile(base.TranslationStore):
                             lexer.extract_quote(),
                             lexer.extract_comments(item.lexpositions[1]),
                         )
-                    elif isinstance(item.expr, BinaryOp) and item.expr.op == '.':
+                    elif isinstance(item.expr, BinaryOp) and item.expr.op == ".":
                         self.create_and_add_unit(
                             name,
                             concatenate(item.expr),
@@ -480,15 +510,15 @@ class phpfile(base.TranslationStore):
             elif isinstance(item, Return):
                 if isinstance(item.node, Array):
                     # Adjustextractor position
-                    lexer.extract_name('RETURN', *item.lexpositions)
-                    handle_array('return', item.node.nodes, lexer)
+                    lexer.extract_name("RETURN", *item.lexpositions)
+                    handle_array("return", item.node.nodes, lexer)
 
 
 class LaravelPHPUnit(phpunit):
     def get_raw_value(self):
         result = self.translation or self.value
         if isinstance(result, multistring):
-            return '|'.join(result.strings)
+            return "|".join(result.strings)
         return result
 
 
@@ -496,6 +526,6 @@ class LaravelPHPFile(phpfile):
     UnitClass = LaravelPHPUnit
 
     def create_and_add_unit(self, name, value, escape_type, comments):
-        if '|' in value:
-            value = multistring(value.split('|'))
+        if "|" in value:
+            value = multistring(value.split("|"))
         super().create_and_add_unit(name, value, escape_type, comments)

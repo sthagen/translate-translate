@@ -1,10 +1,9 @@
-
 from translate.lang import factory
 
 
 def test_punctranslate():
     """Tests that we can translate punctuation."""
-    language = factory.getlanguage('hy')
+    language = factory.getlanguage("hy")
     assert language.punctranslate("") == ""
     assert language.punctranslate("abc efg") == "abc efg"
     assert language.punctranslate("abc efg.") == "abc efg։"
@@ -16,11 +15,20 @@ def test_punctranslate():
 
 def test_sentences():
     """Tests basic functionality of sentence segmentation."""
-    language = factory.getlanguage('hy')
+    language = factory.getlanguage("hy")
     sentences = language.sentences("")
     assert sentences == []
 
-    sentences = language.sentences("Արխիվն արդեն գոյություն ունի։ Դուք ցանկանու՞մ եք կրկին գրել այն։")
-    assert sentences == ["Արխիվն արդեն գոյություն ունի։", "Դուք ցանկանու՞մ եք կրկին գրել այն։"]
-    sentences = language.sentences("Արխիվն արդեն գոյություն ունի։ դուք ցանկանու՞մ եք կրկին գրել այն։")
-    assert sentences == ["Արխիվն արդեն գոյություն ունի։ դուք ցանկանու՞մ եք կրկին գրել այն։"]
+    sentences = language.sentences(
+        "Արխիվն արդեն գոյություն ունի։ Դուք ցանկանու՞մ եք կրկին գրել այն։"
+    )
+    assert sentences == [
+        "Արխիվն արդեն գոյություն ունի։",
+        "Դուք ցանկանու՞մ եք կրկին գրել այն։",
+    ]
+    sentences = language.sentences(
+        "Արխիվն արդեն գոյություն ունի։ դուք ցանկանու՞մ եք կրկին գրել այն։"
+    )
+    assert sentences == [
+        "Արխիվն արդեն գոյություն ունի։ դուք ցանկանու՞մ եք կրկին գրել այն։"
+    ]
