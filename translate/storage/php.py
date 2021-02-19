@@ -312,7 +312,7 @@ class phpunit(base.TranslationUnit):
             else:
                 self._comments = [text]
         else:
-            return super().addnote(text, origin=origin, position=position)
+            super().addnote(text, origin=origin, position=position)
 
     def getnotes(self, origin=None):
         if origin in ["programmer", "developer", "source code", None]:
@@ -331,7 +331,11 @@ class phpunit(base.TranslationUnit):
         return self.name
 
     def setid(self, value):
-        self.name = value
+        # Sanitize name to produce valid syntax
+        if not value.startswith(("$", "define(", "return")):
+            self.name = "${}".format(value.replace(" ", "_"))
+        else:
+            self.name = value
 
 
 class phpfile(base.TranslationStore):
@@ -460,7 +464,8 @@ class phpfile(base.TranslationStore):
         tree = parser.parse(phpsrc.decode(self.encoding), lexer=lexer, tracking=True)
         # Handle text without PHP start
         if len(tree) == 1 and isinstance(tree[0], InlineHTML):
-            return self.parse(b"<?php\n" + phpsrc)
+            self.parse(b"<?php\n" + phpsrc)
+            return
         for item in tree:
             if isinstance(item, FunctionCall):
                 if item.name == "define":

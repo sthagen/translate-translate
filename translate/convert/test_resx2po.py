@@ -92,8 +92,7 @@ class TestRESX2PO:
         inputfile = BytesIO(resxsource.encode())
         inputresx = resx.RESXFile(inputfile)
         convertor = resx2po.resx2po()
-        outputpo = convertor.convert_store(inputresx)
-        return outputpo
+        return convertor.convert_store(inputresx)
 
     def test_simple(self):
         """Test the most basic resx conversion"""
@@ -197,7 +196,7 @@ class TestRESX2POCommand(test_convert.TestConvertCommand, TestRESX2PO):
 
     def test_help(self, capsys):
         """Tests getting help"""
-        options = test_convert.TestConvertCommand.test_help(self, capsys)
+        options = super().test_help(capsys)
         options = self.help_check(options, "-P, --pot")
         options = self.help_check(options, "--duplicates")
         options = self.help_check(options, "-t TEMPLATE, --template=TEMPLATE")

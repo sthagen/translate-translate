@@ -229,9 +229,7 @@ def rc_statement():
         + block_end
     )
 
-    statem = comments ^ precompiler ^ language_definition ^ dialog ^ string_table ^ menu
-
-    return statem
+    return comments ^ precompiler ^ language_definition ^ dialog ^ string_table ^ menu
 
 
 def generate_stringtable_name(identifier):
@@ -338,6 +336,9 @@ class rcfile(base.TranslationStore):
         self.encoding = encoding
         if encoding != "auto":
             decoded = rcsrc.decode(encoding)
+        elif b"\000" in rcsrc[:2]:
+            self.encoding = "utf-16-le"
+            decoded = rcsrc.decode(self.encoding)
         else:
             decoded, self.encoding = self.detect_encoding(
                 rcsrc, default_encodings=[self.default_encoding]
@@ -355,7 +356,8 @@ class rcfile(base.TranslationStore):
             if statement[0] == "#pragma" and "code_page" in statement[1]:
                 expected_encoding = parse_encoding_pragma(statement[1])
                 if expected_encoding and expected_encoding != self.encoding:
-                    return self.parse(rcsrc, expected_encoding)
+                    self.parse(rcsrc, expected_encoding)
+                    return
             if statement.language:
 
                 if self.lang is None or statement.language == self.lang:

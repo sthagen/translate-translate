@@ -25,12 +25,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip
-      uses: actions/cache@v2.1.3
+      uses: actions/cache@v2.1.4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2.1.4
+      uses: actions/setup-python@v2.2.1
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install apt dependencies
@@ -49,10 +49,13 @@ jobs:
         cat requirements/min-versions.txt
         pip install -r requirements/min-versions.txt
     - name: Install
-      run: pip install .
+      run: pip install -e .
     - name: pytest
       run: make test
     - name: test-functional
+      env:
+        PYTHON_ARGS: -m coverage run --append --source ${{ github.workspace }}/translate
+        COVERAGE_FILE: ${{ github.workspace }}/.coverage
       run: make test-functional
     - name: Coverage
       run: |

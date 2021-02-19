@@ -77,7 +77,7 @@ def getXMLspace(node, default=None):
     """Gets the xml:space attribute on node"""
     value = node.get("{%s}space" % XML_NS)
     if value is None:
-        value = default
+        return default
     return value
 
 
@@ -97,8 +97,7 @@ def namespaced(namespace, name):
     """
     if namespace:
         return f"{{{namespace}}}{name}"
-    else:
-        return name
+    return name
 
 
 MULTIWHITESPACE_PATTERN = r"[\n\r\t ]+"
@@ -107,8 +106,7 @@ MULTIWHITESPACE_RE = re.compile(MULTIWHITESPACE_PATTERN, re.MULTILINE)
 
 def normalize_space(text):
     """Normalize the given text for implementation of ``xml:space="default"``."""
-    text = MULTIWHITESPACE_RE.sub(" ", text)
-    return text
+    return MULTIWHITESPACE_RE.sub(" ", text)
 
 
 def normalize_xml_space(node, xml_space, remove_start=False):
@@ -175,3 +173,18 @@ def reindent(
     else:
         if not elem.tail or not elem.tail.strip():
             elem.tail = i
+
+
+def validate_char(c):
+    """
+    identify valid chars for XML, based on xmlIsChar_ch from
+    https://github.com/GNOME/libxml2/blob/master/include/libxml/chvalid.h
+    """
+    return (0x9 <= ord(c) <= 0xA) or (ord(c) == 0xD) or (0x20 <= ord(c))
+
+
+def valid_chars_only(s):
+    """
+    prevent to crash libxml with unexpected chars
+    """
+    return "".join(ch for ch in s if validate_char(ch))

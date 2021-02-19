@@ -14,10 +14,7 @@ class TestHTML2PO:
         """Helper to convert html to po without a file."""
         inputfile = BytesIO(markup.encode() if isinstance(markup, str) else markup)
         convertor = html2po.html2po()
-        outputpo = convertor.convertfile(
-            inputfile, "test", duplicatestyle, keepcomments
-        )
-        return outputpo
+        return convertor.convertfile(inputfile, "test", duplicatestyle, keepcomments)
 
     def po2html(self, posource, htmltemplate):
         """Helper to convert po to html without a file."""
@@ -692,7 +689,7 @@ class TestHTML2POCommand(test_convert.TestConvertCommand, TestHTML2PO):
 
     def test_help(self, capsys):
         """Test getting help."""
-        options = test_convert.TestConvertCommand.test_help(self, capsys)
+        options = super().test_help(capsys)
         options = self.help_check(options, "-P, --pot")
         options = self.help_check(options, "--duplicates=DUPLICATESTYLE")
         options = self.help_check(options, "--keepcomments")

@@ -212,21 +212,21 @@ class TestJSONResourceStore(test_monolingual.TestMonolingualStore):
         assert out.getvalue() == JSON_COMPLEX_ARRAY
 
     def test_add(self):
+        expected = """{
+    "simple.key": "source"
+}
+"""
         store = self.StoreClass()
 
         unit = self.StoreClass.UnitClass(
             "source",
         )
+        assert str(unit) != expected.strip()
         unit.setid("simple.key")
         store.addunit(unit)
 
-        assert (
-            bytes(store).decode()
-            == """{
-    "simple.key": "source"
-}
-"""
-        )
+        assert str(unit) == expected.strip()
+        assert bytes(store).decode() == expected
 
 
 class TestJSONNestedResourceStore(test_monolingual.TestMonolingualUnit):
@@ -311,6 +311,32 @@ class TestJSONNestedResourceStore(test_monolingual.TestMonolingualUnit):
 }
 """
         assert bytes(store).decode() == expected
+
+    def test_list_to_dict(self):
+        data = """{
+    "userInfoPage": [
+        "Name"
+    ]
+}
+"""
+        store = self.StoreClass()
+        store.parse(data)
+        assert len(store.units) == 1
+        assert bytes(store).decode() == data
+
+        unit = self.StoreClass.UnitClass("Test")
+        unit.setid("userInfoPage.nesting")
+        store.addunit(unit)
+        assert (
+            bytes(store).decode()
+            == """{
+    "userInfoPage": {
+        "0": "Name",
+        "nesting": "Test"
+    }
+}
+"""
+        )
 
 
 class TestWebExtensionUnit(test_monolingual.TestMonolingualUnit):

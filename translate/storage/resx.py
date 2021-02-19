@@ -21,7 +21,7 @@
 
 from lxml import etree
 
-from translate.misc.xml_helpers import reindent, setXMLspace
+from translate.misc.xml_helpers import setXMLspace
 from translate.storage import lisa
 from translate.storage.placeables import general
 
@@ -101,9 +101,7 @@ class RESXUnit(lisa.LISAunit):
             self.xmlelement.remove(note)
 
     def setid(self, value):
-        if id is None:
-            return False
-        else:
+        if id is not None:
             self.xmlelement.set("name", value)
 
     def getid(self):
@@ -190,6 +188,9 @@ class RESXFile(lisa.LISAfile):
   </resheader>
 </root>
 """
+    XMLindent = {"indent": "  ", "max_level": 4}
+    # Use same header as Visual Studio
+    XMLdoublequotes = True
     namespace = ""
 
     def __init__(self, *args, **kwargs):
@@ -222,13 +223,6 @@ class RESXFile(lisa.LISAfile):
             unit.xmlelement.text = "\n    "
         return unit
 
-    def serialize(self, out=None):
-        root = self.document.getroot()
-        reindent(root, indent="  ", max_level=4)
-        # Use same header as Visual Studio
-        out.write(b'<?xml version="1.0" encoding="utf-8"?>\n')
-        content = etree.tostring(
-            root, pretty_print=False, xml_declaration=False, encoding="utf-8"
-        )
+    def serialize_hook(self, treestring):
         # Additional space on empty tags same as Visual Studio
-        out.write(content.replace(b"/>", b" />"))
+        return treestring.replace(b"/>", b" />")

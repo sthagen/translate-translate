@@ -47,6 +47,7 @@ from translate.storage import base, poheader
 
 
 MO_MAGIC_NUMBER = 0x950412DE
+POT_HEADER = re.compile(r"^POT-Creation-Date:.*(\n|$)", re.IGNORECASE | re.MULTILINE)
 
 
 def mounpack(filename="messages.mo"):
@@ -68,36 +69,40 @@ def my_swap4(result):
 def hashpjw(str_param):
     HASHWORDBITS = 32
     hval = 0
-    g = None
-    s = str_param
     for s in str_param:
+        if not s:
+            break
         hval = hval << 4
         hval += s
         g = hval & 0xF << (HASHWORDBITS - 4)
         if g != 0:
-            hval = hval ^ g >> (HASHWORDBITS - 8)
+            hval = hval ^ (g >> (HASHWORDBITS - 8))
             hval = hval ^ g
     return hval
 
 
 def get_next_prime_number(start):
     # find the smallest prime number that is greater or equal "start"
+    # this is based on hash lib implementation in gettext
 
     def is_prime(num):
-        # special small numbers
-        if (num < 2) or (num == 4):
-            return False
-        if (num == 2) or (num == 3):
-            return True
-        # check for numbers > 4
-        for divider in range(2, num // 2):
-            if num % divider == 0:
-                return False
-        return True
+        # No even number and none less than 10 will be passed here
+        divn = 3
+        sq = divn * divn
 
-    candidate = start
+        while sq < num and num % divn != 0:
+            divn += 1
+            sq += 4 * divn
+            divn += 1
+
+        return num % divn != 0
+
+    # Make it definitely odd
+    candidate = start | 1
+
     while not is_prime(candidate):
-        candidate += 1
+        candidate += 2
+
     return candidate
 
 
@@ -148,20 +153,13 @@ class mofile(poheader.poheader, base.TranslationStore):
         # check the header of this file for the copyright note of this function
 
         def add_to_hash_table(string, i):
-            V = hashpjw(string)
-            # Taken from gettext-0.17:gettext-tools/src/write-mo.c:408-409
-            S = hash_size <= 2 and 3 or hash_size
-            hash_cursor = V % S
-            orig_hash_cursor = hash_cursor
-            increment = 1 + (V % (S - 2))
-            while True:
-                index = hash_table[hash_cursor]
-                if index == 0:
-                    hash_table[hash_cursor] = i + 1
-                    break
+            hash_value = hashpjw(string)
+            hash_cursor = hash_value % hash_size
+            increment = 1 + (hash_value % (hash_size - 2))
+            while hash_table[hash_cursor] != 0:
                 hash_cursor += increment
-                hash_cursor = hash_cursor % S
-                assert hash_cursor != orig_hash_cursor
+                hash_cursor = hash_cursor % hash_size
+            hash_table[hash_cursor] = i + 1
 
         def lst_encode(lst, join_char=b""):
             return join_char.join([i.encode("utf-8") for i in lst])
@@ -169,7 +167,7 @@ class mofile(poheader.poheader, base.TranslationStore):
         # hash_size should be the smallest prime number that is greater
         # or equal (4 / 3 * N) - where N is the number of keys/units.
         # see gettext-0.17:gettext-tools/src/write-mo.c:406
-        hash_size = get_next_prime_number(int((len(self.units) * 4) / 3))
+        hash_size = get_next_prime_number((len(self.units) * 4) // 3)
         if hash_size <= 2:
             hash_size = 3
         MESSAGES = {}
@@ -187,6 +185,10 @@ class mofile(poheader.poheader, base.TranslationStore):
                 source = lst_encode(unit.msgctxt) + b"\x04" + source
             if isinstance(unit.target, multistring):
                 target = lst_encode(unit.target.strings, b"\0")
+            elif unit.isheader():
+                # Support for "reproducible builds": Delete information that
+                # may vary between builds in the same conditions.
+                target = POT_HEADER.sub("", unit.target).encode("utf-8")
             else:
                 target = unit.target.encode("utf-8")
             if unit.target:
@@ -206,7 +208,6 @@ class mofile(poheader.poheader, base.TranslationStore):
             offsets.append((len(ids), len(id), len(strs), len(string)))
             ids = ids + id + b"\0"
             strs = strs + string + b"\0"
-        output = ""
         # The header is 7 32-bit unsigned integers
         keystart = 7 * 4 + 16 * len(keys) + hash_size * 4
         # and the values start after the keys
@@ -219,23 +220,24 @@ class mofile(poheader.poheader, base.TranslationStore):
             koffsets = koffsets + [l1, o1 + keystart]
             voffsets = voffsets + [l2, o2 + valuestart]
         offsets = koffsets + voffsets
-        output = struct.pack(
-            "Iiiiiii",
-            MO_MAGIC_NUMBER,  # Magic
-            0,  # Version
-            len(keys),  # # of entries
-            7 * 4,  # start of key index
-            7 * 4 + len(keys) * 8,  # start of value index
-            hash_size,  # size of hash table
-            7 * 4 + 2 * (len(keys) * 8),
-        )  # offset of hash table
+        out.write(
+            struct.pack(
+                "Iiiiiii",
+                MO_MAGIC_NUMBER,  # Magic
+                0,  # Version
+                len(keys),  # # of entries
+                7 * 4,  # start of key index
+                7 * 4 + len(keys) * 8,  # start of value index
+                hash_size,  # size of hash table
+                7 * 4 + 2 * (len(keys) * 8),  # offset of hash table
+            )
+        )
         # additional data is not necessary for empty mo files
         if len(keys) > 0:
-            output = output + array.array("i", offsets).tobytes()
-            output = output + hash_table.tobytes()
-            output = output + ids
-            output = output + strs
-        return out.write(output)
+            out.write(array.array("i", offsets).tobytes())
+            out.write(hash_table.tobytes())
+            out.write(ids)
+            out.write(strs)
 
     def parse(self, input):
         """parses the given file or file source string"""

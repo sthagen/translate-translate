@@ -11,8 +11,7 @@ class TestPO2CSV:
         inputfile = BytesIO(posource.encode())
         inputpo = po.pofile(inputfile)
         convertor = po2csv.po2csv()
-        outputcsv = convertor.convertstore(inputpo)
-        return outputcsv
+        return convertor.convertstore(inputpo)
 
     def csv2po(self, csvsource, template=None):
         """helper that converts csv source to po source without requiring files"""
@@ -24,8 +23,7 @@ class TestPO2CSV:
         else:
             inputpot = None
         convertor = csv2po.csv2po(templatepo=inputpot)
-        outputpo = convertor.convertstore(inputcsv)
-        return outputpo
+        return convertor.convertstore(inputcsv)
 
     def singleelement(self, storage):
         """checks that the pofile contains a single non-header element, and returns it"""
@@ -141,5 +139,27 @@ class TestPO2CSVCommand(test_convert.TestConvertCommand, TestPO2CSV):
 
     def test_help(self, capsys):
         """tests getting help"""
-        options = test_convert.TestConvertCommand.test_help(self, capsys)
+        options = super().test_help(capsys)
         options = self.help_check(options, "--columnorder=COLUMNORDER", last=True)
+
+    def test_columnorder(self):
+        pocontent = '#: simple.c\nmsgid "Same"\nmsgstr "Target"\n'
+        self.create_testfile("test.po", pocontent)
+
+        self.run_command("test.po", "test.csv")
+        content = self.open_testfile("test.csv", "r").read()
+        assert (
+            content
+            == """"location","source","target"
+"simple.c","Same","Target"
+"""
+        )
+
+        self.run_command("test.po", "test.csv", columnorder="target,source")
+        content = self.open_testfile("test.csv", "r").read()
+        assert (
+            content
+            == """"target","source"
+"Target","Same"
+"""
+        )

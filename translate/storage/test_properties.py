@@ -129,6 +129,17 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         """helper that converts properties source to propfile object and back"""
         return self.propparse(propsource).__bytes__()
 
+    def test_quotes(self):
+        """checks that quotes are parsed and saved correctly"""
+        propsource = "test_me=I can ''code''!"
+        propfile = self.propparse(propsource)
+        assert len(propfile.units) == 1
+        propunit = propfile.units[0]
+        assert propunit.name == "test_me"
+        assert propunit.source == "I can 'code'!"
+        propunit.value = "I 'can' code!"
+        assert bytes(propfile).decode() == "test_me=I ''can'' code!\n"
+
     def test_simpledefinition(self):
         """checks that a simple properties definition is parsed correctly"""
         propsource = "test_me=I can code!"
@@ -638,7 +649,8 @@ job.log.begin=Starting job of type [{0}]
             == """# This is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation; either version 2.1 of
-# the License, or (at your option) any later version."""
+# the License, or (at your option) any later version.
+"""
         )
         propunit = propfile.units[1]
         assert propunit.name == "job.log.begin"
@@ -684,6 +696,8 @@ class TestXWiki(test_monolingual.TestMonolingualStore):
         assert propunit.missing
         propunit.target = ""
         assert propunit.missing
+        propunit.target = "I can code!"
+        assert not propunit.missing
         propunit.target = "Je peux coder"
         assert not propunit.missing
         # Check encoding
@@ -735,6 +749,31 @@ class TestXWiki(test_monolingual.TestMonolingualStore):
         propsource = """\n# My comment\ntest_me=I can code"""
         propgen = self.propregen(propsource)
         assert propgen == propsource + "\n"
+
+    def test_deprecated_comments_preserved(self):
+        propsource = """# Deprecated keys starts here.
+#@deprecatedstart
+
+job.log.label=Job log
+
+#@deprecatedend"""
+
+        propfile = self.propparse(propsource)
+        assert len(propfile.units) == 3
+        propunit = propfile.units[1]
+        assert propunit.name == "job.log.label"
+        assert propunit.source == "Job log"
+        assert not propunit.missing
+        propunit.missing = True
+        expected_output = """# Deprecated keys starts here.
+#@deprecatedstart
+
+### Missing: job.log.label=Job log
+
+#@deprecatedend
+"""
+        propgen = bytes(propfile).decode("utf-8")
+        assert propgen == expected_output
 
 
 class TestXWikiPageProperties(test_monolingual.TestMonolingualStore):
@@ -967,6 +1006,168 @@ class TestXWikiPageProperties(test_monolingual.TestMonolingualStore):
 test_me=Je peux coder !
 </content>
             </xwikidoc>"""
+        )
+        assert (
+            generatedcontent.getvalue().decode(propfile.encoding) == expected_xml + "\n"
+        )
+        assert '<?xml version="1.1" encoding="UTF-8"?>\n\n<!--\n * See the NOTICE file distributed with this work for additional' in generatedcontent.getvalue().decode(
+            propfile.encoding
+        )
+
+    def test_translate_source(self):
+        """
+        Ensure that the XML is correctly formatted during serialization:
+        it should not contain objects or attachments tags, and translation should be
+        set to 1.
+        """
+        ## Real XWiki files are containing multiple attributes on xwikidoc tag: we're not testing it there
+        ## because ElementTree changed its implementation between Python 3.7 and 3.8 which changed the order of output of the attributes
+        ## it makes it more difficult to assert it on multiple versions of Python.
+        propsource = (
+            properties.XWikiPageProperties.XML_HEADER
+            + """<xwikidoc reference="XWiki.AdminTranslations">
+            <web>XWiki</web>
+            <name>AdminTranslations</name>
+            <language/>
+            <defaultLanguage>en</defaultLanguage>
+            <translation>0</translation>
+            <creator>xwiki:XWiki.Admin</creator>
+            <parent>XWiki.WebHome</parent>
+            <author>xwiki:XWiki.Admin</author>
+            <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+            <version>1.1</version>
+            <title>AdminTranslations</title>
+            <comment/>
+            <minorEdit>false</minorEdit>
+            <syntaxId>plain/1.0</syntaxId>
+            <hidden>true</hidden>
+            <content># Users Section
+            test_me=I can code!
+            </content>
+            <object>
+                <name>XWiki.AdminTranslations</name>
+                <number>0</number>
+                <className>XWiki.TranslationDocumentClass</className>
+                <guid>554b2ee4-98dc-48ef-b436-ef0cf7d38c4f</guid>
+                <class>
+                  <name>XWiki.TranslationDocumentClass</name>
+                  <customClass/>
+                  <customMapping/>
+                  <defaultViewSheet/>
+                  <defaultEditSheet/>
+                  <defaultWeb/>
+                  <nameField/>
+                  <validationScript/>
+                  <scope>
+                    <cache>0</cache>
+                    <disabled>0</disabled>
+                    <displayType>select</displayType>
+                    <freeText>forbidden</freeText>
+                    <multiSelect>0</multiSelect>
+                    <name>scope</name>
+                    <number>1</number>
+                    <prettyName>Scope</prettyName>
+                    <relationalStorage>0</relationalStorage>
+                    <separator> </separator>
+                    <separators>|, </separators>
+                    <size>1</size>
+                    <unmodifiable>0</unmodifiable>
+                    <values>GLOBAL|WIKI|USER|ON_DEMAND</values>
+                    <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+                  </scope>
+                </class>
+                <property>
+                  <scope>WIKI</scope>
+                </property>
+            </object>
+            <attachment>
+                <filename>XWikiLogo.png</filename>
+                <mimetype>image/png</mimetype>
+                <filesize>1390</filesize>
+                <author>xwiki:XWiki.Admin</author>
+                <version>1.1</version>
+                <comment/>
+                <content>something=toto</content>
+            </attachment>
+        </xwikidoc>"""
+        )
+        propfile = self.propparse(propsource)
+        assert len(propfile.units) == 1
+        propunit = propfile.units[0]
+        propfile.settargetlanguage("en")
+        assert propunit.name == "test_me"
+        assert propunit.source == "I can code!"
+        assert not propunit.missing
+        propunit.target = "I can change the translation source"
+        generatedcontent = BytesIO()
+        propfile.serialize(generatedcontent)
+        expected_xml = (
+            properties.XWikiPageProperties.XML_HEADER
+            + """<xwikidoc reference="XWiki.AdminTranslations">
+            <web>XWiki</web>
+            <name>AdminTranslations</name>
+            <language/>
+            <defaultLanguage>en</defaultLanguage>
+            <translation>0</translation>
+            <creator>xwiki:XWiki.Admin</creator>
+            <parent>XWiki.WebHome</parent>
+            <author>xwiki:XWiki.Admin</author>
+            <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+            <version>1.1</version>
+            <title>AdminTranslations</title>
+            <comment/>
+            <minorEdit>false</minorEdit>
+            <syntaxId>plain/1.0</syntaxId>
+            <hidden>true</hidden>
+            <content># Users Section
+test_me=I can change the translation source
+</content>
+            <object>
+                <name>XWiki.AdminTranslations</name>
+                <number>0</number>
+                <className>XWiki.TranslationDocumentClass</className>
+                <guid>554b2ee4-98dc-48ef-b436-ef0cf7d38c4f</guid>
+                <class>
+                  <name>XWiki.TranslationDocumentClass</name>
+                  <customClass/>
+                  <customMapping/>
+                  <defaultViewSheet/>
+                  <defaultEditSheet/>
+                  <defaultWeb/>
+                  <nameField/>
+                  <validationScript/>
+                  <scope>
+                    <cache>0</cache>
+                    <disabled>0</disabled>
+                    <displayType>select</displayType>
+                    <freeText>forbidden</freeText>
+                    <multiSelect>0</multiSelect>
+                    <name>scope</name>
+                    <number>1</number>
+                    <prettyName>Scope</prettyName>
+                    <relationalStorage>0</relationalStorage>
+                    <separator> </separator>
+                    <separators>|, </separators>
+                    <size>1</size>
+                    <unmodifiable>0</unmodifiable>
+                    <values>GLOBAL|WIKI|USER|ON_DEMAND</values>
+                    <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+                  </scope>
+                </class>
+                <property>
+                  <scope>WIKI</scope>
+                </property>
+            </object>
+            <attachment>
+                <filename>XWikiLogo.png</filename>
+                <mimetype>image/png</mimetype>
+                <filesize>1390</filesize>
+                <author>xwiki:XWiki.Admin</author>
+                <version>1.1</version>
+                <comment/>
+                <content>something=toto</content>
+            </attachment>
+        </xwikidoc>"""
         )
         assert (
             generatedcontent.getvalue().decode(propfile.encoding) == expected_xml + "\n"

@@ -21,7 +21,7 @@
 from lxml import etree
 
 from translate import __version__
-from translate.misc.xml_helpers import setXMLlang
+from translate.misc.xml_helpers import setXMLlang, valid_chars_only
 from translate.storage import lisa
 
 
@@ -39,7 +39,12 @@ class tmxunit(lisa.LISAunit):
         seg = etree.SubElement(langset, self.textNode)
         # implied by the standard:
         # setXMLspace(seg, "preserve")
-        seg.text = text
+        try:
+            seg.text = text
+        except ValueError:
+            # Prevents "All strings must be XML compatible" when string contains a control characters
+            seg.text = valid_chars_only(text)
+
         return langset
 
     def getid(self):
@@ -69,9 +74,7 @@ class tmxunit(lisa.LISAunit):
         :rtype: List
         """
         note_nodes = self.xmlelement.iterdescendants(self.namespaced("note"))
-        note_list = [lisa.getText(note) for note in note_nodes]
-
-        return note_list
+        return [lisa.getText(note) for note in note_nodes]
 
     def getnotes(self, origin=None):
         return "\n".join(self._getnotelist(origin=origin))

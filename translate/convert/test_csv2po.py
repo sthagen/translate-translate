@@ -24,8 +24,7 @@ class TestCSV2PO:
         else:
             inputpot = None
         convertor = csv2po.csv2po(templatepo=inputpot)
-        outputpo = convertor.convertstore(inputcsv)
-        return outputpo
+        return convertor.convertstore(inputcsv)
 
     def singleelement(self, storage):
         """checks that the pofile contains a single non-header element, and returns it"""
@@ -144,9 +143,33 @@ class TestCSV2POCommand(test_convert.TestConvertCommand, TestCSV2PO):
 
     def test_help(self, capsys):
         """tests getting help"""
-        options = test_convert.TestConvertCommand.test_help(self, capsys)
+        options = super().test_help(capsys)
         options = self.help_check(options, "-t TEMPLATE, --template=TEMPLATE")
         options = self.help_check(options, "-P, --pot")
         options = self.help_check(options, "--charset=CHARSET")
         options = self.help_check(options, "--columnorder=COLUMNORDER")
         options = self.help_check(options, "--duplicates=DUPLICATESTYLE", last=True)
+
+    def test_columnorder(self):
+        csvcontent = '"Target","Same"\n'
+        self.create_testfile("test.csv", csvcontent)
+
+        self.run_command("test.csv", "test.po")
+        # Strip PO file header
+        content = self.open_testfile("test.po", "r").read().split("\n\n")[1]
+        assert (
+            content
+            == """#: Target
+msgid "Same"
+msgstr ""
+"""
+        )
+
+        self.run_command("test.csv", "test.po", columnorder="target,source")
+        content = self.open_testfile("test.po", "r").read().split("\n\n")[1]
+        assert (
+            content
+            == """msgid "Same"
+msgstr "Target"
+"""
+        )

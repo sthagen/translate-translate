@@ -1,13 +1,13 @@
 -r required.txt
 
 # Format support
-aeidon==1.7.0        # Subtitles
+aeidon==1.9        # Subtitles
 # Format support
 BeautifulSoup4>=4.3  # Trados
 # Encoding detection
-chardet==3.0.4              # chardet
+chardet==4.0.0              # chardet
 # Tmserver backend
-cheroot==8.5.0       # tmserver
+cheroot==8.5.2       # tmserver
 # Format support
 iniparse==0.5        # INI
 # Format support

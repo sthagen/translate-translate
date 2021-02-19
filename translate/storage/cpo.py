@@ -33,6 +33,7 @@ import os
 import re
 import sys
 import tempfile
+import threading
 from ctypes import (
     CFUNCTYPE,
     POINTER,
@@ -123,14 +124,44 @@ class po_error_handler(Structure):
     ]
 
 
+xerror_storage = threading.local()
+
+ignored_erorrs = {
+    # TODO: this is probably bug somewhere in cpo, but
+    # it used to be silently ignored before the exceptions
+    # were raised, so it is left to fixing separately
+    "invalid multibyte sequence",
+    # Duplicate messages are allowed
+    "duplicate message definition",
+}
+
+
+def trigger_exception(severity, filename, lineno, column, message_text):
+    # Severity 0 is warning, severity 1 error, severity 2 critical
+    if severity >= 1 and message_text not in ignored_erorrs:
+        if filename:
+            detail = f"{filename}:{lineno}:{column}: {message_text}"
+        else:
+            detail = message_text
+        xerror_storage.exception = ValueError(detail)
+
+
 # Callback functions for po_xerror_handler
 def xerror_cb(severity, message, filename, lineno, column, multiline_p, message_text):
+    message_text = message_text.decode()
+    if filename:
+        filename = filename.decode()
     logger.error(
-        "xerror_cb %s %s %s %s %s %s %s"
-        % (severity, message, filename, lineno, column, multiline_p, message_text)
+        "xerror_cb %s %s %s %s %s %s %s",
+        severity,
+        message,
+        filename,
+        lineno,
+        column,
+        multiline_p,
+        message_text,
     )
-    if severity >= 1:
-        raise ValueError(message_text)
+    trigger_exception(severity, filename, lineno, column, message_text)
 
 
 def xerror2_cb(
@@ -148,25 +179,28 @@ def xerror2_cb(
     multiline_p2,
     message_text2,
 ):
+    message_text1 = message_text1.decode()
+    message_text2 = message_text2.decode()
+    if filename1:
+        filename1 = filename1.decode()
+    if filename2:
+        filename2 = filename2.decode()
     logger.error(
-        "xerror2_cb %s %s %s %s %s %s %s %s %s %s %s %s"
-        % (
-            severity,
-            message1,
-            filename1,
-            lineno1,
-            column1,
-            multiline_p1,
-            message_text1,
-            filename2,
-            lineno2,
-            column2,
-            multiline_p2,
-            message_text2,
-        )
+        "xerror2_cb %s %s %s %s %s %s %s %s %s %s %s %s",
+        severity,
+        message1,
+        filename1,
+        lineno1,
+        column1,
+        multiline_p1,
+        message_text1,
+        filename2,
+        lineno2,
+        column2,
+        multiline_p2,
+        message_text2,
     )
-    if severity >= 1:
-        raise ValueError(message_text1)
+    trigger_exception(severity, filename1, lineno1, column1, message_text1)
 
 
 # Setup return and parameter types
@@ -713,9 +747,7 @@ class pounit(pocommon.pounit):
         msgctxt = gpo.po_message_msgctxt(self._gpo_message)
         if msgctxt:
             return gpo_decode(msgctxt)
-        else:
-            msgidcomment = self._extract_msgidcomments()
-            return msgidcomment
+        return self._extract_msgidcomments()
 
     def setcontext(self, context):
         gpo.po_message_set_msgctxt(self._gpo_message, gpo_encode(context))
@@ -868,32 +900,36 @@ class pofile(pocommon.pofile):
                         location = gpo.po_message_filepos(unit._gpo_message, 0)
 
         def writefile(filename):
+            xerror_storage.exception = None
             self._gpo_memory_file = gpo.po_file_write_v2(
                 self._gpo_memory_file, gpo_encode(filename), xerror_handler
             )
+            if xerror_storage.exception is not None:
+                raise xerror_storage.exception
             with open(filename, "rb") as tfile:
-                content = tfile.read()
-            return content
+                return tfile.read()
 
         outputstring = ""
         if self._gpo_memory_file:
             obsolete_workaround()
             f, fname = tempfile.mkstemp(prefix="translate", suffix=".po")
             os.close(f)
-            outputstring = writefile(fname)
-            if self.encoding != pounit.CPO_ENC:
-                try:
-                    outputstring = outputstring.decode(pounit.CPO_ENC).encode(
-                        self.encoding
-                    )
-                except UnicodeEncodeError:
-                    self.encoding = pounit.CPO_ENC
-                    self.updateheader(
-                        content_type="text/plain; charset=UTF-8",
-                        content_transfer_encoding="8bit",
-                    )
-                    outputstring = writefile(fname)
-            os.remove(fname)
+            try:
+                outputstring = writefile(fname)
+                if self.encoding != pounit.CPO_ENC:
+                    try:
+                        outputstring = outputstring.decode(pounit.CPO_ENC).encode(
+                            self.encoding
+                        )
+                    except UnicodeEncodeError:
+                        self.encoding = pounit.CPO_ENC
+                        self.updateheader(
+                            content_type="text/plain; charset=UTF-8",
+                            content_transfer_encoding="8bit",
+                        )
+                        outputstring = writefile(fname)
+            finally:
+                os.remove(fname)
         out.write(outputstring)
 
     def isempty(self):
@@ -930,12 +966,18 @@ class pofile(pocommon.pofile):
             input = fname
             os.close(fd)
 
-        self._gpo_memory_file = gpo.po_file_read_v3(gpo_encode(input), xerror_handler)
-        if self._gpo_memory_file is None:
-            logger.error("Error:")
-
-        if needtmpfile:
-            os.remove(input)
+        try:
+            xerror_storage.exception = None
+            self._gpo_memory_file = gpo.po_file_read_v3(
+                gpo_encode(input), xerror_handler
+            )
+            if xerror_storage.exception is not None:
+                raise xerror_storage.exception
+            if self._gpo_memory_file is None:
+                logger.error("Error:")
+        finally:
+            if needtmpfile:
+                os.remove(input)
 
         self.units = []
         # Handle xerrors here

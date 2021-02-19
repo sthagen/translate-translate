@@ -24,7 +24,7 @@ The official recommendation is to use the extention .xlf for XLIFF files.
 from lxml import etree
 
 from translate.misc.multistring import multistring
-from translate.misc.xml_helpers import getXMLspace, reindent, setXMLlang, setXMLspace
+from translate.misc.xml_helpers import getXMLspace, setXMLlang, setXMLspace
 from translate.storage import base, lisa
 from translate.storage.placeables.lisa import strelem_to_xml, xml_to_strelem
 from translate.storage.workflow import StateEnum as state
@@ -339,13 +339,11 @@ class xliffunit(lisa.LISAunit):
 
         # Remove duplicate entries from list:
         dictset = {}
-        note_list = [
+        return [
             dictset.setdefault(note, note)
             for note in initial_list
             if note not in dictset
         ]
-
-        return note_list
 
     def getnotes(self, origin=None):
         return "\n".join(self._getnotelist(origin=origin))
@@ -464,6 +462,8 @@ class xliffunit(lisa.LISAunit):
         """Sets the target string to the given value."""
         super().settarget(target, lang, append)
         if target:
+            if getXMLspace(self.xmlelement) != "preserve":
+                setXMLspace(self.xmlelement, "preserve")
             self.marktranslated()
 
     # This code is commented while this will almost always return false.
@@ -626,6 +626,7 @@ class xlifffile(lisa.LISAfile):
 </body>
 </file>
 </xliff>"""
+    XMLindent = {"indent": "  ", "max_level": 4, "toplevel": False}
     namespace = "urn:oasis:names:tc:xliff:document:1.1"
     unversioned_namespace = "urn:oasis:names:tc:xliff:document:"
 
@@ -712,8 +713,7 @@ class xlifffile(lisa.LISAfile):
             if self.getfilename(filenode) == filename:
                 return filenode
         if createifmissing:
-            filenode = self.createfilenode(filename)
-            return filenode
+            return self.createfilenode(filename)
         return None
 
     def getids(self, filename=None):
@@ -819,8 +819,7 @@ class xlifffile(lisa.LISAfile):
             pass
         if not createifmissing:
             return None
-        bodynode = etree.SubElement(filenode, self.namespaced("body"))
-        return bodynode
+        return etree.SubElement(filenode, self.namespaced("body"))
 
     def addunit(self, unit, new=True):
         parts = unit.getid().split("\x04")
@@ -875,7 +874,6 @@ class xlifffile(lisa.LISAfile):
 
     def serialize(self, out):
         self.removedefaultfile()
-        reindent(self.document.getroot(), indent="  ", max_level=4)
         super().serialize(out)
 
     @classmethod

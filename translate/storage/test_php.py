@@ -169,8 +169,7 @@ class TestPhpFile(test_monolingual.TestMonolingualStore):
     def phpparse(self, phpsource):
         """helper that parses php source without requiring files"""
         dummyfile = BytesIO(phpsource.encode())
-        phpfile = php.phpfile(dummyfile)
-        return phpfile
+        return php.phpfile(dummyfile)
 
     def phpregen(self, phpsource):
         """helper that converts php source to phpfile object and back"""
@@ -1153,6 +1152,21 @@ return [
         phpunit.source = 'foo "pesca"'
         assert bytes(phpfile).decode() == phpsource
 
+    def test_addunit(self):
+        expected = """<?php
+$key = 'first';
+$sec = 'second';
+"""
+        store = self.StoreClass()
+
+        unit = self.StoreClass.UnitClass("first")
+        unit.setid("key")
+        store.addunit(unit)
+        unit = self.StoreClass.UnitClass("second")
+        unit.setid("$sec")
+        store.addunit(unit)
+        assert bytes(store).decode() == expected
+
 
 class TestLaravelPhpUnit(test_monolingual.TestMonolingualUnit):
     UnitClass = php.LaravelPHPUnit
@@ -1164,8 +1178,7 @@ class TestLaravelPhpFile(test_monolingual.TestMonolingualStore):
     def phpparse(self, phpsource):
         """helper that parses php source without requiring files"""
         dummyfile = BytesIO(phpsource.encode())
-        phpfile = self.StoreClass(dummyfile)
-        return phpfile
+        return self.StoreClass(dummyfile)
 
     def test_plurals(self):
         phpsource = r"""<?php

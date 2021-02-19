@@ -48,6 +48,9 @@ class tbxunit(lisa.LISAunit):
         # The id attribute is optional
         return self.xmlelement.get("id") or self.source
 
+    def setid(self, value):
+        return self.xmlelement.set("id", value)
+
     def removenotes(self, origin=None):
         """Remove all the translator notes."""
         notes = self.xmlelement.iterdescendants(self.namespaced("note"))
@@ -93,13 +96,11 @@ class tbxunit(lisa.LISAunit):
 
         # Remove duplicate entries from list:
         dictset = {}
-        note_list = [
+        return [
             dictset.setdefault(note, note)
             for note in initial_list
             if note not in dictset
         ]
-
-        return note_list
 
     def getnotes(self, origin=None):
         return "\n".join(self._getnotelist(origin=origin))
@@ -124,6 +125,8 @@ class tbxfile(lisa.LISAfile):
 </martifHeader>
 <text><body></body></text>
 </martif>"""
+    XMLindent = {"indent": "    ", "toplevel": False}
+    XMLdoublequotes = True
 
     def addheader(self):
         """Initialise headers with TBX specific things."""

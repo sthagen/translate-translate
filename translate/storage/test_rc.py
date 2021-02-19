@@ -32,11 +32,10 @@ second line"""
 class TestRcFile:
     StoreClass = rc.rcfile
 
-    def source_parse(self, source):
+    def source_parse(self, source, encoding="utf-8"):
         """Helper that parses source without requiring files."""
-        dummy_file = BytesIO(source.encode())
-        parsed_file = self.StoreClass(dummy_file)
-        return parsed_file
+        dummy_file = BytesIO(source.encode(encoding))
+        return self.StoreClass(dummy_file)
 
     def source_regenerate(self, source):
         """Helper that converts source to store object and back."""
@@ -447,5 +446,16 @@ BEGIN
 END
 """
         rc_file = self.source_parse(rc_source)
+        assert len(rc_file.units) == 1
+        assert rc_file.units[0].source == "✔ Copied"
+
+    def test_utf_16(self):
+        rc_source = """
+STRINGTABLE
+BEGIN
+    IDS_COPIED              "✔ Copied"
+END
+"""
+        rc_file = self.source_parse(rc_source, "utf-16-le")
         assert len(rc_file.units) == 1
         assert rc_file.units[0].source == "✔ Copied"

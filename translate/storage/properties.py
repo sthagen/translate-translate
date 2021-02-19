@@ -435,10 +435,9 @@ class DialectGaia(DialectMozilla):
 
 
 @register_dialect
-class DialectGwt(DialectJava):
+class DialectGwt(DialectJavaUtf8):
     plural_regex = re.compile(r"([^\[\]]*)(?:\[(.*)\])?")
     name = "gwt"
-    default_encoding = "utf-8"
     delimiters = ["="]
 
     gwt_plural_categories = [
@@ -482,7 +481,13 @@ class DialectGwt(DialectJava):
 
     @classmethod
     def encode(cls, string, encoding=None):
-        return quote.java_utf8_properties_encode(string or "")
+        result = super().encode(string, encoding)
+        return result.replace("'", "''")
+
+    @classmethod
+    def decode(cls, string):
+        result = super().decode(string)
+        return result.replace("''", "'")
 
 
 @register_dialect
@@ -886,11 +891,11 @@ class propunit(base.TranslationUnit):
     def getoutput(self):
         """Convert the element back into formatted lines for a .properties file"""
         notes = self.getnotes()
-        if notes:
-            notes += "\n"
         if self.isblank():
             return notes + "\n"
         else:
+            if notes:
+                notes = notes + "\n"
             self.value = self.personality.encode(self.source, self.encoding)
             self.translation = self.personality.encode(self.target, self.encoding)
             # encode key, if needed
@@ -931,7 +936,7 @@ class propunit(base.TranslationUnit):
         if origin in ["programmer", "developer", "source code", None]:
             self.comments.append(text)
         else:
-            return super().addnote(text, origin=origin, position=position)
+            super().addnote(text, origin=origin, position=position)
 
     def getnotes(self, origin=None):
         if origin in ["programmer", "developer", "source code", None]:
@@ -1056,12 +1061,14 @@ class propfile(base.TranslationStore):
                 if newunit.name:
                     self.addunit(newunit)
                     newunit = self.UnitClass("", self.personality.name)
-                elif not was_header and str(newunit).strip():
+                else:
+                    newunit.comments.append("")
+
+                if not was_header and str(newunit).strip():
                     self.addunit(newunit)
                     newunit = self.UnitClass("", self.personality.name)
                     was_header = True
-                else:
-                    newunit.comments.append("")
+
             else:
                 ismissing = False
                 if self.UnitClass.represents_missing(line):
@@ -1255,6 +1262,9 @@ class XWikiPageProperties(xwikifile):
         self.root = None
         super(xwikifile, self).__init__(*args, **kwargs)
 
+    def is_source_file(self):
+        return self.getsourcelanguage() == self.gettargetlanguage()
+
     def get_parser(self):
         return etree.XMLParser(strip_cdata=False, resolve_entities=False)
 
@@ -1306,7 +1316,10 @@ class XWikiPageProperties(xwikifile):
         newroot.find("content").text = (
             "".join(unit.getoutput() for unit in self.units).strip() + "\n"
         )
-        self.set_xwiki_xml_attributes(newroot)
+        # We only modify the XML attributes if we are editing a translation file
+        # if we are editing the source file we should not modify it.
+        if not self.is_source_file():
+            self.set_xwiki_xml_attributes(newroot)
         self.write_xwiki_xml(newroot, out)
 
 
@@ -1350,5 +1363,8 @@ class XWikiFullPage(XWikiPageProperties):
             newroot.find("content").text = self.output_unit(unit_content).replace(
                 "\\n", "\n"
             )
-        self.set_xwiki_xml_attributes(newroot)
+        # We only modify the XML attributes if we are editing a translation file
+        # if we are editing the source file we should not modify it.
+        if not self.is_source_file():
+            self.set_xwiki_xml_attributes(newroot)
         self.write_xwiki_xml(newroot, out)

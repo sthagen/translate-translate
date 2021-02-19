@@ -19,8 +19,7 @@ class TestPO2DTD:
         inputfile = BytesIO(posource.encode())
         inputpo = po.pofile(inputfile)
         convertor = po2dtd.po2dtd(remove_untranslated=remove_untranslated)
-        outputdtd = convertor.convertstore(inputpo)
-        return outputdtd
+        return convertor.convertstore(inputpo)
 
     def merge2dtd(self, dtdsource, posource):
         """helper that merges po translations to dtd source without requiring files"""
@@ -29,8 +28,7 @@ class TestPO2DTD:
         templatefile = BytesIO(dtdsource.encode())
         templatedtd = dtd.dtdfile(templatefile)
         convertor = po2dtd.redtd(templatedtd)
-        outputdtd = convertor.convertstore(inputpo)
-        return outputdtd
+        return convertor.convertstore(inputpo)
 
     def convertdtd(self, posource, dtdtemplate, remove_untranslated=False):
         """helper to exercise the command line function"""
@@ -520,7 +518,7 @@ msgid "&Bookmarks"
 msgstr "Dipu&kutshwayo1"
 
 #: bookmarksItem.title
-msgctxt "bookmarksItem.title
+msgctxt "bookmarksItem.title"
 msgid "Bookmarks"
 msgstr "Dipukutshwayo2"
 
@@ -554,17 +552,17 @@ class TestPO2DTDCommand(test_convert.TestConvertCommand, TestPO2DTD):
 
     def setup_method(self, method):
         """call both base classes setup_methods"""
-        test_convert.TestConvertCommand.setup_method(self, method)
+        super().setup_method(method)
         TestPO2DTD.setup_method(self, method)
 
     def teardown_method(self, method):
         """call both base classes teardown_methods"""
-        test_convert.TestConvertCommand.teardown_method(self, method)
+        super().teardown_method(method)
         TestPO2DTD.teardown_method(self, method)
 
     def test_help(self, capsys):
         """tests getting help"""
-        options = test_convert.TestConvertCommand.test_help(self, capsys)
+        options = super().test_help(capsys)
         options = self.help_check(options, "-t TEMPLATE, --template=TEMPLATE")
         options = self.help_check(options, "--fuzzy")
         options = self.help_check(options, "--threshold=PERCENT")

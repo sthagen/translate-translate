@@ -302,27 +302,24 @@ class TestTranslationStore:
     def reparse(self, store):
         """converts the store to a string and back to a store again"""
         storestring = bytes(store)
-        newstore = self.StoreClass.parsestring(storestring)
-        return newstore
+        return self.StoreClass.parsestring(storestring)
 
     def check_equality(self, store1, store2):
         """asserts that store1 and store2 are the same"""
         assert headerless_len(store1.units) == headerless_len(store2.units)
         for n, store1unit in enumerate(store1.units):
             store2unit = store2.units[n]
-            match = store1unit == store2unit
-            if not match:
-                print(
-                    "match failed between elements %d of %d"
-                    % ((n + 1), headerless_len(store1.units))
-                )
-                print("store1:")
-                print(bytes(store1))
-                print("store2:")
-                print(bytes(store2))
-                print("store1.units[%d].__dict__:" % n, store1unit.__dict__)
-                print("store2.units[%d].__dict__:" % n, store2unit.__dict__)
-                assert store1unit == store2unit
+            print(
+                "match failed between elements %d of %d"
+                % ((n + 1), headerless_len(store1.units))
+            )
+            print("store1:")
+            print(bytes(store1))
+            print("store2:")
+            print(bytes(store2))
+            print("store1.units[%d].__dict__:" % n, store1unit.__dict__)
+            print("store2.units[%d].__dict__:" % n, store2unit.__dict__)
+            assert store1unit == store2unit
 
     def test_parse(self):
         """Tests converting to a string and parsing the resulting string"""
