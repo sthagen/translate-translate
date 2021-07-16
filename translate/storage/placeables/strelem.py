@@ -152,7 +152,7 @@ class StringElem:
         return self * lhs
 
     def __repr__(self):
-        elemstr = ", ".join([repr(elem) for elem in self.sub])
+        elemstr = ", ".join(repr(elem) for elem in self.sub)
         return "<%(class)s(%(id)s%(rid)s%(xid)s[%(subs)s])>" % {
             "class": self.__class__.__name__,
             "id": self.id is not None and 'id="%s" ' % (self.id) or "",
@@ -166,7 +166,7 @@ class StringElem:
             return self.renderer(self)
         if not self.isvisible:
             return ""
-        return "".join([str(elem) for elem in self.sub])
+        return "".join(str(elem) for elem in self.sub)
 
     # METHODS #
     def apply_to_strings(self, f):
@@ -785,7 +785,7 @@ class StringElem:
             return True
 
         logging.debug(
-            "Could not insert between {} and {}... odd.".format(repr(left), repr(right))
+            f"Could not insert between {repr(left)} and {repr(right)}... odd."
         )
         return False
 
@@ -848,9 +848,7 @@ class StringElem:
         manner.
         """
         indent_prefix = " " * indent * 2
-        out = (
-            "{}{} [{}]".format(indent_prefix, self.__class__.__name__, str(self))
-        ).encode("utf-8")
+        out = f"{indent_prefix}{self.__class__.__name__} [{str(self)}]"
         if verbose:
             out += " " + repr(self)
 
@@ -860,7 +858,7 @@ class StringElem:
             if isinstance(elem, StringElem):
                 elem.print_tree(indent + 1, verbose=verbose)
             else:
-                print((f"{indent_prefix}{indent_prefix}[{elem}]").encode("utf-8"))
+                print(f"{indent_prefix}{indent_prefix}[{elem}]")
 
     def prune(self):
         """Remove unnecessary nodes to make the tree optimal."""

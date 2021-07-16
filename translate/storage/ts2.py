@@ -166,7 +166,7 @@ class tsunit(lisa.LISAunit):
             )
         if position == "append":
             note.text = "\n".join(
-                [item for item in [current_notes, text.strip()] if item]
+                item for item in [current_notes, text.strip()] if item
             )
         else:
             note.text = text.strip()
@@ -483,6 +483,7 @@ class tsfile(lisa.LISAfile):
                 treestring[pos:nextpos]
                 .replace(b"'", b"&apos;")
                 .replace(b'"', b"&quot;")
+                .replace(b"\xc2\xa0", b"&#xa0;")
             )
             pos = nextpos
             nextpos = treestring.find(b">", pos)

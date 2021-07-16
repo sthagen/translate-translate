@@ -137,7 +137,7 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         propunit = propfile.units[0]
         assert propunit.name == "test_me"
         assert propunit.source == "I can 'code'!"
-        propunit.value = "I 'can' code!"
+        propunit.source = "I 'can' code!"
         assert bytes(propfile).decode() == "test_me=I ''can'' code!\n"
 
     def test_simpledefinition(self):
@@ -156,10 +156,13 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         assert len(propfile.units) == 1
         propunit = propfile.units[0]
         assert propunit.name == "test_me"
-        assert propunit.source.strings == ["I can code!", "I can code single!"]
+        assert propunit.source.strings == ["I can code single!", "I can code!"]
         assert propunit.value == ["I can code!", "I can code single!"]
-        propunit.value = ["I can code!", "I can code single!"]
-        assert propunit.value == ["I can code!", "I can code single!"]
+        propunit.value = ["I can code double!", "I can code single!"]
+        assert propunit.value == ["I can code double!", "I can code single!"]
+        assert propunit.source.strings == ["I can code single!", "I can code double!"]
+        # propunit.value = ["I can code single!", "I can code!" ]
+        # assert propunit.value == ["I can code single!", "I can code!"]
 
     def test_doubledefinition_source(self):
         """checks that a double properties definition can be regenerated as source"""
@@ -609,6 +612,16 @@ key=value
         propunit = propfile.units[0]
         assert propunit.name == "VALUE"
         assert propunit.source == 'I am a "value"'
+        assert bytes(propfile) == propsource
+
+    def test_joomla_escape(self):
+        """test various items used in Joomla files"""
+        propsource = b"""; comment\nVALUE="I am a "_QQ_"value"_QQ_"\\n"\n"""
+        propfile = self.propparse(propsource, personality="joomla")
+        assert len(propfile.units) == 1
+        propunit = propfile.units[0]
+        assert propunit.name == "VALUE"
+        assert propunit.source == 'I am a "value"\n'
         assert bytes(propfile) == propsource
 
     def test_serialize_missing_delimiter(self):

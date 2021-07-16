@@ -148,11 +148,9 @@ class TranslationUnit:
         """Converts to a string representation. Most often overriden by subclasses."""
         # no point in showing store object.
         return ", ".join(
-            [
-                "{}: {}".format(k, self.__dict__[k])
-                for k in sorted(self.__dict__.keys())
-                if k != "_store"
-            ]
+            f"{k}: {self.__dict__[k]}"
+            for k in sorted(self.__dict__.keys())
+            if k != "_store"
         )
 
     @classmethod
@@ -253,7 +251,7 @@ class TranslationUnit:
         length = len(self.target or "")
         strings = getattr(self.target, "strings", [])
         if strings:
-            length += sum([len(pluralform) for pluralform in strings[1:]])
+            length += sum(len(pluralform) for pluralform in strings[1:])
         return length
 
     def getid(self):
@@ -911,11 +909,11 @@ class UnitId:
             else:
                 raise ValueError(f"Unsupported element: {element}")
 
-        return "".join([fmt(*part) for part in self.parts])
+        return "".join(fmt(*part) for part in self.parts)
 
     def __add__(self, other):
         if not isinstance(other, list):
-            raise ValueError("Not supported type for add: {}".format(type(other)))
+            raise ValueError(f"Not supported type for add: {type(other)}")
         return self.__class__(self.parts + other)
 
     @classmethod

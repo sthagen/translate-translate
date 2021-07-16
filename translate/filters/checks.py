@@ -793,12 +793,8 @@ class StandardChecker(TranslationChecker):
         in the original string you also have them in the translation.
         """
         if not helpers.countsmatch(str1, str2, ("\\", "\\\\")):
-            escapes1 = ", ".join(
-                ["'%s'" % word for word in str1.split() if "\\" in word]
-            )
-            escapes2 = ", ".join(
-                ["'%s'" % word for word in str2.split() if "\\" in word]
-            )
+            escapes1 = ", ".join("'%s'" % word for word in str1.split() if "\\" in word)
+            escapes2 = ", ".join("'%s'" % word for word in str2.split() if "\\" in word)
 
             raise SeriousFilterFailure(
                 "Escapes in original (%s) don't match "
@@ -1131,11 +1127,9 @@ class StandardChecker(TranslationChecker):
             # correct for 0-indexing)
             try:
                 explicit_n = max(
-                    [
-                        int(numbered_anon) + 1
-                        for numbered_anon in anons
-                        if len(numbered_anon) >= 1
-                    ]
+                    int(numbered_anon) + 1
+                    for numbered_anon in anons
+                    if len(numbered_anon) >= 1
                 )
             except ValueError:
                 explicit_n = 0
@@ -1852,7 +1846,7 @@ class StandardChecker(TranslationChecker):
         invalid1 = str1.translate(self.config.validcharsmap)
         invalid2 = str2.translate(self.config.validcharsmap)
         invalidchars = [
-            "'{}' (\\u{:04x})".format(invalidchar, ord(invalidchar))
+            f"'{invalidchar}' (\\u{ord(invalidchar):04x})"
             for invalidchar in invalid2
             if invalidchar not in invalid1
         ]

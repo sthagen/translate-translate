@@ -259,6 +259,7 @@ class Dialect:
     key_wrap_char = ""
     value_wrap_char = ""
     drop_comments = []
+    has_plurals = False
 
     @classmethod
     def encode(cls, string, encoding=None):
@@ -292,16 +293,15 @@ class Dialect:
         for delimiter in cls.delimiters:
             delimiter_dict[delimiter] = -1
         delimiters = delimiter_dict
-        # Find the position of each delimiter type
-        for delimiter, pos in delimiters.items():
-            start_pos = len(line) - len(line.lstrip())  # Skip initial whitespace
-            if cls.key_wrap_char != "" and line[start_pos] == cls.key_wrap_char:
-                # Skip the key if it is delimited by some char
+        # Figure out starting position
+        start_pos = len(line) - len(line.lstrip())  # Skip initial whitespace
+        if cls.key_wrap_char != "" and line[start_pos] == cls.key_wrap_char:
+            # Skip the key if it is delimited by some char
+            start_pos += 1
+            while line[start_pos] != cls.key_wrap_char or line[start_pos - 1] == "\\":
                 start_pos += 1
-                while (
-                    line[start_pos] != cls.key_wrap_char or line[start_pos - 1] == "\\"
-                ):
-                    start_pos += 1
+        # Find the position of each delimiter type
+        for delimiter in delimiters:
             pos = line.find(delimiter, start_pos)
             while pos != -1:
                 if delimiters[delimiter] == -1 and line[pos - 1] != "\\":
@@ -399,6 +399,7 @@ class DialectXWiki(DialectJava):
     name = "xwiki"
     default_encoding = "iso-8859-1"
     delimiters = ["=", ":", " "]
+    has_plurals = True
 
     @classmethod
     def encode(cls, string, encoding=None):
@@ -439,6 +440,7 @@ class DialectGwt(DialectJavaUtf8):
     plural_regex = re.compile(r"([^\[\]]*)(?:\[(.*)\])?")
     name = "gwt"
     delimiters = ["="]
+    has_plurals = True
 
     gwt_plural_categories = [
         ("", "other"),
@@ -449,8 +451,8 @@ class DialectGwt(DialectJavaUtf8):
         ("many", "many"),
     ]
 
-    gwt2cldr = collections.OrderedDict(gwt_plural_categories)
-    cldr2gwt = collections.OrderedDict([(b, a) for a, b in gwt_plural_categories])
+    gwt2cldr = dict(gwt_plural_categories)
+    cldr2gwt = {b: a for a, b in gwt_plural_categories}
 
     @classmethod
     def get_key_cldr_name(cls, key):
@@ -569,22 +571,24 @@ class proppluralunit(base.TranslationUnit):
     def _get_language_mapping(lang):
         if lang:
             locale = lang.replace("_", "-").split("-")[0]
-            cldr_mapping = data.plural_tags.get(locale, data.plural_tags["en"])
-            if cldr_mapping:
-                return cldr_mapping
+            return data.plural_tags.get(locale, data.plural_tags["en"])
         return None
+
+    def _get_existing_mapping(self):
+        existing = self.units.keys()
+        return [key for key in data.cldr_plural_categories if key in existing]
 
     def _get_target_mapping(self):
         cldr_mapping = proppluralunit._get_language_mapping(self._store.targetlanguage)
         if cldr_mapping:
             return cldr_mapping
-        return self.units.keys()
+        return self._get_existing_mapping()
 
     def _get_source_mapping(self):
         cldr_mapping = proppluralunit._get_language_mapping(self._store.sourcelanguage)
         if cldr_mapping:
             return cldr_mapping
-        return self.units.keys()
+        return self._get_existing_mapping()
 
     def _get_units(self, mapping):
         ret = []
@@ -645,10 +649,7 @@ class proppluralunit(base.TranslationUnit):
         strings = self._get_strings(strings, mapping)
         units = self._get_units(mapping)
         if len(strings) != len(units):
-            raise Exception(
-                'Not same plural counts between "%s" and "%s"'
-                % (str(strings), str(units))
-            )
+            raise Exception(f'Not same plural counts between "{strings}" and "{units}"')
 
         for a, b in zip(strings, units):
             b.target = a
@@ -684,10 +685,7 @@ class proppluralunit(base.TranslationUnit):
         strings = self._get_strings(strings, mapping)
         units = self._get_units(mapping)
         if len(strings) != len(units):
-            raise Exception(
-                'Not same plural counts between "%s" and "%s"'
-                % (str(strings), str(units))
-            )
+            raise Exception(f'Not same plural counts between "{strings}" and "{units}"')
 
         for a, b in zip(strings, units):
             b.source = a
@@ -786,16 +784,14 @@ class DialectJoomla(Dialect):
     @classmethod
     def value_strip(cls, value):
         """Strip unneeded characters from the value"""
-        newvalue = value.strip()
-        if not newvalue:
-            return newvalue
-        if newvalue[0] == '"' and newvalue[-1] == '"':
-            newvalue = newvalue[1:-1]
-        return newvalue.replace('"_QQ_"', '"')
+        return value.strip()
 
     @classmethod
     def decode(cls, string):
-        return cls.value_strip(string)
+        string = super().decode(string)
+        if len(string) > 2 and string[0] == '"' and string[-1] == '"':
+            string = string[1:-1]
+        return string.replace('"_QQ_"', '"')
 
     @classmethod
     def encode(cls, string, encoding=None):
@@ -896,38 +892,25 @@ class propunit(base.TranslationUnit):
         else:
             if notes:
                 notes = notes + "\n"
-            self.value = self.personality.encode(self.source, self.encoding)
-            self.translation = self.personality.encode(self.target, self.encoding)
             # encode key, if needed
             key = self.name
             kwc = self.personality.key_wrap_char
             if kwc:
-                key = key.replace(kwc, "\\%s" % kwc)
+                key = key.replace(kwc, f"\\{kwc}")
                 key = f"{kwc}{key}{kwc}"
             # encode value, if needed
             value = self.translation or self.value
             vwc = self.personality.value_wrap_char
             if vwc:
-                value = value.replace(vwc, "\\%s" % vwc)
+                value = value.replace(vwc, f"\\{vwc}")
                 value = f"{vwc}{value}{vwc}"
             wrappers = self.out_delimiter_wrappers
             delimiter = f"{wrappers}{self.delimiter}{wrappers}"
             ending = self.out_ending
             missing_prefix = ""
-            if self.missing and self.output_missing:
+            if self.output_missing and self.missing:
                 missing_prefix = self.get_missing_part()
-            out_dict = {
-                "notes": notes,
-                "missing_prefix": missing_prefix,
-                "key": key,
-                "del": delimiter,
-                "value": value,
-                "ending": ending,
-            }
-            return (
-                "%(notes)s%(missing_prefix)s%(key)s%(del)s%(value)s%(ending)s\n"
-                % out_dict
-            )
+            return f"{notes}{missing_prefix}{key}{delimiter}{value}{ending}\n"
 
     def getlocations(self):
         return [self.name]
@@ -1107,7 +1090,8 @@ class propfile(base.TranslationStore):
         ):
             self.addunit(newunit)
 
-        self.fold()
+        if self.personality.has_plurals:
+            self.fold()
 
     def fold(self):
         old_units = self.units

@@ -23,14 +23,14 @@ jobs:
             python-version: 3.6
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.3.4
     - name: Cache pip
-      uses: actions/cache@v2.1.4
+      uses: actions/cache@v2.1.6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2.2.1
+      uses: actions/setup-python@v2.2.2
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install apt dependencies
@@ -60,6 +60,6 @@ jobs:
     - name: Coverage
       run: |
         coverage xml
-    - uses: codecov/codecov-action@v1
+    - uses: codecov/codecov-action@v1.5.2
       with:
         name: ${{ runner.os }}, Python ${{ matrix.python-version }}, ${{ matrix.requirements }}
