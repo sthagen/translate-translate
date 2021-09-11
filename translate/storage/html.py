@@ -218,22 +218,22 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         tagstack = []
         tagmap = {}
         tag = None
-        for pos in range(len(self.tu_content)):
-            if (
-                self.tu_content[pos]["type"] != "endtag"
-                and tag in self.EMPTY_HTML_ELEMENTS
-            ):
+        do_normalize = True
+        for pos, content in enumerate(self.tu_content):
+            if content["type"] != "endtag" and tag in self.EMPTY_HTML_ELEMENTS:
                 match = tagstack.pop()
                 tag = None
 
-            if self.has_translatable_content(self.tu_content[pos]):
+            if self.has_translatable_content(content):
                 if end == 0:
                     start = pos
                 end = pos + 1
-            elif self.tu_content[pos]["type"] == "starttag":
+            elif content["type"] == "starttag":
                 tagstack.append(pos)
-                tag = self.tu_content[pos]["tag"]
-            elif self.tu_content[pos]["type"] == "endtag":
+                tag = content["tag"]
+                if tag == "pre":
+                    do_normalize = False
+            elif content["type"] == "endtag":
                 if tagstack:
                     match = tagstack.pop()
                     tagmap[match] = pos
@@ -267,14 +267,18 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
 
         # emit captured markup elements
         if start < end:
-            html_content = ""
+            html_content = []
             for markup in self.tu_content[start:end]:
                 if markup["type"] != "comment":
                     if "untranslated_html" in markup:
-                        html_content += markup["untranslated_html"]
+                        html_content.append(markup["untranslated_html"])
                     else:
-                        html_content += markup["html_content"]
-            normalized_content = self.WHITESPACE_RE.sub(" ", html_content.strip())
+                        html_content.append(markup["html_content"])
+            html_content = "".join(html_content)
+            if do_normalize:
+                normalized_content = self.WHITESPACE_RE.sub(" ", html_content.strip())
+            else:
+                normalized_content = html_content.strip()
             assert normalized_content  # shouldn't be here otherwise
 
             unit = self.addsourceunit(normalized_content)
