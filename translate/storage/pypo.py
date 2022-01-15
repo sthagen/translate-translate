@@ -609,7 +609,8 @@ class pounit(pocommon.pounit):
                 typecomments.remove(typecomment)
             if typecomments:
                 typecomments.sort()
-                self.typecomments = ["#, %s\n" % ", ".join(typecomments)]
+                comments_str = ", ".join(typecomments)
+                self.typecomments = [f"#, {comments_str}{self.newline}"]
             else:
                 self.typecomments = []
 
@@ -652,11 +653,6 @@ class pounit(pocommon.pounit):
     def hasplural(self):
         """returns whether this pounit contains plural strings..."""
         return len(self.msgid_plural) > 0
-
-    def parse(self, src):
-        return poparser.parse_unit(
-            poparser.ParseState(splitlines(src)[0], pounit), self
-        )
 
     def _getmsgpartstr(self, partname, partlines, partcomments=""):
         if isinstance(partlines, dict):
@@ -796,7 +792,7 @@ class pounit(pocommon.pounit):
 
         """
         location = pocommon.quote_plus(location)
-        self.sourcecomments.append("#: %s\n" % location)
+        self.sourcecomments.append(f"#: {location}{self.newline}")
 
     def _extract_msgidcomments(self, text=None):
         """Extract KDE style msgid comments from the unit.
