@@ -76,7 +76,7 @@ def check_po_date(datestring):
 
     # Get the timezone offset (last 4 digits):
     tz = datestring[-4:]
-    assert type(int(tz)) == int
+    assert type(int(tz)) is int
 
     # Strip the timezone from the string, typically something like "+0200".
     # This is to make the datestring conform to the specified format,
@@ -84,7 +84,7 @@ def check_po_date(datestring):
     datestring = datestring[0:-5]
 
     # Check that the date can be parsed
-    assert type(time.strptime(datestring, date_format)) == time.struct_time
+    assert type(time.strptime(datestring, date_format)) is time.struct_time
 
 
 def test_po_dates():
@@ -129,6 +129,8 @@ def test_timezones():
 
 
 def test_header_blank():
+    """test header functionality"""
+
     def compare(pofile):
         print(pofile)
         assert len(pofile.units) == 1
@@ -148,7 +150,6 @@ def test_header_blank():
         assert headeritems["Content-Transfer-Encoding"] == "8bit"
         assert headeritems["Plural-Forms"] == "nplurals=INTEGER; plural=EXPRESSION;"
 
-    """test header functionality"""
     posource = r"""# other comment\n
 msgid ""
 msgstr ""

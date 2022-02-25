@@ -51,7 +51,8 @@ class UnitMixer:
                     # ".accesskey")
         return mixedentities
 
-    def mix_units(self, label_unit, accesskey_unit, target_unit):
+    @staticmethod
+    def mix_units(label_unit, accesskey_unit, target_unit):
         """Mix the given units into the given target_unit if possible.
 
         Might return None if no match is possible.
@@ -186,7 +187,7 @@ def combine(label, accesskey, accesskey_marker=DEFAULT_ACCESSKEY_MARKER):
         searchchar = label[searchpos]
         if searchchar == "&":
             in_entity = True
-        elif searchchar == ";" or searchchar == " ":
+        elif searchchar in (";", " "):
             in_entity = False
         if not in_entity:
             if searchchar == accesskey:  # Prefer supplied case

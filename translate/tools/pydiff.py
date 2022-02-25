@@ -162,10 +162,10 @@ class DirDiffer:
 
     def isexcluded(self, difffile):
         """checks if the given filename has been excluded from the diff"""
-        for exclude_pat in self.options.exclude:
-            if fnmatch.fnmatch(difffile, exclude_pat):
-                return True
-        return False
+        return any(
+            fnmatch.fnmatch(difffile, exclude_pat)
+            for exclude_pat in self.options.exclude
+        )
 
     def writediff(self, outfile):
         """writes the actual diff to the given file"""
@@ -342,10 +342,10 @@ class FileDiffer:
                 for line in self.from_lines[i1:i2]:
                     yield " " + line
                 continue
-            if tag == "replace" or tag == "delete":
+            if tag in ("replace", "delete"):
                 for line in self.from_lines[i1:i2]:
                     yield "-" + line
-            if tag == "replace" or tag == "insert":
+            if tag in ("replace", "insert"):
                 for line in self.to_lines[j1:j2]:
                     yield "+" + line
 

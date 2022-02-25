@@ -210,7 +210,7 @@ class prop2po:
             string = unit.getlocations()[0]
             match = regex.match(string)
             if not match:
-                logger.warn("Invalid key: %s" % (string))
+                logger.warn("Invalid key: %s", string)
                 continue
             key = match.group(1)
             variant = match.group(2)
@@ -232,8 +232,11 @@ class prop2po:
                 raise Exception("Variant invalid: %s" % (old_variant))
             if variant in plurals[key].variants:
                 logger.warn(
-                    "Override %s[%s]: %s by %s"
-                    % (key, variant, str(plurals[key].variants[variant]), str(unit))
+                    "Override %s[%s]: %s by %s",
+                    key,
+                    variant,
+                    plurals[key].variants[variant],
+                    unit,
                 )
 
             # Put the unit
@@ -260,7 +263,8 @@ class prop2po:
             _append_plural_unit(plural.unit, units)
         return new_store
 
-    def fold_gaia_plurals(self, postore):
+    @staticmethod
+    def fold_gaia_plurals(postore):
         """Fold the multiple plural units of a gaia file into a gettext plural."""
 
         def _append_plural_unit(store, plurals, plural):
@@ -317,7 +321,8 @@ class prop2po:
             )
         return new_store
 
-    def convertunit(self, propunit, commenttype):
+    @staticmethod
+    def convertunit(propunit, commenttype):
         """Converts a .properties unit to a .po unit. Returns None if empty or
         not for translation.
         """
@@ -355,7 +360,7 @@ class prop2po:
         ``mixbucket`` can be specified to indicate if the given unit is part of
         the template or the translated file.
         """
-        if self.personality != "mozilla" and self.personality != "gwt":
+        if self.personality not in ("mozilla", "gwt"):
             # XXX should we enable unit mixing for other personalities?
             return self.convertunit(unit, commenttype)
 

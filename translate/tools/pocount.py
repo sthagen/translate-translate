@@ -200,7 +200,7 @@ def file_extended_totals(units, wordcounts):
     Provide extended statuses (used by XLIFF)
     """
 
-    stats = dict()
+    stats = {}
 
     for unit in units:
         state = unit.get_state_n()
@@ -208,7 +208,7 @@ def file_extended_totals(units, wordcounts):
         # if state is not standard (xliff)
         # search for the default one to use
         # each unit defines its own states
-        if state not in extended_state_strings.keys():
+        if state not in extended_state_strings:
             for k in unit.STATE.keys():
                 val = unit.STATE[k]
                 if val[0] <= int(state.__str__()) <= val[1]:
@@ -431,7 +431,7 @@ Translated Target Words, Fuzzy Messages, Fuzzy Source Words, Untranslated Messag
 Untranslated Source Words, Total Message, Total Source Words, \
 Review Messages, Review Source Words"""
             )
-        if self.style == style_short_strings or self.style == style_short_words:
+        if self.style in (style_short_strings, style_short_words):
             for filename in filenames:  # find longest filename
                 if len(filename) > self.longestfilename:
                     self.longestfilename = len(filename)

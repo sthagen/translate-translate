@@ -100,9 +100,8 @@ def intuplelist(pair, list):
     for pattern in list:
         x, y, z = pattern
 
-        if (x, y) in [(a, b), (None, b)]:
-            if z in [None, c]:
-                return pattern
+        if (x, y) in [(a, b), (None, b)] and z in [None, c]:
+            return pattern
 
     return pair
 
@@ -231,7 +230,8 @@ class CheckerConfig:
         self.validcharsmap = {}
         self.updatevalidchars(validchars)
 
-    def _init_list(self, list):
+    @staticmethod
+    def _init_list(list):
         """initialise configuration paramaters that are lists
 
         :type list: List
@@ -243,7 +243,8 @@ class CheckerConfig:
 
         return list
 
-    def _init_default(self, param, default):
+    @staticmethod
+    def _init_default(param, default):
         """Initialise parameters that can have default options.
 
         :param param: the user supplied paramater value
@@ -305,10 +306,9 @@ def cache_results(f):
 
         if key in res_cache:
             return res_cache[key]
-        else:
-            value = f(self, param1)
-            res_cache[key] = value
-            return value
+        value = f(self, param1)
+        res_cache[key] = value
+        return value
 
     return cached_f
 
@@ -407,43 +407,39 @@ class UnitChecker:
         if self.suggestion_store:
             self.suggestion_store.require_index()
 
+    @cache_results
     def filtervariables(self, str1):
         """Filter out variables from ``str1``."""
         return helpers.multifilter(str1, self.varfilters)
 
-    filtervariables = cache_results(filtervariables)
-
+    @cache_results
     def removevariables(self, str1):
         """Remove variables from ``str1``."""
         return helpers.multifilter(str1, self.removevarfilter)
 
-    removevariables = cache_results(removevariables)
-
+    @cache_results
     def filteraccelerators(self, str1):
         """Filter out accelerators from ``str1``."""
         return helpers.multifilter(str1, self.accfilters, None)
-
-    filteraccelerators = cache_results(filteraccelerators)
 
     def filteraccelerators_by_list(self, str1, acceptlist=None):
         """Filter out accelerators from ``str1``."""
         return helpers.multifilter(str1, self.accfilters, acceptlist)
 
+    @cache_results
     def filterwordswithpunctuation(self, str1):
         """Replaces words with punctuation with their unpunctuated
         equivalents.
         """
         return prefilters.filterwordswithpunctuation(str1)
 
-    filterwordswithpunctuation = cache_results(filterwordswithpunctuation)
-
+    @cache_results
     def filterxml(self, str1):
         """Filter out XML from the string so only text remains."""
         return tag_re.sub("", str1)
 
-    filterxml = cache_results(filterxml)
-
-    def run_test(self, test, unit):
+    @staticmethod
+    def run_test(test, unit):
         """Runs the given test on the given unit.
 
         Note that this can raise a :exc:`FilterFailure` as part of normal operation.
@@ -574,8 +570,7 @@ class TranslationChecker(UnitChecker):
 
             if not filterresult and filtermessages:
                 raise FilterFailure(filtermessages)
-            else:
-                return filterresult
+            return filterresult
         else:
             return test(self.str1, self.str2)
 
@@ -745,8 +740,7 @@ class StandardChecker(TranslationChecker):
 
         if len1 > 0 and len(str2) != 0 and len2 == 0:
             raise FilterFailure("Translation is empty")
-        else:
-            return True
+        return True
 
     @functional
     def short(self, str1, str2):
@@ -763,8 +757,7 @@ class StandardChecker(TranslationChecker):
 
         if (len1 > 0) and (0 < len2 < (len1 * 0.1)) or ((len1 > 1) and (len2 == 1)):
             raise FilterFailure("The translation is much shorter than the original")
-        else:
-            return True
+        return True
 
     @functional
     def long(self, str1, str2):
@@ -782,8 +775,7 @@ class StandardChecker(TranslationChecker):
 
         if (len1 > 0) and (0 < len1 < (len2 * 0.1)) or ((len1 == 1) and (len2 > 1)):
             raise FilterFailure("The translation is much longer than the original")
-        else:
-            return True
+        return True
 
     @critical
     def escapes(self, str1, str2):
@@ -800,8 +792,7 @@ class StandardChecker(TranslationChecker):
                 "Escapes in original (%s) don't match "
                 "escapes in translation (%s)" % (escapes1, escapes2)
             )
-        else:
-            return True
+        return True
 
     @critical
     def newlines(self, str1, str2):
@@ -830,8 +821,7 @@ class StandardChecker(TranslationChecker):
         """
         if not helpers.countmatch(str1, str2, "\t"):
             raise SeriousFilterFailure("Different tabs")
-        else:
-            return True
+        return True
 
     @cosmetic
     def singlequoting(self, str1, str2):
@@ -855,8 +845,7 @@ class StandardChecker(TranslationChecker):
 
         if helpers.countsmatch(str1, str2, ("'", "''", "\\'")):
             return True
-        else:
-            raise FilterFailure("Different quotation marks")
+        raise FilterFailure("Different quotation marks")
 
     @cosmetic
     def doublequoting(self, str1, str2):
@@ -876,8 +865,7 @@ class StandardChecker(TranslationChecker):
 
         if helpers.countsmatch(str1, str2, ('"', '""', '\\"', "«", "»", "“", "”")):
             return True
-        else:
-            raise FilterFailure("Different quotation marks")
+        raise FilterFailure("Different quotation marks")
 
     @cosmetic
     def doublespacing(self, str1, str2):
@@ -893,8 +881,7 @@ class StandardChecker(TranslationChecker):
 
         if helpers.countmatch(str1, str2, "  "):
             return True
-        else:
-            raise FilterFailure("Different use of double spaces")
+        raise FilterFailure("Different use of double spaces")
 
     @cosmetic
     def puncspacing(self, str1, str2):
@@ -984,8 +971,7 @@ class StandardChecker(TranslationChecker):
         details following data are tested to ensure that they are strictly
         identical, but they may be reordered.
 
-        See also `printf Format String
-        <http://en.wikipedia.org/wiki/Printf_format_string>`_.
+        .. seealso:: :wp:`printf Format String <Printf_format_string>`
         """
         count1 = count2 = plural = None
 
@@ -1090,7 +1076,7 @@ class StandardChecker(TranslationChecker):
                         )
 
         if count2 is None:
-            str1_variables = list(m.group() for m in printf_pat.finditer(str1))
+            str1_variables = [m.group() for m in printf_pat.finditer(str1)]
 
             if str1_variables:
                 raise FilterFailure(
@@ -1199,10 +1185,9 @@ class StandardChecker(TranslationChecker):
             raise FilterFailure(messages)
         elif failure_state == STATE_SERIOUS:
             raise SeriousFilterFailure(messages)
-        else:
-            raise ValueError(
-                "Something wrong in python brace checks: unreachable state reached"
-            )
+        raise ValueError(
+            "Something wrong in python brace checks: unreachable state reached"
+        )
 
     @functional
     def accelerators(self, str1, str2):
@@ -1260,8 +1245,7 @@ class StandardChecker(TranslationChecker):
         if messages:
             if "accelerators" in self.config.criticaltests:
                 raise SeriousFilterFailure(messages)
-            else:
-                raise FilterFailure(messages)
+            raise FilterFailure(messages)
 
         return True
 
@@ -1350,8 +1334,7 @@ class StandardChecker(TranslationChecker):
             set(decoration.getfunctions(str2))
         ):
             return True
-        else:
-            raise FilterFailure("Different functions")
+        raise FilterFailure("Different functions")
 
     @functional
     def emails(self, str1, str2):
@@ -1364,8 +1347,7 @@ class StandardChecker(TranslationChecker):
         """
         if helpers.funcmatch(str1, str2, decoration.getemails):
             return True
-        else:
-            raise FilterFailure("Different e-mails")
+        raise FilterFailure("Different e-mails")
 
     @functional
     def urls(self, str1, str2):
@@ -1381,8 +1363,7 @@ class StandardChecker(TranslationChecker):
         """
         if helpers.funcmatch(str1, str2, decoration.geturls):
             return True
-        else:
-            raise FilterFailure("Different URLs")
+        raise FilterFailure("Different URLs")
 
     @functional
     def numbers(self, str1, str2):
@@ -1397,8 +1378,7 @@ class StandardChecker(TranslationChecker):
 
         if helpers.countsmatch(str1, str2, decoration.getnumbers(str1)):
             return True
-        else:
-            raise FilterFailure("Different numbers")
+        raise FilterFailure("Different numbers")
 
     @cosmetic
     def startwhitespace(self, str1, str2):
@@ -1408,8 +1388,7 @@ class StandardChecker(TranslationChecker):
         """
         if helpers.funcmatch(str1, str2, decoration.spacestart):
             return True
-        else:
-            raise FilterFailure("Different whitespace at the start")
+        raise FilterFailure("Different whitespace at the start")
 
     @cosmetic
     def endwhitespace(self, str1, str2):
@@ -1429,8 +1408,7 @@ class StandardChecker(TranslationChecker):
 
         if helpers.funcmatch(str1, str2, decoration.spaceend):
             return True
-        else:
-            raise FilterFailure("Different whitespace at the end")
+        raise FilterFailure("Different whitespace at the end")
 
     @cosmetic
     def startpunc(self, str1, str2):
@@ -1452,8 +1430,7 @@ class StandardChecker(TranslationChecker):
 
         if helpers.funcmatch(str1, str2, decoration.puncstart, self.config.punctuation):
             return True
-        else:
-            raise FilterFailure("Different punctuation at the start")
+        raise FilterFailure("Different punctuation at the start")
 
     @cosmetic
     def endpunc(self, str1, str2):
@@ -1492,8 +1469,7 @@ class StandardChecker(TranslationChecker):
             str1, str2, decoration.puncend, self.config.endpunctuation + ":"
         ):
             return True
-        else:
-            raise FilterFailure("Different punctuation at the end")
+        raise FilterFailure("Different punctuation at the end")
 
     @functional
     def purepunc(self, str1, str2):
@@ -1510,8 +1486,7 @@ class StandardChecker(TranslationChecker):
 
         if success:
             return True
-        else:
-            raise FilterFailure("Consider not translating punctuation")
+        raise FilterFailure("Consider not translating punctuation")
 
     @cosmetic
     def brackets(self, str1, str2):
@@ -1670,7 +1645,7 @@ class StandardChecker(TranslationChecker):
 
         # some heuristic tests to try and see that the style of capitals is
         # vaguely the same
-        if capitals1 == 0 or capitals1 == 1:
+        if capitals1 in (0, 1):
             success = capitals2 == capitals1
         elif capitals1 < len(str1) / 10:
             success = capitals2 <= len(str2) / 8
@@ -1683,8 +1658,7 @@ class StandardChecker(TranslationChecker):
 
         if success:
             return True
-        else:
-            raise FilterFailure("Different capitalization")
+        raise FilterFailure("Different capitalization")
 
     @functional
     def acronyms(self, str1, str2):
@@ -1975,13 +1949,11 @@ class StandardChecker(TranslationChecker):
         if self.config.lang.nplurals == 1:
             if targetcount:
                 raise FilterFailure("Plural(s) were kept in translation")
-            else:
-                return True
+            return True
 
         if sourcecount == targetcount:
             return True
-        else:
-            raise FilterFailure("The original uses plural(s)")
+        raise FilterFailure("The original uses plural(s)")
 
     @functional
     def spellcheck(self, str1, str2):
@@ -2237,7 +2209,7 @@ openofficeconfig = CheckerConfig(
 
 class OpenOfficeChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2278,7 +2250,7 @@ libreofficeconfig = CheckerConfig(
 
 class LibreOfficeChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2373,7 +2345,7 @@ class MozillaChecker(StandardChecker):
     ]
 
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2525,7 +2497,7 @@ drupalconfig = CheckerConfig(
 
 class DrupalChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2544,7 +2516,7 @@ gnomeconfig = CheckerConfig(
 
 class GnomeChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2594,7 +2566,7 @@ class KdeChecker(StandardChecker):
     def __init__(self, **kwargs):
         # TODO allow setup of KDE plural and translator comments so that they do
         # not create false postives
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2609,7 +2581,7 @@ cclicenseconfig = CheckerConfig(varmatches=[("@", "@")])
 
 class CCLicenseChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2624,13 +2596,13 @@ minimalconfig = CheckerConfig()
 
 class MinimalChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
             kwargs["checkerconfig"] = checkerconfig
 
-        limitfilters = kwargs.get("limitfilters", None)
+        limitfilters = kwargs.get("limitfilters")
 
         if limitfilters is None:
             limitfilters = ["untranslated", "unchanged", "blank"]
@@ -2645,13 +2617,13 @@ reducedconfig = CheckerConfig()
 
 class ReducedChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
             kwargs["checkerconfig"] = checkerconfig
 
-        limitfilters = kwargs.get("limitfilters", None)
+        limitfilters = kwargs.get("limitfilters")
 
         if limitfilters is None:
             limitfilters = [
@@ -2673,7 +2645,7 @@ termconfig = CheckerConfig()
 
 class TermChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2699,7 +2671,7 @@ class L20nChecker(MozillaChecker):
     complex_unit_pattern = "->"
 
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -2737,7 +2709,7 @@ iosconfig = CheckerConfig(
 
 class IOSChecker(StandardChecker):
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()

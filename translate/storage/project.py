@@ -44,7 +44,7 @@ def split_extensions(filename):
         extensions.append(part)
     if not extensions:
         return filename, ""
-    extensions = [x for x in reversed(extensions)]
+    extensions = list(reversed(extensions))
 
     if len(extensions) == len(filename_parts):
         extensions = extensions[1:]
@@ -144,7 +144,7 @@ class Project:
             inputfile,
             template=template,
             options=conv_options,
-            convert_options=options.get("convert_options", None),
+            convert_options=options.get("convert_options"),
         )
 
         # Determine the file name and path where the output should be moved.

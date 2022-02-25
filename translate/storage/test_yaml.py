@@ -255,7 +255,7 @@ foo: "Hello \"World\"."
         assert store.units[0].source == 'Hello "World".'
         assert (
             bytes(store)
-            == br"""foo: "Hello \"World\"."
+            == rb"""foo: "Hello \"World\"."
 """
         )
 
@@ -272,7 +272,7 @@ foo: "Hello \n World."
         assert store.units[0].source == "Hello \n World."
         assert (
             bytes(store)
-            == br"""foo: "Hello \n World."
+            == rb"""foo: "Hello \n World."
 """
         )
 
@@ -458,7 +458,8 @@ class TestRubyYAMLResourceStore(test_monolingual.TestMonolingualStore):
         store.parse(data)
         assert bytes(store) == data.encode("ascii")
 
-    def test_invalid_value(self):
+    @staticmethod
+    def test_invalid_value():
         store = yaml.YAMLFile()
         with pytest.raises(base.ParseError):
             store.parse('val: "\\u string"')

@@ -167,7 +167,7 @@ def findmarkedvariables(str1, startmarker, endmarker, ignorelist=[]):
                 if currentpos < endmatch:
                     variable = str1[currentpos:endmatch]
                 currentpos = endmatch
-            elif type(endmarker) == int:
+            elif type(endmarker) is int:
                 # setting endmarker to an int means it is a fixed-length
                 # variable string (usually endmarker==1)
                 endmatch = currentpos + endmarker
@@ -237,7 +237,7 @@ def getnumbers(str1):
         if chr1.isdigit():
             innumber = True
         elif innumber:
-            if not (chr1 == "." or chr1 == degreesign):
+            if chr1 not in (".", degreesign):
                 innumber = False
                 if lastnumber:
                     numbers.append(lastnumber)

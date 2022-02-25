@@ -43,10 +43,10 @@ class _NGram:
             # This must already be normalised!
             self.ngrams = arg
         else:
-            self.ngrams = dict()
+            self.ngrams = {}
 
     def addText(self, text):
-        ngrams = dict()
+        ngrams = {}
 
         for word in white_space_re.split(text):
             word = "_%s_" % word
@@ -130,14 +130,14 @@ class NGram:
                 min = d
                 r = lang
 
-        if min > 0.8 * (nb_ngrams ** 2):
+        if min > 0.8 * (nb_ngrams**2):
             r = ""
         return r
 
 
 class Generate:
     def __init__(self, folder, ext=".txt"):
-        self.ngrams = dict()
+        self.ngrams = {}
         folder = path.join(folder, "*" + ext)
         size = len(ext)
 
@@ -153,7 +153,7 @@ class Generate:
             self.ngrams[lang] = n
 
     def save(self, folder, ext=".lm"):
-        for lang in self.ngrams.keys():
+        for lang in self.ngrams:
             fname = path.join(folder, lang + ext)
             with open(fname, mode="w", encoding="utf-8") as fp:
                 for v, k in self.ngrams[lang].sorted_by_score():

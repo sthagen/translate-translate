@@ -4,21 +4,23 @@ from translate.misc import multistring
 
 
 class TestMultistring:
-    def test_constructor(self):
+    @staticmethod
+    def test_constructor():
         t = multistring.multistring
         s1 = t("test")
-        assert type(s1) == t
+        assert type(s1) is t
         assert s1 == "test"
         assert s1.strings == ["test"]
         s2 = t(["test", "mé"])
-        assert type(s2) == t
+        assert type(s2) is t
         assert s2 == "test"
         assert s2.strings == ["test", "mé"]
         assert s2 != s1
         with pytest.raises(ValueError):
             t([])
 
-    def test_repr(self):
+    @staticmethod
+    def test_repr():
         t = multistring.multistring
         s1 = t("test")
         assert repr(s1) == "multistring(['test'])"
@@ -28,12 +30,13 @@ class TestMultistring:
         assert repr(s2) == "multistring(['test', 'mé'])"
         assert eval("multistring.%s" % repr(s2)) == s2
 
-    def test_replace(self):
+    @staticmethod
+    def test_replace():
         t = multistring.multistring
         s1 = t(["abcdef", "def"])
 
         result = s1.replace("e", "")
-        assert type(result) == t
+        assert type(result) is t
         assert result == t(["abcdf", "df"])
 
         result = s1.replace("e", "xx")
@@ -59,7 +62,8 @@ class TestMultistring:
         result = s2.replace("e", "g", 1)
         assert result == t(["abcdgef", "dgef"])
 
-    def test_comparison(self):
+    @staticmethod
+    def test_comparison():
         t = multistring.multistring
         assert t("test") == "test"
         assert t("test").__cmp__("test") == 0
@@ -68,12 +72,14 @@ class TestMultistring:
         assert "test" < t("téßt")
         assert t("téßt").__cmp__("test") > 0
 
-    def test_coercion(self):
+    @staticmethod
+    def test_coercion():
         t = multistring.multistring
         assert str(t("test")) == "test"
         assert str(t("téßt")) == "téßt"
 
-    def test_unicode_coercion(self):
+    @staticmethod
+    def test_unicode_coercion():
         t = multistring.multistring
         assert str(t("test")) == "test"
         assert str(t("test")) == "test"
@@ -82,12 +88,14 @@ class TestMultistring:
         assert str(t(["téßt", "blāh"])) == "téßt"
         assert str(t(["téßt"])) == "téßt"
 
-    def test_list_coercion(self):
+    @staticmethod
+    def test_list_coercion():
         t = multistring.multistring
         assert str([t("test")]) == "[multistring(['test'])]"
         assert str([t("tést")]) == "[multistring(['tést'])]"
 
-    def test_multistring_hash(self):
+    @staticmethod
+    def test_multistring_hash():
         t = multistring.multistring
         foo = t(["foo", "bar"])
         foodict = {foo: "baz"}

@@ -227,32 +227,26 @@ class PoXliffUnit(xliff.xliffunit):
         """Returns the automatic comments (x-po-autocomment), which corresponds
         to the #. style po comments.
         """
-
-        def hasautocomment(grp):
-            return grp[0] == "x-po-autocomment"
-
         groups = self.getcontextgroups("po-entry")
-        comments = []
-        for group in groups:
-            commentpairs = filter(hasautocomment, group)
-            for (type, text) in commentpairs:
-                comments.append(text)
+        comments = [
+            text
+            for group in groups
+            for ctype, text in group
+            if ctype == "x-po-autocomment"
+        ]
         return "\n".join(comments)
 
     def gettranslatorcomments(self):
         """Returns the translator comments (x-po-trancomment), which
         corresponds to the # style po comments.
         """
-
-        def hastrancomment(grp):
-            return grp[0] == "x-po-trancomment"
-
         groups = self.getcontextgroups("po-entry")
-        comments = []
-        for group in groups:
-            commentpairs = filter(hastrancomment, group)
-            for (type, text) in commentpairs:
-                comments.append(text)
+        comments = [
+            text
+            for group in groups
+            for ctype, text in group
+            if ctype == "x-po-trancomment"
+        ]
         return "\n".join(comments)
 
     def isheader(self):
@@ -313,41 +307,6 @@ class PoXliffFile(xliff.xlifffile, poheader.poheader):
         unit.xmlelement.set("approved", "no")
         setXMLspace(unit.xmlelement, "preserve")
         return unit
-
-    def addplural(self, source, target, filename, createifmissing=False):
-        """This method should now be unnecessary, but is left for reference"""
-        assert isinstance(source, multistring)
-        if not isinstance(target, multistring):
-            target = multistring(target)
-        sourcel = len(source.strings)
-        targetl = len(target.strings)
-        if sourcel < targetl:
-            sources = source.strings + [source.strings[-1]] * targetl - sourcel
-            targets = target.strings
-        else:
-            sources = source.strings
-            targets = target.strings
-        self._messagenum += 1
-        pluralnum = 0
-        group = self.creategroup(filename, True, restype="x-gettext-plural")
-        for (src, tgt) in zip(sources, targets):
-            unit = self.UnitClass(src)
-            unit.target = tgt
-            unit.setid("%d[%d]" % (self._messagenum, pluralnum))
-            pluralnum += 1
-            group.append(unit.xmlelement)
-            self.units.append(unit)
-
-        if pluralnum < sourcel:
-            for string in sources[pluralnum:]:
-                unit = self.UnitClass(src)
-                unit.xmlelement.set("translate", "no")
-                unit.setid("%d[%d]" % (self._messagenum, pluralnum))
-                pluralnum += 1
-                group.append(unit.xmlelement)
-                self.units.append(unit)
-
-        return self.units[-pluralnum]
 
     def parse(self, xml):
         """Populates this object from the given xml string"""

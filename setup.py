@@ -44,7 +44,7 @@ sitepackages = packagesdir.replace(sys.prefix + os.sep, "")
 infofiles = [
     (
         join(sitepackages, "translate"),
-        [filename for filename in ("COPYING", "README.rst")],
+        ["COPYING", "README.rst"],
     )
 ]
 initfiles = [(join(sitepackages, "translate"), [join("translate", "__init__.py")])]
@@ -184,11 +184,13 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Unix",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Internationalization",
     "Topic :: Software Development :: Localization",
 ]
 
@@ -245,7 +247,8 @@ else:
             self.other_files = [self.chop(p) for p in other_files]
             self.install_scripts = install_scripts
 
-        def getcompilecommand(self):
+        @staticmethod
+        def getcompilecommand():
             try:
                 import _winreg
 
@@ -352,7 +355,8 @@ else:
                 return install_data
             return super().reinitialize_command(command, reinit_subcommands)
 
-        def remap_data_files(self, data_files):
+        @staticmethod
+        def remap_data_files(data_files):
             """maps the given data files to different locations using external
             map_data_file function
             """
@@ -591,7 +595,7 @@ def dosetup(name, version, packages, datafiles, scripts, ext_modules=[]):
     setup(
         name=name,
         version=version,
-        python_requires=">=3.6",
+        python_requires=">=3.7",
         license="GNU General Public License (GPL)",
         description=description,
         long_description=long_description,

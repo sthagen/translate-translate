@@ -5,8 +5,8 @@ from translate.convert import html2po, po2html, test_convert
 
 
 class TestHTML2PO:
+    @staticmethod
     def html2po(
-        self,
         markup,
         duplicatestyle="msgctxt",
         keepcomments=False,
@@ -16,7 +16,8 @@ class TestHTML2PO:
         convertor = html2po.html2po()
         return convertor.convertfile(inputfile, "test", duplicatestyle, keepcomments)
 
-    def po2html(self, posource, htmltemplate):
+    @staticmethod
+    def po2html(posource, htmltemplate):
         """Helper to convert po to html without a file."""
         # Convert pofile object to bytes
         inputfile = BytesIO(bytes(posource))
@@ -25,7 +26,8 @@ class TestHTML2PO:
         assert po2html.converthtml(inputfile, outputfile, templatefile)
         return outputfile.getvalue().decode("utf-8")
 
-    def countunits(self, pofile, expected):
+    @staticmethod
+    def countunits(pofile, expected):
         """helper to check that we got the expected number of messages"""
         actual = len(pofile.units)
         if actual > 0:
@@ -34,7 +36,8 @@ class TestHTML2PO:
         print(pofile)
         assert actual == expected
 
-    def compareunit(self, pofile, unitnumber, expected):
+    @staticmethod
+    def compareunit(pofile, unitnumber, expected):
         """helper to validate a PO message"""
         if not pofile.units[0].isheader():
             unitnumber = unitnumber - 1
@@ -427,8 +430,11 @@ years has helped to bridge the digital divide to a limited extent.</p> \r
         )
 
     def test_encoding_latin1(self):
-        """Convert HTML input in iso-8859-1 correctly to unicode."""
-        """Also verifies that the charset declaration isn't extracted as a translation unit."""
+        """
+        Convert HTML input in iso-8859-1 correctly to unicode.
+
+        Also verifies that the charset declaration isn't extracted as a translation unit.
+        """
         htmlsource = b"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><!-- InstanceBegin template="/Templates/masterpage.dwt" codeOutsideHTMLIsLocked="false" -->
 <head>
@@ -516,8 +522,11 @@ years has helped to bridge the digital divide to a limited extent.</p> \r
         assert snippet in htmlresult
 
     def test_entityrefs_in_text(self):
-        """Should extract html entityrefs, preserving the ones representing reserved characters"""
-        """`See <https://developer.mozilla.org/en-US/docs/Glossary/Entity>`."""
+        """
+        Should extract html entityrefs, preserving the ones representing reserved characters.
+
+        `See <https://developer.mozilla.org/en-US/docs/Glossary/Entity>`.
+        """
         self.check_single(
             "<html><head></head><body><p>&lt;not an element&gt; &amp; &quot; &apos; &rsquo;</p></body></html>",
             "&lt;not an element&gt; &amp; \" ' \u2019",

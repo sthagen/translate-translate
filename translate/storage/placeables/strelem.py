@@ -480,9 +480,7 @@ class StringElem:
         """
         if filter is None or not callable(filter):
             filter = lambda e: True
-        return [
-            elem for elem in self.iter_depth_first(lambda e: e.isleaf() and filter(e))
-        ]
+        return list(self.iter_depth_first(lambda e: e.isleaf() and filter(e)))
 
     def get_ancestor_where(self, child, criteria):
         parent = self.get_parent_elem(child)
@@ -798,10 +796,7 @@ class StringElem:
 
         :rtype: bool
         """
-        for e in self.sub:
-            if not isinstance(e, str):
-                return False
-        return True
+        return all(isinstance(e, str) for e in self.sub)
 
     def iter_depth_first(self, filter=None):
         """Iterate through the nodes in the tree in dept-first order."""
@@ -900,7 +895,7 @@ class StringElem:
                 # (but not StringElem sub-class instances, because they
                 # might contain important (non-rendered) data.
                 if (
-                    type(elem.sub[i]) == StringElem or isinstance(elem.sub[i], str)
+                    type(elem.sub[i]) is StringElem or isinstance(elem.sub[i], str)
                 ) and len(elem.sub[i]) == 0:
                     del elem.sub[i]
                     continue

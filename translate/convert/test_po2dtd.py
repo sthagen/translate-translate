@@ -8,20 +8,16 @@ from translate.storage import dtd, po
 
 
 class TestPO2DTD:
-    def setup_method(self, method):
-        warnings.resetwarnings()
-
-    def teardown_method(self, method):
-        warnings.resetwarnings()
-
-    def po2dtd(self, posource, remove_untranslated=False):
+    @staticmethod
+    def po2dtd(posource, remove_untranslated=False):
         """helper that converts po source to dtd source without requiring files"""
         inputfile = BytesIO(posource.encode())
         inputpo = po.pofile(inputfile)
         convertor = po2dtd.po2dtd(remove_untranslated=remove_untranslated)
         return convertor.convertstore(inputpo)
 
-    def merge2dtd(self, dtdsource, posource):
+    @staticmethod
+    def merge2dtd(dtdsource, posource):
         """helper that merges po translations to dtd source without requiring files"""
         inputfile = BytesIO(posource.encode())
         inputpo = po.pofile(inputfile)
@@ -30,7 +26,8 @@ class TestPO2DTD:
         convertor = po2dtd.redtd(templatedtd)
         return convertor.convertstore(inputpo)
 
-    def convertdtd(self, posource, dtdtemplate, remove_untranslated=False):
+    @staticmethod
+    def convertdtd(posource, dtdtemplate, remove_untranslated=False):
         """helper to exercise the command line function"""
         inputfile = BytesIO(posource.encode())
         outputfile = BytesIO()
@@ -40,7 +37,8 @@ class TestPO2DTD:
         )
         return outputfile.getvalue().decode("utf-8")
 
-    def roundtripsource(self, dtdsource):
+    @staticmethod
+    def roundtripsource(dtdsource):
         """converts dtd source to po and back again, returning the resulting source"""
         dtdinputfile = BytesIO(dtdsource.encode())
         dtdinputfile2 = BytesIO(dtdsource.encode())
@@ -547,18 +545,6 @@ class TestPO2DTDCommand(test_convert.TestConvertCommand, TestPO2DTD):
 
     convertmodule = po2dtd
     defaultoptions = {"progress": "none"}
-    # TODO: because of having 2 base classes, we need to call all their setup and teardown methods
-    # (otherwise we won't reset the warnings etc)
-
-    def setup_method(self, method):
-        """call both base classes setup_methods"""
-        super().setup_method(method)
-        TestPO2DTD.setup_method(self, method)
-
-    def teardown_method(self, method):
-        """call both base classes teardown_methods"""
-        super().teardown_method(method)
-        TestPO2DTD.teardown_method(self, method)
 
     def test_help(self, capsys):
         """tests getting help"""

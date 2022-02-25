@@ -79,9 +79,6 @@ def qmunpack(file_="messages.qm"):
 class qmunit(base.TranslationUnit):
     """A class representing a .qm translation message."""
 
-    def __init__(self, source=None):
-        super().__init__(source)
-
 
 class qmfile(base.TranslationStore):
     """A class representing a .qm file."""
@@ -125,7 +122,6 @@ class qmfile(base.TranslationStore):
                 "Section: %s (type: %#x, offset: %#x, length: %d)"
                 % (name, section_type, startsection, length)
             )
-            return
 
         while startsection < len(input):
             section_type, length = struct.unpack(

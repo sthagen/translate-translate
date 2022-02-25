@@ -21,7 +21,8 @@ class TestOO2PO:
         outputpo = convertor.convertstore(inputoo)
         return outputpo
 
-    def singleelement(self, pofile):
+    @staticmethod
+    def singleelement(pofile):
         """checks that the pofile contains a single non-header element, and returns it"""
         if isinstance(pofile, poheader):
             assert len(pofile.units) == 2
@@ -218,7 +219,7 @@ class TestOO2POCommand(test_convert.TestConvertCommand, TestOO2PO):
 
     def test_preserve_filename(self):
         """Ensures that the filename is preserved."""
-        oosource = br"svx	source\dialog\numpages.src	0	string	RID_SVXPAGE_NUM_OPTIONS	STR_BULLET			0	en-US	Character				20050924 09:13:58"
+        oosource = rb"svx	source\dialog\numpages.src	0	string	RID_SVXPAGE_NUM_OPTIONS	STR_BULLET			0	en-US	Character				20050924 09:13:58"
         self.create_testfile("snippet.sdf", oosource)
         oofile = oo.oofile(self.open_testfile("snippet.sdf"))
         assert oofile.filename.endswith("snippet.sdf")

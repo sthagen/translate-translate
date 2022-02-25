@@ -68,7 +68,7 @@ class TMDB:
         self.preload_db()
 
     def _get_connection(self, index):
-        current_thread = threading.currentThread()
+        current_thread = threading.current_thread()
         if current_thread not in self._tm_db:
             connection = dbapi2.connect(self.db_file)
             cursor = connection.cursor()
@@ -185,7 +185,7 @@ DROP TRIGGER IF EXISTS sources_delete_trig;
             query = """SELECT COUNT(*) FROM sources s JOIN targets t on s.sid = t.sid"""
         self.cursor.execute(query)
         (numrows,) = self.cursor.fetchone()
-        logging.debug("tmdb has %d records" % numrows)
+        logging.debug("tmdb has %d records", numrows)
         return numrows
 
     def add_unit(self, unit, source_lang=None, target_lang=None, commit=True):

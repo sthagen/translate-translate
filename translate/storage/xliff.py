@@ -24,7 +24,12 @@ The official recommendation is to use the extention .xlf for XLIFF files.
 from lxml import etree
 
 from translate.misc.multistring import multistring
-from translate.misc.xml_helpers import getXMLspace, setXMLlang, setXMLspace
+from translate.misc.xml_helpers import (
+    clear_content,
+    getXMLspace,
+    setXMLlang,
+    setXMLspace,
+)
 from translate.storage import base, lisa
 from translate.storage.placeables.lisa import strelem_to_xml, xml_to_strelem
 from translate.storage.workflow import StateEnum as state
@@ -182,9 +187,7 @@ class xliffunit(lisa.LISAunit):
             self.set_source_dom(sourcelanguageNode)
 
         # Clear sourcelanguageNode first
-        for i in range(len(sourcelanguageNode)):
-            del sourcelanguageNode[0]
-        sourcelanguageNode.text = None
+        clear_content(sourcelanguageNode)
 
         strelem_to_xml(sourcelanguageNode, value[0])
 
@@ -216,9 +219,7 @@ class xliffunit(lisa.LISAunit):
             self.set_target_dom(languageNode, append)
 
         # Clear languageNode first
-        for i in range(len(languageNode)):
-            del languageNode[0]
-        languageNode.text = None
+        clear_content(languageNode)
 
         strelem_to_xml(languageNode, value[0])
         ### currently giving some issues in Virtaal: self._rich_target = value
@@ -578,7 +579,8 @@ class xliffunit(lisa.LISAunit):
         if comments:
             self.addnote(otherunit.getnotes())
 
-    def correctorigin(self, node, origin):
+    @staticmethod
+    def correctorigin(node, origin):
         """Check against node tag's origin (e.g note or alt-trans)"""
         if origin is None:
             return True
@@ -639,7 +641,7 @@ class xlifffile(lisa.LISAfile):
 
     def initbody(self):
         # detect the xliff namespace, handle both 1.1 and 1.2
-        for prefix, ns in self.document.getroot().nsmap.items():
+        for ns in self.document.getroot().nsmap.values():
             if ns and ns.startswith(self.unversioned_namespace):
                 self.namespace = ns
                 break
@@ -689,11 +691,13 @@ class xlifffile(lisa.LISAfile):
         etree.SubElement(filenode, self.namespaced(self.bodyNode))
         return filenode
 
-    def getfilename(self, filenode):
+    @staticmethod
+    def getfilename(filenode):
         """returns the name of the given file"""
         return filenode.get("original")
 
-    def setfilename(self, filenode, filename):
+    @staticmethod
+    def setfilename(filenode, filename):
         """set the name of the given file"""
         return filenode.set("original", filename)
 
@@ -715,17 +719,6 @@ class xlifffile(lisa.LISAfile):
         if createifmissing:
             return self.createfilenode(filename)
         return None
-
-    def getids(self, filename=None):
-        if not filename:
-            return super().getids()
-
-        self.id_index = {}
-        prefix = filename + ID_SEPARATOR
-        units = (unit for unit in self.units if unit.getid().startswith(prefix))
-        for index, unit in enumerate(units):
-            self.id_index[unit.getid()[len(prefix) :]] = unit
-        return self.id_index.keys()
 
     def setsourcelanguage(self, language):
         if not language:

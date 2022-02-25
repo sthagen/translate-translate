@@ -184,7 +184,8 @@ class LISAunit(base.TranslationUnit):
     def target(self, target):
         self.settarget(target)
 
-    def createlanguageNode(self, lang, text, purpose=None):
+    @staticmethod
+    def createlanguageNode(lang, text, purpose=None):
         """Returns a xml Element setup with given parameters to represent a
         single language entry. Has to be overridden.
         """
@@ -321,7 +322,8 @@ class LISAfile(base.TranslationStore):
         super().removeunit(unit)
         unit.xmlelement.getparent().remove(unit.xmlelement)
 
-    def serialize_hook(self, treestring):
+    @staticmethod
+    def serialize_hook(treestring):
         return treestring
 
     def serialize(self, out=None):
@@ -334,24 +336,15 @@ class LISAfile(base.TranslationStore):
                 out.write(b'<?xml version="1.0" encoding="utf-8"?>\n')
         if self.XMLindent:
             reindent(root, **self.XMLindent)
-        if 1:
-            treestring = etree.tostring(
-                self.document,
-                pretty_print=not self.XMLindent,
-                xml_declaration=not self.XMLdoublequotes,
-                encoding=self.encoding,
-                doctype=self.XMLdoctype,
-            )
-            treestring = self.serialize_hook(treestring)
-            out.write(treestring)
-            return
-        self.document.write(
-            out,
+        treestring = etree.tostring(
+            self.document,
             pretty_print=not self.XMLindent,
             xml_declaration=not self.XMLdoublequotes,
-            encoding=("UTF-8" if self.XMLuppercaseEncoding else "utf-8"),
+            encoding=self.encoding,
             doctype=self.XMLdoctype,
         )
+        treestring = self.serialize_hook(treestring)
+        out.write(treestring)
 
     def parse(self, xml):
         """Populates this object from the given xml string"""

@@ -52,14 +52,14 @@ done generically like this:
 
 .. code-block:: console
 
-    $ git log $previous_version..HEAD > docs/releases/$version.rst
+    $ git log $(git describe --tags --abbrev=0)..HEAD > docs/releases/$version.rst
 
 
 Or a more specific example:
 
 .. code-block:: console
 
-    $ git log 1.10.0..HEAD > docs/releases/1.11.0-rc1.rst
+    $ git log $(git describe --tags --abbrev=0)..HEAD > docs/releases/3.6.0.rst
 
 
 Edit this file.  You can use the commits as a guide to build up the release
@@ -86,7 +86,7 @@ We create a list of contributors using this command:
 
 .. code-block:: console
 
-    $ git log 1.10.0..HEAD --format='%aN, ' | awk '{arr[$0]++} END{for (i in arr){print arr[i], i;}}' | sort -rn | cut -d\  -f2-
+    $ git log $(git describe --tags --abbrev=0)..HEAD --format='%aN, ' | awk '{arr[$0]++} END{for (i in arr){print arr[i], i;}}' | sort -rn | cut -d\  -f2-
 
 
 .. _releasing#up-version-numbers:
@@ -251,7 +251,7 @@ Publish on PyPI
 
    These can be stored in :file:`$HOME/.pypirc` and will contain your username
    and password. Check `Create a PyPI account
-   <https://packaging.python.org/tutorials/distributing-packages/#create-an-account>`_
+   <https://packaging.python.org/en/latest/tutorials/packaging-projects/#next-steps>`_
    for more details.
 
 
@@ -318,8 +318,7 @@ Let people know that there is a new version:
 
 #. Post link to release Tweet to the `Translate gitter channel <https://gitter.im/translate/dev>`_.
 
-#. Update `Translate Toolkit's Wikipedia page
-   <http://en.wikipedia.org/wiki/Translate_Toolkit>`_
+#. Update :wp:`Translate Toolkit's Wikipedia page <Translate_Toolkit>`
 
 
 Post-Releasing Tasks

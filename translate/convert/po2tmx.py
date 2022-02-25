@@ -30,7 +30,8 @@ from translate.storage import po, tmx
 
 
 class po2tmx:
-    def cleancomments(self, comments, comment_type=None):
+    @staticmethod
+    def cleancomments(comments, comment_type=None):
         """Removes the comment marks from the PO strings."""
         # FIXME this is a bit hacky, needs some fixes in the PO classes
         for index, comment in enumerate(comments):
@@ -62,7 +63,7 @@ class po2tmx:
                 "source": self.cleancomments(inunit.sourcecomments, "source"),
                 "type": self.cleancomments(inunit.typecomments, "type"),
                 "others": self.cleancomments(inunit.othercomments),
-            }.get(comment, None)
+            }.get(comment)
 
             tmxfile.addtranslation(
                 source, sourcelanguage, translation, targetlanguage, commenttext

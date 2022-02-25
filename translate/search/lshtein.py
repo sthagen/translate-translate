@@ -19,7 +19,7 @@
 """A class to calculate a similarity based on the Levenshtein
 distance.
 
-See http://en.wikipedia.org/wiki/Levenshtein_distance.
+.. seealso:: :wp:`Levenshtein_distance`
 
 If available, the `python-Levenshtein
 <https://pypi.python.org/pypi/python-Levenshtein>`_ will be used which will
@@ -69,7 +69,7 @@ def native_distance(a, b, stopvalue=0):
 
 
 try:
-    import Levenshtein as Levenshtein
+    import Levenshtein
 
     distance = native_distance
 except ImportError:

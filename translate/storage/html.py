@@ -126,7 +126,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
     TRAILING_WHITESPACE_RE = re.compile(r"(\s+)$")
 
     ENCODING_RE = re.compile(
-        br"""<meta.*
+        rb"""<meta.*
                                 content.*=.*?charset.*?=\s*?
                                 ([^\s]*)
                                 \s*?["']\s*?>
@@ -157,7 +157,8 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
             inputfile.close()
             self.parse(htmlsrc)
 
-    def _simple_callback(self, string):
+    @staticmethod
+    def _simple_callback(string):
         return string
 
     def guess_encoding(self, htmlsrc):
@@ -251,10 +252,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         # scan the start and end tags captured between translatable content;
         # extend the captured interval to include the matching tags
         for pos in range(start + 1, end - 1):
-            if (
-                self.tu_content[pos]["type"] == "starttag"
-                or self.tu_content[pos]["type"] == "endtag"
-            ) and pos in tagmap:
+            if self.tu_content[pos]["type"] in ("starttag", "endtag") and pos in tagmap:
                 match = tagmap[pos]
                 start = min(start, match)
                 end = max(end, match + 1)
@@ -332,7 +330,8 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         if name in self.TRANSLATABLE_METADATA and "content" in attrs_dict:
             return self.create_attribute_tu("content", attrs_dict["content"])
 
-    def translatable_attribute_matches_tag(self, attrname, tag):
+    @staticmethod
+    def translatable_attribute_matches_tag(attrname, tag):
         if attrname == "lang":
             return tag == "html"
         return True
@@ -369,7 +368,8 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
             result.append((attrname, attrvalue))
         return result
 
-    def create_start_tag(self, tag, attrs=None, startend=False):
+    @staticmethod
+    def create_start_tag(tag, attrs=None, startend=False):
         attr_strings = []
         for attrname, attrvalue in attrs:
             if attrvalue is None:
@@ -467,7 +467,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
 
     def handle_entityref(self, name):
         """Handle named entities of the form &aaaa; e.g. &rsquo;"""
-        converted = html5.get(name + ";", None)
+        converted = html5.get(name + ";")
         if name in ["gt", "lt", "amp"] or not converted:
             self.handle_data("&%s;" % name)
         else:

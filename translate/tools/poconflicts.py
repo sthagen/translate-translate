@@ -108,11 +108,11 @@ class ConflictOptionParser(optrecurse.RecursiveOptionParser):
                 )
                 success = False
             progress_bar.report_progress(inputpath, success)
-        del progress_bar
         self.buildconflictmap()
         self.outputconflicts(options)
 
-    def clean(self, string, options):
+    @staticmethod
+    def clean(string, options):
         """returns the cleaned string that contains the text to be matched"""
         if options.ignorecase:
             string = string.lower()
@@ -138,7 +138,8 @@ class ConflictOptionParser(optrecurse.RecursiveOptionParser):
                 source = self.clean(unit.target, options)
             self.textmap.setdefault(source, []).append((target, unit, fullinputpath))
 
-    def flatten(self, text, joinchar):
+    @staticmethod
+    def flatten(text, joinchar):
         """flattens text to just be words"""
         flattext = ""
         for c in text:

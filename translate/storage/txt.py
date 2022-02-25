@@ -30,39 +30,29 @@ import re
 from translate.storage import base
 
 
-dokuwiki = []
-dokuwiki.append(
+dokuwiki = [
     (
         "Dokuwiki heading",
         re.compile(r"( ?={2,6}[\s]*)(.+)"),
         re.compile(r"([\s]*={2,6}[\s]*)$"),
-    )
-)
-dokuwiki.append(
-    ("Dokuwiki bullet", re.compile(r"([\s]{2,}\*[\s]*)(.+)"), re.compile(r"[\s]+$"))
-)
-dokuwiki.append(
+    ),
+    ("Dokuwiki bullet", re.compile(r"([\s]{2,}\*[\s]*)(.+)"), re.compile(r"[\s]+$")),
     (
         "Dokuwiki numbered item",
         re.compile(r"([\s]{2,}-[\s]*)(.+)"),
         re.compile(r"[\s]+$"),
-    )
-)
+    ),
+]
 
-mediawiki = []
-mediawiki.append(
+mediawiki = [
     (
         "MediaWiki heading",
         re.compile(r"(={1,5}[\s]*)(.+)"),
         re.compile(r"([\s]*={1,5}[\s]*)$"),
-    )
-)
-mediawiki.append(
-    ("MediaWiki bullet", re.compile(r"(\*+[\s]*)(.+)"), re.compile(r"[\s]+$"))
-)
-mediawiki.append(
-    ("MediaWiki numbered item", re.compile(r"(#+[\s]*)(.+)"), re.compile(r"[\s]+$"))
-)
+    ),
+    ("MediaWiki bullet", re.compile(r"(\*+[\s]*)(.+)"), re.compile(r"[\s]+$")),
+    ("MediaWiki numbered item", re.compile(r"(#+[\s]*)(.+)"), re.compile(r"[\s]+$")),
+]
 
 flavours = {
     "dokuwiki": dokuwiki,
@@ -134,7 +124,7 @@ class TxtFile(base.TranslationStore):
         for linenum, line in enumerate(lines):
             current_line = linenum + 1
             line = line.decode(self.encoding).rstrip("\r\n")
-            for rule, prere, postre in self.flavour:
+            for _rule, prere, postre in self.flavour:
                 match = prere.match(line)
                 if match:
                     pretext, source = match.groups()

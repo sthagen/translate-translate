@@ -141,7 +141,8 @@ class FilterOptionParser(optrecurse.RecursiveOptionParser):
             help="list filters available",
         )
 
-    def parse_noinput(self, option, opt, value, parser, *args, **kwargs):
+    @staticmethod
+    def parse_noinput(option, opt, value, parser, *args, **kwargs):
         """This sets an option to *True*, but also sets input to *-* to prevent
         an error.
         """
@@ -186,7 +187,7 @@ class FilterOptionParser(optrecurse.RecursiveOptionParser):
 
             with open(options.notranslatefile) as fp:
                 notranslatewords = [line.strip() for line in fp.readlines()]
-            notranslatewords = dict.fromkeys([key for key in notranslatewords])
+            notranslatewords = dict.fromkeys(list(notranslatewords))
 
             checkerconfig.notranslatewords.update(notranslatewords)
 
@@ -200,7 +201,7 @@ class FilterOptionParser(optrecurse.RecursiveOptionParser):
 
             with open(options.musttranslatefile) as fp:
                 musttranslatewords = [line.strip() for line in fp.readlines()]
-            musttranslatewords = dict.fromkeys([key for key in musttranslatewords])
+            musttranslatewords = dict.fromkeys(list(musttranslatewords))
 
             checkerconfig.musttranslatewords.update(musttranslatewords)
 

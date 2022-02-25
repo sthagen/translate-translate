@@ -9,7 +9,8 @@ sample_po_file = os.path.join(base_dir, "tests", "xliff_conformance", "af-pootle
 
 
 class TestPOTerminology:
-    def test_term_extraction(self):
+    @staticmethod
+    def test_term_extraction():
         """Test basic term extraction/filtering from a po file."""
         extractor = poterminology.TerminologyExtractor()
         # When no content has been provided, returns a simple dict
@@ -20,7 +21,7 @@ class TestPOTerminology:
         extractor.processunits(inputfile.units, sample_po_file)
         terms = extractor.extract_terms()
         assert len(terms) > 50
-        assert "default" in terms.keys()
+        assert "default" in terms
 
         filtered_terms = extractor.filter_terms(terms)
         assert filtered_terms[0][0] > filtered_terms[-1][0]

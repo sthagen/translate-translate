@@ -3,12 +3,13 @@ name: Test on Linux
 on:
   push:
     paths-ignore:
-    - "docs/**"
+    - docs/**
     branches-ignore:
-      - "dependabot/**"
+    - dependabot/**
+    - deepsource**
   pull_request:
     paths-ignore:
-    - "docs/**"
+    - docs/**
 
 jobs:
   test:
@@ -17,19 +18,23 @@ jobs:
     strategy:
       matrix:
         requirements: [latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version:
+        - '3.7'
+        - '3.8'
+        - '3.9'
+        - '3.10'
         include:
-          - requirements: minimal
-            python-version: 3.6
+        - requirements: minimal
+          python-version: '3.7'
 
     steps:
-    - uses: actions/checkout@v2.4.0
+    - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2.3.1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
         cache: pip
-        cache-dependency-path: 'requirements/*.txt'
+        cache-dependency-path: requirements/*.txt
     - name: Install apt dependencies
       run: |
         sudo apt-get update

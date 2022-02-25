@@ -18,7 +18,7 @@
 
 """This module represents the Sicilian language.
 
-.. seealso:: http://en.wikipedia.org/wiki/Sicilian_language
+.. seealso:: :wp:`Sicilian_language`
 """
 
 
@@ -34,10 +34,7 @@ def contains_illegal(illegal_substrings, string):
     :param string: the string to check against occurences of illegal substrings
     :return: True if string contains any of the illegal substrings
     """
-    for s in illegal_substrings:
-        if s in string:
-            return True
-    return False
+    return any(s in string for s in illegal_substrings)
 
 
 sicilianconfig = CheckerConfig(
@@ -49,7 +46,7 @@ class SicilianChecker(TranslationChecker):
     """A Checker class for Sicilian"""
 
     def __init__(self, **kwargs):
-        checkerconfig = kwargs.get("checkerconfig", None)
+        checkerconfig = kwargs.get("checkerconfig")
 
         if checkerconfig is None:
             checkerconfig = CheckerConfig()
@@ -90,7 +87,7 @@ class SicilianChecker(TranslationChecker):
         stopwords = [
             f"{word} ({errors[word]})"
             for word in words2
-            if word.lower() in errors.keys() and word not in words1
+            if word.lower() in errors and word not in words1
         ]
 
         if stopwords:
@@ -118,9 +115,14 @@ class SicilianChecker(TranslationChecker):
         stopwords = []
 
         for word in self.config.lang.words(str2):
-            if word not in str1 and word.lower() not in exceptions:
-                if word.lower().endswith(("e", "o")) and word.lower() not in stopwords:
-                    stopwords.append(word.lower())
+            lower_word = word.lower()
+            if (
+                word not in str1
+                and lower_word not in exceptions
+                and lower_word.endswith(("e", "o"))
+                and lower_word not in stopwords
+            ):
+                stopwords.append(lower_word)
 
         if stopwords:
             raise FilterFailure("Please respect vocalism: %s" % (", ".join(stopwords)))
@@ -141,7 +143,7 @@ class SicilianChecker(TranslationChecker):
         stopwords = []
 
         for word in self.config.lang.words(str2):
-            for suffix in suffixes.keys():
+            for suffix in suffixes:
                 if word not in str1 and word.lower().endswith(suffix):
                     stopwords.append(f"{word} (-{suffixes[suffix]})")
 

@@ -104,8 +104,8 @@ class TestPropUnit(test_monolingual.TestMonolingualUnit):
 class TestGwtProp(test_monolingual.TestMonolingualStore):
     StoreClass = properties.gwtfile
 
+    @staticmethod
     def propparse(
-        self,
         propsource,
         personality="gwt",
         encoding=None,
@@ -240,11 +240,33 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
             == propfile.__bytes__()
         )
 
+    def test_extra_plurals(self):
+        propsource = r"""
+userItems.limit = Only {0} items can be added.
+userItems.limit[one] = Only one item can be added.
+userItems.limit[\=0] = No items can be added.
+"""
+        propfile = self.propparse(propsource)
+
+        assert len(propfile.units) == 2
+        propunit = propfile.units[0]
+        assert propunit.name == "userItems.limit"
+        assert isinstance(propunit.target, multistring)
+        assert propunit.source.strings == [
+            "Only one item can be added.",
+            "Only {0} items can be added.",
+        ]
+        propunit = propfile.units[1]
+        assert propunit.name == "userItems.limit[\\=0]"
+        assert not isinstance(propunit.target, multistring)
+        assert propunit.source == "No items can be added."
+
 
 class TestProp(test_monolingual.TestMonolingualStore):
     StoreClass = properties.propfile
 
-    def propparse(self, propsource, personality="java", encoding=None):
+    @staticmethod
+    def propparse(propsource, personality="java", encoding=None):
         """helper that parses properties source without requiring files"""
         dummyfile = BytesIO(
             propsource.encode() if isinstance(propsource, str) else propsource
@@ -676,7 +698,8 @@ job.log.begin=Starting job of type [{0}]
 class TestXWiki(test_monolingual.TestMonolingualStore):
     StoreClass = properties.xwikifile
 
-    def propparse(self, propsource):
+    @staticmethod
+    def propparse(propsource):
         """helper that parses properties source without requiring files"""
         dummyfile = BytesIO(
             propsource.encode() if isinstance(propsource, str) else propsource
@@ -804,7 +827,8 @@ class TestXWikiPageProperties(test_monolingual.TestMonolingualStore):
     def getcontent(self, content, language="en"):
         return self.FILE_SCHEME % {"content": content + "\n", "language": language}
 
-    def propparse(self, propsource):
+    @staticmethod
+    def propparse(propsource):
         """helper that parses properties source without requiring files"""
         dummyfile = BytesIO(
             propsource.encode() if isinstance(propsource, str) else propsource
@@ -1209,7 +1233,8 @@ class TestXWikiFullPage(test_monolingual.TestMonolingualStore):
             "language": language,
         }
 
-    def propparse(self, propsource):
+    @staticmethod
+    def propparse(propsource):
         """helper that parses properties source without requiring files"""
         dummyfile = BytesIO(
             propsource.encode() if isinstance(propsource, str) else propsource

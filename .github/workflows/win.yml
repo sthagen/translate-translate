@@ -3,30 +3,35 @@ name: Test on Windows
 on:
   push:
     paths-ignore:
-    - "docs/**"
+    - docs/**
     branches-ignore:
-      - "dependabot/**"
+    - dependabot/**
+    - deepsource**
   pull_request:
     paths-ignore:
-    - "docs/**"
+    - docs/**
 
 jobs:
-  test:
+  test-win:
 
     runs-on: windows-latest
     strategy:
       matrix:
         requirements: [latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version:
+        - '3.7'
+        - '3.8'
+        - '3.9'
+        - '3.10'
 
     steps:
-    - uses: actions/checkout@v2.4.0
+    - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2.3.1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
         cache: pip
-        cache-dependency-path: 'requirements/*.txt'
+        cache-dependency-path: requirements/*.txt
     - name: Update pip
       run: pip install --user --upgrade pip wheel
     - name: Install pip dependencies

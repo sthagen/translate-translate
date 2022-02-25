@@ -319,6 +319,71 @@ class TestJSONNestedResourceStore(test_monolingual.TestMonolingualUnit):
 """
         assert bytes(store).decode() == expected
 
+    def test_add_index_nested(self):
+        store = self.StoreClass()
+        store.parse('{"foo":[["x", "y"]]}')
+
+        assert len(store.units) == 2
+        assert store.units[0].getid() == ".foo[0][0]"
+        assert store.units[1].getid() == ".foo[0][1]"
+
+        unit = self.StoreClass.UnitClass("source")
+        unit.setid("values[2][0]")
+        store.addunit(unit)
+
+        expected = """{
+    "foo": [
+        [
+            "x",
+            "y"
+        ]
+    ],
+    "values": [
+        [],
+        [],
+        [
+            "source"
+        ]
+    ]
+}
+"""
+        assert bytes(store).decode() == expected
+
+    def test_nested_list_mixed(self):
+        data = """{
+    "story_9795": {
+        "tsr_0": [
+            [
+                "‥",
+                "Combinato Carcer Tullianum & parco"
+            ],
+            "Archeologico del Colosseo"
+        ]
+    }
+}
+"""
+        store = self.StoreClass()
+        store.parse(data)
+        assert len(store.units) == 3
+        assert store.units[0].getid() == ".story_9795.tsr_0[0][0]"
+        assert store.units[1].getid() == ".story_9795.tsr_0[0][1]"
+        assert store.units[2].getid() == ".story_9795.tsr_0[1]"
+
+        assert bytes(store).decode() == data
+
+        store = self.StoreClass()
+        unit = self.StoreClass.UnitClass("Archeologico del Colosseo")
+        unit.setid(".story_9795.tsr_0[1]")
+        store.addunit(unit)
+        unit = self.StoreClass.UnitClass("Combinato Carcer Tullianum & parco")
+        unit.setid(".story_9795.tsr_0[0][1]")
+        store.addunit(unit)
+        unit = self.StoreClass.UnitClass("‥")
+        unit.setid(".story_9795.tsr_0[0][0]")
+        store.addunit(unit)
+
+        assert bytes(store).decode() == data
+
     def test_list_to_dict(self):
         data = """{
     "userInfoPage": [

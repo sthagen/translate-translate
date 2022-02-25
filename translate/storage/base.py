@@ -23,6 +23,7 @@ import logging
 import pickle
 from collections import OrderedDict
 from io import BytesIO
+from typing import List, Optional, Tuple
 
 from translate.misc.multistring import multistring
 from translate.storage.placeables import StringElem, parse as rich_parse
@@ -273,7 +274,8 @@ class TranslationUnit:
         """
         pass
 
-    def getlocations(self):
+    @staticmethod
+    def getlocations():
         """A list of source code locations.
 
         :rtype: List
@@ -311,7 +313,8 @@ class TranslationUnit:
         else:
             self.addlocation(location)
 
-    def getcontext(self):
+    @staticmethod
+    def getcontext():
         """Get the message context."""
         return ""
 
@@ -359,7 +362,8 @@ class TranslationUnit:
         """
         pass
 
-    def geterrors(self):
+    @staticmethod
+    def geterrors():
         """Get all error messages.
 
         :rtype: Dictionary
@@ -391,7 +395,8 @@ class TranslationUnit:
         """
         return bool(self.source)
 
-    def isfuzzy(self):
+    @staticmethod
+    def isfuzzy():
         """Indicates whether this unit is fuzzy."""
         return False
 
@@ -399,7 +404,8 @@ class TranslationUnit:
         """Marks the unit as fuzzy or not."""
         pass
 
-    def isobsolete(self):
+    @staticmethod
+    def isobsolete():
         """indicate whether a unit is obsolete"""
         return False
 
@@ -407,11 +413,13 @@ class TranslationUnit:
         """Make a unit obsolete"""
         pass
 
-    def isheader(self):
+    @staticmethod
+    def isheader():
         """Indicates whether this unit is a header."""
         return False
 
-    def isreview(self):
+    @staticmethod
+    def isreview():
         """Indicates whether this unit needs review."""
         return False
 
@@ -426,7 +434,8 @@ class TranslationUnit:
         """
         return not (self.source or self.target)
 
-    def hasplural(self):
+    @staticmethod
+    def hasplural():
         """Tells whether or not this specific unit has plural strings."""
         # TODO: Reconsider
         return False
@@ -455,7 +464,7 @@ class TranslationUnit:
         """Build a native unit from a foreign unit, preserving as much
         information as possible.
         """
-        if type(unit) == cls and hasattr(unit, "copy") and callable(unit.copy):
+        if type(unit) is cls and hasattr(unit, "copy") and callable(unit.copy):
             return unit.copy()
         newunit = cls(unit.source)
         newunit.target = unit.target
@@ -487,7 +496,7 @@ class TranslationUnit:
         if self.STATE:
             return self._state_n
         else:
-            return self.istranslated() and self.S_UNREVIEWED or self.S_EMPTY
+            return self.S_UNREVIEWED if self.istranslated() else self.S_EMPTY
 
     def set_state_n(self, value):
         self._state_n = value
@@ -575,7 +584,7 @@ class TranslationStore:
 
     def getunits(self):
         """Return a list of all units in this store."""
-        return [unit for unit in self.unit_iter()]
+        return list(self.unit_iter())
 
     def addunit(self, unit):
         """Append the given unit to the object's list of units.
@@ -613,7 +622,7 @@ class TranslationStore:
     def findid(self, id):
         """find unit with matching id by checking id_index"""
         self.require_index()
-        return self.id_index.get(id, None)
+        return self.id_index.get(id)
 
     def findunit(self, source):
         """Find the unit with the given source string.
@@ -709,7 +718,7 @@ class TranslationStore:
         if not self.id_index:
             self.makeindex()
 
-    def getids(self, filename=None):
+    def getids(self):
         """return a list of unit ids"""
         self.require_index()
         return self.id_index.keys()
@@ -763,7 +772,8 @@ class TranslationStore:
         newstore.parse(storestring)
         return newstore
 
-    def fallback_detection(self, text):
+    @staticmethod
+    def fallback_detection(text):
         """
         Simple detection based on BOM in case chardet is not available.
         """
@@ -772,7 +782,9 @@ class TranslationStore:
                 return {"encoding": encoding, "confidence": 1.0}
         return None
 
-    def detect_encoding(self, text, default_encodings=None):
+    def detect_encoding(
+        self, text: bytes, default_encodings: Optional[List[str]] = None
+    ) -> Tuple[str, str]:
         """
         Try to detect a file encoding from `text`, using either the chardet lib
         or by trying to decode the file.
@@ -780,13 +792,15 @@ class TranslationStore:
         if not default_encodings:
             default_encodings = ["utf-8"]
         try:
-            import chardet
+            from charset_normalizer import detect
         except ImportError:
             detected_encoding = self.fallback_detection(text)
         else:
-            # many false complaints with ellipse (…) (see bug 1825)
-            detected_encoding = chardet.detect(text.replace(b"\xe2\x80\xa6", b""))
-            if detected_encoding["confidence"] < 0.48:
+            detected_encoding = detect(text)
+            if (
+                detected_encoding["confidence"] is None
+                or detected_encoding["confidence"] < 0.48
+            ):
                 detected_encoding = None
             elif detected_encoding["encoding"] == "ascii":
                 detected_encoding["encoding"] = self.encoding
@@ -923,11 +937,16 @@ class UnitId:
         if text.startswith(cls.KEY_SEPARATOR):
             text = text[len(cls.KEY_SEPARATOR) :]
         for item in text.split(cls.KEY_SEPARATOR):
-            if "[" in item and item[-1] == "]":
-                item, pos = item[:-1].split("[")
-                if item:
-                    result.append(("key", item))
-                result.append(("index", int(pos)))
+            bracepos = item.find("[")
+            endbracepos = item.find("]")
+            if bracepos != -1 and endbracepos != -1:
+                if bracepos > 0:
+                    result.append(("key", item[:bracepos]))
+                    item = item[bracepos:]
+                result.extend(
+                    ("index", int(pos))
+                    for pos in item.replace("[", " ").replace("]", " ").split()
+                )
             else:
                 result.append(("key", item))
         return cls(result)
@@ -961,6 +980,9 @@ class DictUnit(TranslationUnit):
             if not use_list and isinstance(target[key], list):
                 # Convert list to dict if needed
                 target[key] = dict(enumerate(target[key]))
+            # Handle placeholders
+            if target[key] is None:
+                target[key] = default.copy()
             target = target[key]
         if override_key:
             element, key = "key", override_key
@@ -974,6 +996,9 @@ class DictUnit(TranslationUnit):
         elif element == "index":
             if len(target) <= key:
                 if not unset:
+                    # Add placeholders to the list
+                    while len(target) < key:
+                        target.append(None)
                     target.append(value)
             else:
                 if unset:

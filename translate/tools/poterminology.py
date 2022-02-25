@@ -127,7 +127,7 @@ class TerminologyExtractor:
                 for stopline in stopfile:
                     line += 1
                     stoptype = stopline[0]
-                    if stoptype == "#" or stoptype == "\n":
+                    if stoptype in ("#", "\n"):
                         continue
                     elif stoptype == "!":
                         if stopline[1] == "C":
@@ -496,7 +496,6 @@ class TerminologyOptionParser(optrecurse.RecursiveOptionParser):
                 )
                 success = False
             progress_bar.report_progress(inputpath, success)
-        del progress_bar
         self.outputterminology(options)
 
     def processfile(self, fileprocessor, options, fullinputpath):
