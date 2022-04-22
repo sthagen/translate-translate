@@ -7,17 +7,20 @@ on:
     - deepsource**
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   setup:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Set up Python 3.7
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: 3.7
         cache: pip
@@ -41,12 +44,13 @@ jobs:
         . ./test-ttk-release/bin/activate
         pip install dist/translate-toolkit-*.tar.gz
         moz2po --help
+        python ./test-ttk-release/lib/python*/site-packages/translate/lang/identify.py README.rst
     - name: Run build
       run: coverage run ./setup.py build
     - name: Run setup
       run: coverage run --append ./setup.py sdist
     - name: Coverage
       run: coverage xml
-    - uses: codecov/codecov-action@v2.1.0
+    - uses: codecov/codecov-action@v3
       with:
         name: setup
