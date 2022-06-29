@@ -58,6 +58,9 @@ def escape_to_python(string):
     pystring = re.sub(
         "\\\\n", "\n", pystring
     )  # Convert escaped newline to a real newline
+    pystring = re.sub(
+        "\\\\r", "\r", pystring
+    )  # Convert escaped carriage-return to a real carriage-return
     pystring = re.sub("\\\\t", "\t", pystring)  # Convert escape tab to a real tab
     pystring = re.sub(
         "\\\\\\\\", "\\\\", pystring
@@ -92,6 +95,7 @@ def escape_to_rc(string):
     rcstring = re.sub("\\\\", "\\\\\\\\", string)
     rcstring = re.sub("\t", "\\\\t", rcstring)
     rcstring = re.sub("\n", "\\\\n", rcstring)
+    rcstring = re.sub("\r", "\\\\r", rcstring)
     return rcstring
 
 
@@ -310,16 +314,21 @@ class rcfile(base.TranslationStore):
     UnitClass = rcunit
     default_encoding = "cp1252"
 
-    def __init__(self, inputfile=None, lang=None, sublang=None, **kwargs):
+    def __init__(
+        self, inputfile=None, lang=None, sublang=None, encoding=None, **kwargs
+    ):
         """Construct an rcfile, optionally reading in from inputfile."""
-        super().__init__(**kwargs)
+        super().__init__(encoding=encoding, **kwargs)
         self.filename = getattr(inputfile, "name", "")
         self.lang = lang
         self.sublang = sublang
         if inputfile is not None:
             rcsrc = inputfile.read()
             inputfile.close()
-            self.parse(rcsrc)
+            self.parse(
+                rcsrc,
+                encoding=encoding or "auto",
+            )
 
     def add_popup_units(self, pre_name, popup):
         """Transverses the popup tree making new units as needed."""
