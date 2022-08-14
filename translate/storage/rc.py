@@ -181,14 +181,14 @@ def rc_statement():
     block_start = (Keyword("{") | Keyword("BEGIN")).set_name("block_start")
     block_end = (Keyword("}") | Keyword("END")).set_name("block_end")
 
-    name_id = Group(Word(alphas, alphanums + "_")).set_name("name_id")
-
     numbers = Word(nums)
 
     integerconstant = numbers ^ Combine("0x" + numbers)
 
+    name_id = Group(Word(alphas, alphanums + "_") | integerconstant)
+
     constant = Combine(
-        Optional(Keyword("NOT")) + (name_id | integerconstant),
+        Optional(Keyword("NOT")) + Group(name_id),
         adjacent=False,
         join_string=" ",
     )
@@ -206,6 +206,7 @@ def rc_statement():
     undefined_control = (
         Group(
             name_id.set_results_name("id_control")
+            + Optional(",")
             + delimited_list(
                 concatenated_string ^ constant ^ numbers ^ Group(combined_constants)
             ).set_results_name("values_")
@@ -258,7 +259,7 @@ def rc_statement():
 
 def generate_stringtable_name(identifier):
     """Return the name generated for a stringtable element."""
-    return "STRINGTABLE." + identifier
+    return f"STRINGTABLE.{identifier}"
 
 
 def generate_menu_pre_name(block_type, block_id):
@@ -280,7 +281,7 @@ def generate_popup_pre_name(pre_name, caption):
 
 def generate_popup_caption_name(pre_name):
     """Return the name generated for a caption of a popup."""
-    return "%s.POPUP.CAPTION" % (pre_name)
+    return f"{pre_name}.POPUP.CAPTION"
 
 
 def generate_menuitem_name(pre_name, block_type, identifier):
@@ -290,7 +291,7 @@ def generate_menuitem_name(pre_name, block_type, identifier):
 
 def generate_dialog_caption_name(block_type, identifier):
     """Return the name generated for a caption of a dialog."""
-    return "{}.{}.{}".format(block_type, identifier, "CAPTION")
+    return f"{block_type}.{identifier}.CAPTION"
 
 
 def generate_dialog_control_name(block_type, block_id, control_type, identifier):
