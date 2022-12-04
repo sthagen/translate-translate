@@ -235,6 +235,35 @@ class TestJSONResourceStore(test_monolingual.TestMonolingualStore):
         assert str(unit) == expected.strip()
         assert bytes(store).decode() == expected
 
+    def test_add_list_like(self):
+        store = self.StoreClass()
+
+        unit = self.StoreClass.UnitClass("source")
+        unit.setid("[0]")
+        store.addunit(unit)
+
+        unit = self.StoreClass.UnitClass("source2")
+        unit.setid("key")
+        store.addunit(unit)
+
+        assert (
+            bytes(store).decode()
+            == """{
+    "[0]": "source",
+    "key": "source2"
+}
+"""
+        )
+        unit.setid("[1]")
+        assert (
+            bytes(store).decode()
+            == """{
+    "[0]": "source",
+    "[1]": "source2"
+}
+"""
+        )
+
     def test_add_blank(self):
         expected = """{
     "simple.key": "source"
@@ -252,6 +281,29 @@ class TestJSONResourceStore(test_monolingual.TestMonolingualStore):
 
         assert str(unit) == expected.strip()
         assert bytes(store).decode() == expected
+
+    def test_types(self):
+        store = self.StoreClass()
+        store.parse('{"key": 1}')
+        assert store.units[0].target == 1
+        store.units[0].target = 2
+
+        assert (
+            bytes(store).decode()
+            == """{
+    "key": 2
+}
+"""
+        )
+        store.units[0].target = "two"
+
+        assert (
+            bytes(store).decode()
+            == """{
+    "key": "two"
+}
+"""
+        )
 
 
 class TestJSONNestedResourceStore(test_monolingual.TestMonolingualUnit):
@@ -295,6 +347,10 @@ class TestJSONNestedResourceStore(test_monolingual.TestMonolingualUnit):
     def test_array(self):
         store = self.StoreClass()
         store.parse(JSON_ARRAY)
+
+        assert store.units[0].source == "One"
+        assert store.units[0].getid() == ".key[0]"
+        assert store.units[1].getid() == ".key[1]"
 
         out = BytesIO()
         store.serialize(out)
