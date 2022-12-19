@@ -226,3 +226,88 @@ msgstr "&Pomoc"
         assert len(rc_result.units) == 8
         assert rc_result.units[0].target == "&File"
         assert rc_result.units[6].target == "&Pomoc"
+
+    def test_convert_discardable(self):
+        self.create_testfile(
+            "simple.rc",
+            """
+STRINGTABLE DISCARDABLE
+BEGIN
+
+IDS_MSG1 "Hello, world!\\n"
+IDS_MSG2 "Orangutan has %d banana.\\n"
+IDS_MSG3 "Try Weblate at https://demo.weblate.org/!\\n"
+IDS_MSG4 "Thank you for using Weblate."
+END
+""",
+        )
+        self.create_testfile(
+            "simple.po",
+            """
+msgid "Hello, world!\\n"
+msgstr "Nazdar, světe!\\n"
+""",
+        )
+        self.run_command(
+            template="simple.rc",
+            i="simple.po",
+            o="output.rc",
+            l="LANG_CZECH",
+            errorlevel="exception",
+        )
+        with self.open_testfile("output.rc") as handle:
+            rc_result = rcfile(handle)
+        assert len(rc_result.units) == 4
+        assert rc_result.units[0].target == "Nazdar, světe!\n"
+
+    def test_convert_menuex(self):
+        rc_source = """
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+IDM_STARTMENU MENUEX
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "", -1, MFT_SEPARATOR
+        POPUP "&Programs", IDM_PROGRAMS
+        BEGIN
+            MENUITEM "(Empty)", -1, MFT_STRING, MFS_GRAYED
+        END
+        MENUITEM "Sh&ut Down...", IDM_SHUTDOWN, MFT_STRING, MFS_ENABLED
+    END
+END
+"""
+        self.create_testfile("simple.rc", rc_source)
+        self.create_testfile(
+            "simple.po",
+            """
+#: MENUEX.IDM_STARTMENU..MENUITEM.-1
+msgid "(Empty)"
+msgstr ""
+
+#: MENUEX.IDM_STARTMENU.MENUITEM.IDM_SHUTDOWN
+msgid "Sh&ut Down..."
+msgstr "Vypnout..."
+""",
+        )
+        self.run_command(
+            template="simple.rc",
+            i="simple.po",
+            o="output.rc",
+            l="LANG_CZECH",
+            errorlevel="exception",
+        )
+        with self.open_testfile("output.rc") as handle:
+            # Ignore whitespace changes (newlines are platform dependant)
+            assert [line.strip() for line in handle.read().decode().splitlines()] == [
+                line.strip()
+                for line in rc_source.replace("Sh&ut Down...", "Vypnout...")
+                .replace(
+                    "LANG_ENGLISH, SUBLANG_ENGLISH_US", "LANG_CZECH, SUBLANG_DEFAULT"
+                )
+                .splitlines()
+            ]
+        with self.open_testfile("output.rc") as handle:
+            rc_result = rcfile(handle)
+        assert len(rc_result.units) == 4
+        assert rc_result.units[3].target == "Vypnout..."
