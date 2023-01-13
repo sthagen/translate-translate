@@ -6,7 +6,7 @@ from translate.misc.multistring import multistring
 from translate.storage import base, jsonl10n, test_monolingual
 
 
-JSON_I18NEXT = b"""{
+JSON_I18NEXT = """{
     "key": "value",
     "keyDeep": {
         "inner": "value"
@@ -21,6 +21,24 @@ JSON_I18NEXT = b"""{
     "keyPluralMultipleEgArabic_5": "the plural form 5"
 }
 """
+
+JSON_I18NEXT_V4 = """{
+    "key": "value",
+    "keyDeep": {
+        "inner": "value"
+    },
+    "keyPluralSimple_one": "the singular",
+    "keyPluralSimple_other": "the plural",
+    "keyPluralMultipleEgArabic_zero": "the plural form 0",
+    "keyPluralMultipleEgArabic_one": "the plural form 1",
+    "keyPluralMultipleEgArabic_two": "the plural form 2",
+    "keyPluralMultipleEgArabic_few": "the plural form 3",
+    "keyPluralMultipleEgArabic_many": "the plural form 4",
+    "keyPluralMultipleEgArabic_other": "the plural form 5"
+}
+"""
+
+
 JSON_I18NEXT_PLURAL = b"""{
     "key": "value",
     "keyDeep": {
@@ -30,6 +48,7 @@ JSON_I18NEXT_PLURAL = b"""{
     "keyPluralMultipleEgArabic": "Nazdar"
 }
 """
+
 JSON_I18NEXT_NESTED_ARRAY = """{
     "apps": [
         {
@@ -83,6 +102,47 @@ JSON_COMPLEX_ARRAY = r"""[
     }
 ]
 """.encode()
+JSON_GOTEXT = b"""{
+    "language": "en-US",
+    "messages": [
+        {
+            "id": "tag",
+            "message": "{N} tags",
+            "translatorComment": "a piece or strip of strong paper, plastic, metal, leather, etc., for attaching by one end to something as a mark or label",
+            "translation": {
+                "select": {
+                    "feature": "plural",
+                    "arg": "N",
+                    "cases": {
+                        "one": {
+                            "msg": "{N} tag"
+                        },
+                        "other": {
+                            "msg": "{N} tags"
+                        }
+                    }
+                }
+            },
+            "placeholders": [
+                {
+                    "id": "N",
+                    "string": "%[1]d",
+                    "type": "int",
+                    "underlyingType": "int",
+                    "argNum": 1,
+                    "expr": "n"
+                }
+            ]
+        },
+        {
+            "id": "table",
+            "message": "Table",
+            "translatorComment": "an article of furniture consisting of a flat, slablike top supported on one or more legs or other supports",
+            "translation": "Table"
+        }
+    ]
+}
+"""
 JSON_GOI18N = b"""[
     {
         "id": "tag",
@@ -553,19 +613,22 @@ class TestI18NextStore(test_monolingual.TestMonolingualStore):
 
     def test_serialize(self):
         store = self.StoreClass()
+        store.settargetlanguage("ar")
         store.parse(JSON_I18NEXT)
         out = BytesIO()
         store.serialize(out)
 
-        assert out.getvalue() == JSON_I18NEXT
+        assert out.getvalue().decode() == JSON_I18NEXT
 
     def test_units(self):
         store = self.StoreClass()
+        store.settargetlanguage("ar")
         store.parse(JSON_I18NEXT)
         assert len(store.units) == 4
 
     def test_plurals(self):
         store = self.StoreClass()
+        store.settargetlanguage("ar")
         store.parse(JSON_I18NEXT)
 
         # Remove plurals
@@ -596,7 +659,7 @@ class TestI18NextStore(test_monolingual.TestMonolingualStore):
         out = BytesIO()
         store.serialize(out)
 
-        assert out.getvalue() == JSON_I18NEXT
+        assert out.getvalue().decode() == JSON_I18NEXT
 
     def test_nested_array(self):
         store = self.StoreClass()
@@ -611,9 +674,11 @@ class TestI18NextStore(test_monolingual.TestMonolingualStore):
         assert bytes(store).decode() == JSON_I18NEXT_NESTED_ARRAY
 
     def test_new_plural(self):
-        EXPECTED = b"""{
+        EXPECTED = """{
     "simple": "the singular",
     "simple_plural": "the plural",
+    "simple2": "the singular",
+    "simple2_plural": "the plural",
     "complex_0": "the plural form 0",
     "complex_1": "the plural form 1",
     "complex_2": "the plural form 2",
@@ -623,6 +688,7 @@ class TestI18NextStore(test_monolingual.TestMonolingualStore):
 }
 """
         store = self.StoreClass()
+        store.settargetlanguage("ar")
 
         unit = self.StoreClass.UnitClass(
             multistring(
@@ -638,22 +704,171 @@ class TestI18NextStore(test_monolingual.TestMonolingualStore):
         unit = self.StoreClass.UnitClass(
             multistring(
                 [
-                    "the plural form 0",
-                    "the plural form 1",
-                    "the plural form 2",
-                    "the plural form 3",
-                    "the plural form 4",
-                    "the plural form 5",
+                    "the singular",
+                    "the plural",
                 ]
             ),
+        )
+        unit.setid("simple2")
+        store.addunit(unit)
+
+        unit = self.StoreClass.UnitClass(
             "complex",
+            "complex",
+        )
+        unit.target = multistring(
+            [
+                "the plural form 0",
+                "the plural form 1",
+                "the plural form 2",
+                "the plural form 3",
+                "the plural form 4",
+                "the plural form 5",
+                "the plural form 6",
+            ]
         )
         store.addunit(unit)
 
         out = BytesIO()
         store.serialize(out)
 
-        assert out.getvalue() == EXPECTED
+        assert out.getvalue().decode() == EXPECTED
+
+
+class TestGoTextJsonFile(test_monolingual.TestMonolingualStore):
+    StoreClass = jsonl10n.GoTextJsonFile
+
+    def test_plurals(self):
+        store = self.StoreClass()
+        store.parse(JSON_GOTEXT)
+
+        assert len(store.units) == 2
+        assert store.units[0].target == multistring(["{N} tag", "{N} tags"])
+        assert store.units[1].target == "Table"
+
+        assert bytes(store).decode() == JSON_GOTEXT.decode()
+
+    def test_plurals_missing(self):
+        store = self.StoreClass()
+        store.parse(JSON_GOTEXT)
+
+        store.units[0].target = multistring(["{N} tag"])
+
+        assert (
+            '"other": {\n                            "msg": ""' in bytes(store).decode()
+        )
+
+
+class TestI18NextV4Store(test_monolingual.TestMonolingualStore):
+    StoreClass = jsonl10n.I18NextV4File
+
+    def test_serialize(self):
+        store = self.StoreClass()
+        store.targetlanguage = "ar"
+        store.parse(JSON_I18NEXT_V4)
+        out = BytesIO()
+        store.serialize(out)
+
+        assert out.getvalue().decode() == JSON_I18NEXT_V4
+
+    def test_units(self):
+        store = self.StoreClass()
+        store.targetlanguage = "ar"
+        store.parse(JSON_I18NEXT_V4)
+        assert len(store.units) == 4
+
+    def test_plurals(self):
+        store = self.StoreClass()
+        store.targetlanguage = "ar"
+        store.parse(JSON_I18NEXT_V4)
+
+        # Remove plurals
+        store.units[2].target = "Ahoj"
+        store.units[3].target = "Nazdar"
+        out = BytesIO()
+        store.serialize(out)
+
+        assert out.getvalue() == JSON_I18NEXT_PLURAL
+
+        # Bring back plurals
+        store.settargetlanguage("ar")
+        store.units[2].target = multistring(
+            [
+                "the singular",
+                "the plural",
+            ]
+        )
+        store.units[3].target = multistring(
+            [
+                "the plural form 0",
+                "the plural form 1",
+                "the plural form 2",
+                "the plural form 3",
+                "the plural form 4",
+                "the plural form 5",
+                "the plural form 6",
+            ]
+        )
+        out = BytesIO()
+        store.serialize(out)
+
+        assert out.getvalue().decode() == JSON_I18NEXT_V4
+
+    def test_nested_array(self):
+        store = self.StoreClass()
+        store.parse(JSON_I18NEXT_NESTED_ARRAY)
+
+        assert len(store.units) == 4
+        assert store.units[0].getid() == ".apps[0].title"
+        assert store.units[1].getid() == ".apps[0].description"
+        assert store.units[2].getid() == ".apps[1].title"
+        assert store.units[3].getid() == ".apps[1].description"
+
+        assert bytes(store).decode() == JSON_I18NEXT_NESTED_ARRAY
+
+    def test_new_plural(self):
+        EXPECTED = """{
+    "simple_one": "the singular",
+    "simple_other": "the plural",
+    "complex_zero": "the plural form 0",
+    "complex_one": "the plural form 1",
+    "complex_two": "the plural form 2",
+    "complex_few": "the plural form 3",
+    "complex_many": "the plural form 4",
+    "complex_other": "the plural form 5"
+}
+"""
+        store = self.StoreClass()
+        store.settargetlanguage("ar")
+
+        unit = self.StoreClass.UnitClass(
+            multistring(
+                [
+                    "the singular",
+                    "the plural",
+                ]
+            ),
+            "simple",
+        )
+        store.addunit(unit)
+
+        unit = self.StoreClass.UnitClass(
+            "complex",
+            "complex",
+        )
+        store.addunit(unit)
+        unit.target = multistring(
+            [
+                "the plural form 0",
+                "the plural form 1",
+                "the plural form 2",
+                "the plural form 3",
+                "the plural form 4",
+                "the plural form 5",
+            ]
+        )
+
+        assert bytes(store).decode() == EXPECTED
 
 
 class TestGoI18NJsonFile(test_monolingual.TestMonolingualStore):

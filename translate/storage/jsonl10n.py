@@ -111,6 +111,8 @@ class BaseJsonUnit(base.DictUnit):
     def setid(self, value):
         self._id = value
         self._unitid = None
+        self.get_unitid()
+        self._item = self._unitid.parts[-1][1]
 
     def getid(self):
         return self._id
@@ -166,6 +168,15 @@ class JsonFile(base.DictStore):
         }
         if inputfile is not None:
             self.parse(inputfile)
+
+    @property
+    def plural_tags(self):
+        locale = self.gettargetlanguage()
+        if locale:
+            locale = locale.replace("_", "-").split("-")[0]
+        else:
+            locale = "en"
+        return plural_tags.get(locale, plural_tags["en"])
 
     def serialize(self, out):
         units = self.get_root_node()
@@ -297,35 +308,43 @@ class I18NextUnit(JsonNestedUnit):
     See https://www.i18next.com/
     """
 
+    @staticmethod
+    def _is_valid_suffix(suffix: str) -> bool:
+        return suffix == "0"
+
+    def _get_base_name(self):
+        """Return base name for plurals"""
+        item = self._item[0]
+        if "_" in item:
+            plural_base, _sep, suffix = item.rpartition("_")
+            if self._is_valid_suffix(suffix):
+                return plural_base
+        return item
+
+    def _get_plural_labels(self, count):
+        base_name = self._get_base_name()
+        if count <= 2:
+            return [base_name, base_name + "_plural"][:count]
+        return [f"{base_name}_{i}" for i in range(count)]
+
+    def _fixup_item(self):
+        if isinstance(self._target, multistring):
+            count = len(self._target.strings)
+            if not isinstance(self._item, list):
+                self._item = [self._item]
+            if count != len(self._item):
+                # Generate new plural labels
+                self._item = self._get_plural_labels(count)
+        elif isinstance(self._item, list):
+            # Changing plural to singular
+            self._item = self._get_base_name()
+
     @property
     def target(self):
         return self._target
 
     @target.setter
     def target(self, target):
-        def get_base(item):
-            """Return base name for plurals"""
-            if "_0" in item[0]:
-                return item[0][:-2]
-            else:
-                return item[0]
-
-        def get_plurals(count, base):
-            if count <= 2:
-                return [base, base + "_plural"][:count]
-            return [f"{base}_{i}" for i in range(count)]
-
-        if isinstance(target, multistring):
-            count = len(target.strings)
-            if not isinstance(self._item, list):
-                self._item = [self._item]
-            if count != len(self._item):
-                # Generate new plural labels
-                self._item = get_plurals(count, get_base(self._item))
-        elif isinstance(self._item, list):
-            # Changing plural to singular
-            self._item = get_base(self._item)
-
         self._rich_target = None
         self._target = target
 
@@ -333,6 +352,11 @@ class I18NextUnit(JsonNestedUnit):
         if not isinstance(self.target, multistring):
             super().storevalues(output)
         else:
+            if len(self.target.strings) > len(self._store.plural_tags):
+                self.target.strings = self.target.strings[
+                    : len(self._store.plural_tags)
+                ]
+            self._fixup_item()
             for i, value in enumerate(self.target.strings):
                 self.storevalue(output, value, override_key=self._item[i])
 
@@ -402,10 +426,212 @@ class I18NextFile(JsonNestedFile):
                     v, stop, prev + [("key", k)], k, None, data
                 )
         else:
-            parent = super()._extract_units(
+            yield from super()._extract_units(
                 data, stop, prev, name_node, name_last_node, last_node
             )
-            yield from parent
+
+
+class I18NextV4Unit(I18NextUnit):
+    """A i18next v4 format, JSON with plurals.
+
+    See https://www.i18next.com/
+    """
+
+    @staticmethod
+    def _is_valid_suffix(suffix: str) -> bool:
+        return suffix in cldr_plural_categories
+
+    def _get_plural_labels(self, count):
+        base_name = self._get_base_name()
+        if count <= 2:
+            return [base_name + "_one", base_name + "_other"][:count]
+        return [f"{base_name}_{self._store.plural_tags[i]}" for i in range(count)]
+
+
+class I18NextV4File(JsonNestedFile):
+    """A i18next v4 format, this is nested JSON with several additions.
+
+    See https://www.i18next.com/
+    """
+
+    UnitClass = I18NextV4Unit
+
+    def _extract_units(
+        self,
+        data,
+        stop=None,
+        prev=None,
+        name_node=None,
+        name_last_node=None,
+        last_node=None,
+    ):
+        if prev is None:
+            prev = self.UnitClass.IdClass([])
+        if isinstance(data, dict):
+            processed = set()
+
+            for k, v in data.items():
+                # Check already processed items
+                if k in processed:
+                    continue
+
+                plurals = []
+                suffix = ""
+                plural_base = ""
+
+                if "_" in k:
+                    plural_base, suffix = k.rsplit("_", 1)
+
+                if suffix in cldr_plural_categories:
+                    plurals = [
+                        f"{plural_base}_{suffix}" for suffix in cldr_plural_categories
+                    ]
+
+                if plurals:
+                    sources = []
+                    items = []
+                    for key in plurals:
+                        if key not in data:
+                            continue
+                        processed.add(key)
+                        sources.append(data[key])
+                        items.append(key)
+
+                    unit = self.UnitClass(multistring(sources), items)
+                    newid = prev + [("key", plural_base)]
+                    unit.set_unitid(newid)
+                    yield unit
+                    continue
+
+                yield from self._extract_units(
+                    v, stop, prev + [("key", k)], k, None, data
+                )
+        else:
+            yield from super()._extract_units(
+                data, stop, prev, name_node, name_last_node, last_node
+            )
+
+
+class GoTextJsonUnit(BaseJsonUnit):
+    ID_FORMAT = "{}"
+
+    def __init__(
+        self,
+        source=None,
+        item=None,
+        notes=None,
+        placeholders=None,
+        comment=None,
+        message=None,
+        meaning=None,
+        key=None,
+        fuzzy=None,
+        position=None,
+        **kwargs,
+    ):
+        super().__init__(source, item, notes, placeholders)
+        self.comment = comment
+        self.message = message
+        self.meaning = meaning
+        self.key = key
+        self.fuzzy = fuzzy
+        self.position = position
+
+    def getvalue(self):
+        target = self.target
+        if isinstance(target, multistring):
+            strings = list(target.strings)
+            if len(self._store.plural_tags) > len(target.strings):
+                strings += [""] * (len(self._store.plural_tags) - len(target.strings))
+            target = {
+                "select": {
+                    "feature": "plural",
+                }
+            }
+            if self.placeholders:
+                target["select"]["arg"] = self.placeholders[0]["id"]
+            target["select"]["cases"] = {
+                plural: {"msg": strings[offset]}
+                for offset, plural in enumerate(self._store.plural_tags)
+            }
+        value = {"id": self.getid()}
+        if self.message:
+            value["message"] = self.message
+        if self.notes:
+            value["translatorComment"] = self.notes
+        if self.comment:
+            value["comment"] = self.comment
+        if self.key:
+            value["key"] = self.key
+        if self.fuzzy:
+            value["fuzzy"] = self.fuzzy
+        if self.position:
+            value["position"] = self.position
+        value["translation"] = target
+        if self.placeholders:
+            value["placeholders"] = self.placeholders
+        return value
+
+
+class GoTextJsonFile(JsonFile):
+    """gotext JSON file
+
+    See following URLs for doc:
+
+    https://pkg.go.dev/golang.org/x/text/cmd/gotext
+    https://github.com/golang/text/tree/master/cmd/gotext/examples/extract/locales/en-US
+    """
+
+    UnitClass = GoTextJsonUnit
+
+    def _extract_units(
+        self,
+        data,
+        stop=None,
+        prev=None,
+        name_node=None,
+        name_last_node=None,
+        last_node=None,
+    ):
+        if prev is None:
+            lang = data.get("language")
+            if lang is not None:
+                self.settargetlanguage(lang)
+        for value in data["messages"]:
+            translation = value.get("translation", "")
+            if isinstance(translation, dict):
+                cases = translation.get("select", {}).get("cases", {})
+                # Ordered list of plurals
+                translation = multistring(
+                    [
+                        cases.get(key, {}).get("msg")
+                        for key in cldr_plural_categories
+                        if key in cases
+                    ]
+                )
+            unit = self.UnitClass(
+                source=translation,
+                item=value.get("id", ""),
+                notes=value.get("translatorComment", ""),
+                placeholders=value.get("placeholders", []),
+                comment=value.get("comment", None),
+                message=value.get("message", None),
+                meaning=value.get("meaning", None),
+                key=value.get("key", None),
+                fuzzy=value.get("fuzzy", None),
+                position=value.get("position", None),
+            )
+            unit.setid(value.get("id", ""))
+            yield unit
+
+    def serialize(self, out):
+        units = [unit.getvalue() for unit in self.units]
+        file = {
+            "language": self.gettargetlanguage(),
+            "messages": units,
+        }
+        out.write(json.dumps(file, **self.dump_args).encode(self.encoding))
+        out.write(b"\n")
 
 
 class GoI18NJsonUnit(BaseJsonUnit):
@@ -438,15 +664,6 @@ class GoI18NJsonFile(JsonFile):
     """
 
     UnitClass = GoI18NJsonUnit
-
-    @property
-    def plural_tags(self):
-        locale = self.gettargetlanguage()
-        if locale:
-            locale = locale.replace("_", "-").split("-")[0]
-        else:
-            locale = "en"
-        return plural_tags.get(locale, plural_tags["en"])
 
     def _extract_units(
         self,
