@@ -38,6 +38,25 @@ JSON_I18NEXT_V4 = """{
 }
 """
 
+JSON_I18NEXT_V4_FIXED = """{
+    "key": "value",
+    "keyDeep": {
+        "inner": "value"
+    },
+    "keyPluralSimple_zero": "",
+    "keyPluralSimple_one": "the singular",
+    "keyPluralSimple_two": "",
+    "keyPluralSimple_few": "",
+    "keyPluralSimple_many": "",
+    "keyPluralSimple_other": "the plural",
+    "keyPluralMultipleEgArabic_zero": "the plural form 0",
+    "keyPluralMultipleEgArabic_one": "the plural form 1",
+    "keyPluralMultipleEgArabic_two": "the plural form 2",
+    "keyPluralMultipleEgArabic_few": "the plural form 3",
+    "keyPluralMultipleEgArabic_many": "the plural form 4",
+    "keyPluralMultipleEgArabic_other": "the plural form 5"
+}
+"""
 
 JSON_I18NEXT_PLURAL = b"""{
     "key": "value",
@@ -544,6 +563,19 @@ class TestJSONNestedResourceStore(test_monolingual.TestMonolingualUnit):
 """
         )
 
+    def test_complex_keys(self):
+        data = """{
+    "view": {
+        "([^.,0-9]|^)1([^.,0-9]|$)": "View `x` comment",
+        "": "View `x` comments"
+    }
+}
+"""
+        store = self.StoreClass()
+        store.parse(data)
+        assert len(store.units) == 2
+        assert bytes(store).decode() == data
+
 
 class TestWebExtensionUnit(test_monolingual.TestMonolingualUnit):
     UnitClass = jsonl10n.WebExtensionJsonUnit
@@ -734,6 +766,26 @@ class TestI18NextStore(test_monolingual.TestMonolingualStore):
 
         assert out.getvalue().decode() == EXPECTED
 
+    def test_new_plural_id(self):
+        EXPECTED = """{
+    "simple_0": "the singular"
+}
+"""
+        store = self.StoreClass()
+        store.settargetlanguage("id")
+
+        unit = self.StoreClass.UnitClass(
+            multistring(
+                [
+                    "the singular",
+                ]
+            ),
+            "simple",
+        )
+        store.addunit(unit)
+
+        assert bytes(store).decode() == EXPECTED
+
 
 class TestGoTextJsonFile(test_monolingual.TestMonolingualStore):
     StoreClass = jsonl10n.GoTextJsonFile
@@ -769,7 +821,8 @@ class TestI18NextV4Store(test_monolingual.TestMonolingualStore):
         out = BytesIO()
         store.serialize(out)
 
-        assert out.getvalue().decode() == JSON_I18NEXT_V4
+        # This will add missing plurals
+        assert out.getvalue().decode() == JSON_I18NEXT_V4_FIXED
 
     def test_units(self):
         store = self.StoreClass()
@@ -794,7 +847,11 @@ class TestI18NextV4Store(test_monolingual.TestMonolingualStore):
         store.settargetlanguage("ar")
         store.units[2].target = multistring(
             [
+                "",
                 "the singular",
+                "",
+                "",
+                "",
                 "the plural",
             ]
         )
@@ -812,7 +869,7 @@ class TestI18NextV4Store(test_monolingual.TestMonolingualStore):
         out = BytesIO()
         store.serialize(out)
 
-        assert out.getvalue().decode() == JSON_I18NEXT_V4
+        assert out.getvalue().decode() == JSON_I18NEXT_V4_FIXED
 
     def test_nested_array(self):
         store = self.StoreClass()
@@ -828,8 +885,8 @@ class TestI18NextV4Store(test_monolingual.TestMonolingualStore):
 
     def test_new_plural(self):
         EXPECTED = """{
-    "simple_one": "the singular",
-    "simple_other": "the plural",
+    "simple_zero": "the singular",
+    "simple_one": "the plural",
     "complex_zero": "the plural form 0",
     "complex_one": "the plural form 1",
     "complex_two": "the plural form 2",
