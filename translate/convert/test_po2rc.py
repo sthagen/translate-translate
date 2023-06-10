@@ -28,6 +28,7 @@ BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,44,74,20,20
     CTEXT           "Use your finger to activate the program.",IDC_ACTIVADA,17,50,175,17
     ICON            IDR_MAINFRAME1,IDC_STATIC6,18,19,20,20
+    // Comment
 END
 
 MainMenu MENU
@@ -58,6 +59,11 @@ msgstr "Licenční dialog"
 msgid "My very good program"
 msgstr "Mój bardzo dobry program"
 """
+POFILE_QUOTES = r"""
+#: DIALOGEX.IDD_REGGHC_DIALOG.CTEXT.IDC_STATIC1
+msgid "My very good program"
+msgstr "My \"good\" program"
+"""
 
 
 class TestPO2RCCommand(test_convert.TestConvertCommand):
@@ -87,6 +93,20 @@ class TestPO2RCCommand(test_convert.TestConvertCommand):
         assert len(rc_result.units) == 14
         assert rc_result.units[0].target == "Licenční dialog"
         assert rc_result.units[4].target == "Mój bardzo dobry program"
+
+    def test_convert_quotes(self):
+        """Tests the conversion to a po file"""
+        self.create_testfile("simple.rc", RC_SOURCE)
+        self.create_testfile("simple.po", POFILE_QUOTES)
+        self.run_command(
+            template="simple.rc", i="simple.po", o="output.rc", l="LANG_CZECH"
+        )
+        with self.open_testfile("output.rc") as handle:
+            print(handle.read())
+        with self.open_testfile("output.rc") as handle:
+            rc_result = rcfile(handle)
+        assert len(rc_result.units) == 14
+        assert rc_result.units[4].target == 'My "good" program'
 
     def test_convert_comment(self):
         self.create_testfile(
@@ -310,3 +330,40 @@ msgstr "Vypnout..."
             rc_result = rcfile(handle)
         assert len(rc_result.units) == 4
         assert rc_result.units[3].target == "Vypnout..."
+
+    def test_convert_newlines(self):
+        """Tests the conversion to a po file"""
+        source = """
+STRINGTABLE
+BEGIN
+ID_T_1 "Hello"
+END
+"""
+        expected = """
+STRINGTABLE
+BEGIN
+    ID_T_1                  "Ahoj"
+END
+"""
+        pofile = """
+#: STRINGTABLE.ID_T_1
+msgid "Hello"
+msgstr "Ahoj"
+"""
+        self.create_testfile("simple.rc", "\r\n".join(source.splitlines()))
+        self.create_testfile("simple.po", pofile)
+        self.run_command(
+            template="simple.rc", i="simple.po", o="output.rc", l="LANG_CZECH"
+        )
+        with self.open_testfile("output.rc", "rb") as handle:
+            content = handle.read()
+            assert content == "\r\n".join(expected.splitlines()).encode()
+
+        self.create_testfile("simple.rc", "\n".join(source.splitlines()))
+        self.create_testfile("simple.po", pofile)
+        self.run_command(
+            template="simple.rc", i="simple.po", o="output.rc", l="LANG_CZECH"
+        )
+        with self.open_testfile("output.rc", "rb") as handle:
+            content = handle.read()
+            assert content == "\n".join(expected.splitlines()).encode()

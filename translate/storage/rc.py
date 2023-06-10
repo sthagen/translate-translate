@@ -52,20 +52,16 @@ from translate.storage import base
 
 
 def escape_to_python(string):
-    """Escape a given .rc string into a valid Python string."""
-    pystring = re.sub('"\\s*\\\\\n\\s*"', "", string)  # xxx"\n"xxx line continuation
-    pystring = re.sub("\\\\\\\n", "", pystring)  # backslash newline line continuation
-    pystring = re.sub(
-        "\\\\n", "\n", pystring
-    )  # Convert escaped newline to a real newline
-    pystring = re.sub(
-        "\\\\r", "\r", pystring
-    )  # Convert escaped carriage-return to a real carriage-return
-    pystring = re.sub("\\\\t", "\t", pystring)  # Convert escape tab to a real tab
-    pystring = re.sub(
-        "\\\\\\\\", "\\\\", pystring
-    )  # Convert escape backslash to a real escaped backslash
-    return pystring
+    """Unescape a given .rc string into a valid Python string."""
+    return (
+        re.sub('"\\s*\\\\\n\\s*"', "", string)  # xxx"\n"xxx line continuation
+        .replace("\\\n", "")  # backslash newline line continuation
+        .replace(r"\r", "\r")
+        .replace(r"\n", "\n")
+        .replace(r"\t", "\t")
+        .replace(r"\\", "\\")
+        .replace('""', '"')
+    )
 
 
 def extract_text(values):
@@ -92,11 +88,13 @@ def extract_id(values):
 
 def escape_to_rc(string):
     """Escape a given Python string into a valid .rc string."""
-    rcstring = re.sub("\\\\", "\\\\\\\\", string)
-    rcstring = re.sub("\t", "\\\\t", rcstring)
-    rcstring = re.sub("\n", "\\\\n", rcstring)
-    rcstring = re.sub("\r", "\\\\r", rcstring)
-    return rcstring
+    return (
+        string.replace("\\", r"\\")
+        .replace("\t", r"\t")
+        .replace("\n", r"\n")
+        .replace("\r", r"\r")
+        .replace('"', '""')
+    )
 
 
 class rcunit(base.TranslationUnit):
@@ -329,6 +327,7 @@ class rcfile(base.TranslationStore):
         self.filename = getattr(inputfile, "name", "")
         self.lang = lang
         self.sublang = sublang
+        self.newline = "\r\n"
         if inputfile is not None:
             rcsrc = inputfile.read()
             inputfile.close()
@@ -377,6 +376,14 @@ class rcfile(base.TranslationStore):
             decoded, self.encoding = self.detect_encoding(
                 rcsrc, default_encodings=[self.default_encoding]
             )
+
+        # Extract first newline
+        for line in decoded.splitlines(True):
+            if len(line) >= 2 and line[-2] in ("\r", "\n"):
+                self.newline = line[-2:]
+            else:
+                self.newline = line[-1]
+            break
 
         decoded = decoded.replace("\r", "")
 
