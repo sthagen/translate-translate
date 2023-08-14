@@ -23,7 +23,7 @@ project = "Translate Toolkit"
 copyright = "2002-2023, Translate"
 
 # The short X.Y version.
-version = "3.9.2"
+version = "3.10.0"
 
 # The full version, including alpha/beta/rc tags
 release = version
@@ -63,6 +63,7 @@ autodoc_mock_imports = [
     "gtk",
     "iniparse",
     "vobject",
+    "mistletoe",
 ]
 
 # -- Options for HTML output -------------------------------------------------

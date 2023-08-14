@@ -10,6 +10,7 @@ Converters
    :hidden:
 
    general_usage
+   android2po
    csv2po
    csv2tbx
    flatxml2po
@@ -17,6 +18,7 @@ Converters
    ical2po
    ini2po
    json2po
+   md2po
    moz2po
    odf2xliff
    oo2po
@@ -54,6 +56,7 @@ one direction is supported, or conversion is done using non-PO formats.  The
 converters follow a :doc:`general pattern of usage <general_usage>`,
 understanding that will make the converters much easier to use and understand.
 
+* :doc:`android2po <android2po>` -- Android resources to PO converter
 * :doc:`csv2po <csv2po>` -- Comma Separated Value (CSV) converter. Useful for
   doing translations using a spreadsheet.
 * :doc:`csv2tbx <csv2tbx>` -- Create TBX (TermBase eXchange) files from Comma
@@ -63,6 +66,7 @@ understanding that will make the converters much easier to use and understand.
 * :doc:`ical2po <ical2po>` -- iCalendar file converter
 * :doc:`ini2po <ini2po>` -- Windows INI file converter
 * :doc:`json2po <json2po>` -- JSON file converter
+* :doc:`md2po <md2po>` -- Markdown file converter
 * :doc:`moz2po <moz2po>` -- Mozilla .properties and .dtd converter.  Works with
   Firefox and Thunderbird
 * :doc:`odf2xliff <odf2xliff>` -- Convert OpenDocument (ODF) documents to XLIFF
