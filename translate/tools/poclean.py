@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Produces a clean file from an unclean file (Trados/Wordfast) by stripping
+"""
+Produces a clean file from an unclean file (Trados/Wordfast) by stripping
 out the tw4win indicators.
 
 This does not convert an RTF file to PO/XLIFF, but produces the target file
@@ -32,14 +33,13 @@ tw4winre = re.compile(r"\{0>.*?<\}\d{1,3}\{>(.*?)<0\}", re.M | re.S)
 
 
 def cleanunit(unit):
-    """cleans the targets in the given unit"""
+    """Cleans the targets in the given unit."""
     if isinstance(unit.target, multistring):
         strings = unit.target.strings
     else:
         strings = [unit.target]
     for index, string in enumerate(strings):
-        string = string.replace(r"\par", "")
-        strings[index] = tw4winre.sub(r"\1", string)
+        strings[index] = tw4winre.sub(r"\1", string.replace(r"\par", ""))
     if len(strings) == 1:
         unit.target = strings[0]
     else:
@@ -47,14 +47,14 @@ def cleanunit(unit):
 
 
 def cleanfile(thefile):
-    """cleans the given file"""
+    """Cleans the given file."""
     for unit in thefile.units:
         cleanunit(unit)
     return thefile
 
 
 def runclean(inputfile, outputfile, templatefile):
-    """reads in inputfile, cleans, writes to outputfile"""
+    """Reads in inputfile, cleans, writes to outputfile."""
     fromfile = factory.getobject(inputfile)
 
     cleanfile(fromfile)

@@ -37,7 +37,7 @@ class Builder:
             if not os.path.exists(filename):
                 logger.error("cannot process %s: does not exist", filename)
                 continue
-            elif os.path.isdir(filename):
+            if os.path.isdir(filename):
                 self.handledir(filename)
             else:
                 self.handlefile(filename)
@@ -46,8 +46,8 @@ class Builder:
     def handlefile(self, filename):
         try:
             store = factory.getobject(filename)
-        except Exception as e:
-            logger.error(str(e))
+        except Exception:
+            logger.exception("Failed to handle file")
             return
         # do something useful with the store and db
         try:

@@ -19,7 +19,8 @@
 # Original Author: Dan Schafer <dschafer@mozilla.com>
 # Date: 10 Jun 2008
 
-"""A class to manage Mozilla .lang files.
+"""
+A class to manage Mozilla .lang files.
 
 See https://github.com/mozilla-l10n/langchecker/wiki/.lang-files-format for
 specifications on the format.
@@ -31,13 +32,13 @@ from translate.storage import base, txt
 
 def strip_ok(string):
     tmpstring = string.rstrip()
-    if tmpstring.endswith("{ok}") or tmpstring.endswith("{OK}"):
+    if tmpstring.endswith(("{ok}", "{OK}")):
         return tmpstring[:-4].rstrip()
     return string
 
 
 class LangUnit(base.TranslationUnit):
-    """This is just a normal unit with a weird string output"""
+    """This is just a normal unit with a weird string output."""
 
     def __init__(self, source=None):
         self.locations = []
@@ -46,10 +47,7 @@ class LangUnit(base.TranslationUnit):
         super().__init__(source)
 
     def __str__(self):
-        if self.istranslated():
-            target = self.target
-        else:
-            target = self.source
+        target = self.target if self.istranslated() else self.source
         if self.source == self.target:
             target = self.target + " {ok}"
         if (
@@ -76,7 +74,7 @@ class LangUnit(base.TranslationUnit):
 
 
 class LangStore(txt.TxtFile):
-    """We extend TxtFile, since that has a lot of useful stuff for encoding"""
+    """We extend TxtFile, since that has a lot of useful stuff for encoding."""
 
     UnitClass = LangUnit
 
@@ -133,8 +131,7 @@ class LangStore(txt.TxtFile):
 
             is_comment = line.startswith("#") and (
                 not line.startswith("##")
-                or line.startswith("## TAG")
-                or line.startswith("## MAX_LENGTH")
+                or line.startswith(("## TAG", "## MAX_LENGTH"))
             )
             if is_comment:
                 # Read comments, *including* meta tags (e.g. '## TAG')

@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Convert .Net Resource (.resx) to Gettext PO localisation files.
+"""
+Convert .Net Resource (.resx) to Gettext PO localisation files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/resx2po.html
 for examples and usage instructions.
@@ -31,10 +32,10 @@ logger = logging.getLogger(__name__)
 
 
 class resx2po:
-    """Convert a RESX file to a PO file for handling translation"""
+    """Convert a RESX file to a PO file for handling translation."""
 
     def convert_store(self, input_store, duplicatestyle="msgctxt"):
-        """Converts a RESX file to a PO file"""
+        """Converts a RESX file to a PO file."""
         output_store = po.pofile()
         output_header = output_store.init_headers(
             charset="UTF-8", encoding="8bit", x_accelerator_marker="&"
@@ -55,7 +56,7 @@ class resx2po:
     def merge_store(
         self, template_store, input_store, blankmsgstr=False, duplicatestyle="msgctxt"
     ):
-        """Converts two RESX files to a PO file"""
+        """Converts two RESX files to a PO file."""
         output_store = po.pofile()
         output_header = output_store.init_headers(
             charset="UTF-8", encoding="8bit", x_accelerator_marker="&"
@@ -107,8 +108,9 @@ class resx2po:
 
     @staticmethod
     def convert_unit(input_unit, commenttype):
-        """Converts a RESX unit to a PO unit
-        @return: None if empty or not for translation
+        """
+        Converts a RESX unit to a PO unit
+        @return: None if empty or not for translation.
         """
         if input_unit is None:
             return None

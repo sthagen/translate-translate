@@ -6,7 +6,7 @@ from translate.storage import po, poheader, poxliff
 
 
 def test_parseheaderstring():
-    """test for the header parsing function"""
+    """Test for the header parsing function."""
     source = r"""item1: one
 item2: two:two
 this item must get ignored because there is no colon sign in it
@@ -21,7 +21,7 @@ item3: three
 
 
 def test_update():
-    """test the update function"""
+    """Test the update function."""
     # do we really add nothing if add==False ?
     d = poheader.update({}, test="hello")
     assert len(d) == 0
@@ -50,24 +50,24 @@ def test_update():
 
 
 def poparse(posource):
-    """helper that parses po source without requiring files"""
+    """Helper that parses po source without requiring files."""
     dummyfile = BytesIO(posource.encode())
     return po.pofile(dummyfile)
 
 
 def poxliffparse(posource):
-    """helper that parses po source into poxliffFile"""
+    """Helper that parses po source into poxliffFile."""
     poxli = poxliff.PoXliffFile()
     poxli.parse(posource)
     return poxli
 
 
 def check_po_date(datestring):
-    """Check the validity of a PO date.
+    """
+    Check the validity of a PO date.
 
     The datestring must be in the format: 2007-06-08 10:08+0200
     """
-
     # We don't include the timezone offset as part of our format,
     # because time.strptime() does not recognize %z
     # The use of %z is deprecated in any case.
@@ -75,7 +75,7 @@ def check_po_date(datestring):
 
     # Get the timezone offset (last 4 digits):
     tz = datestring[-4:]
-    assert type(int(tz)) is int
+    assert isinstance(int(tz), int)
 
     # Strip the timezone from the string, typically something like "+0200".
     # This is to make the datestring conform to the specified format,
@@ -128,7 +128,7 @@ def test_timezones():
 
 
 def test_header_blank():
-    """test header functionality"""
+    """Test header functionality."""
 
     def compare(pofile):
         print(pofile)
@@ -201,7 +201,7 @@ msgstr ""
 def test_plural_equation():
     """
     test that we work with the equation even is the last semicolon is left out, since gettext
-    tools don't seem to mind
+    tools don't seem to mind.
     """
     posource = r"""msgid ""
 msgstr ""
@@ -225,7 +225,7 @@ msgstr ""
 
 
 def test_plural_equation_across_lines():
-    """test that we work if the plural equation spans more than one line"""
+    """Test that we work if the plural equation spans more than one line."""
     posource = r"""msgid ""
 msgstr ""
 "Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
@@ -274,7 +274,7 @@ msgstr ""
 
 
 def test_updatecontributor_header():
-    """Test preserving empty lines in comments"""
+    """Test preserving empty lines in comments."""
     posource = r"""# Japanese translation of ibus.
 # Copyright (C) 2015-2019 Takao Fujiwara <takao.fujiwara1@gmail.com>
 # This file is distributed under the same license as the ibus package.

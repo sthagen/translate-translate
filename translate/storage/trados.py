@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-r"""Manage the Trados .txt Translation Memory format
+r"""
+Manage the Trados .txt Translation Memory format.
 
 A Trados file looks like this:
 
@@ -93,21 +94,21 @@ http://msdn.microsoft.com/en-us/library/aa140283(v=office.10).aspx
 
 
 def unescape(text):
-    """Convert Trados text to normal Unicode string"""
+    """Convert Trados text to normal Unicode string."""
     for trados_escape, char in RTF_ESCAPES.items():
         text = text.replace(trados_escape, char)
     return text
 
 
 def escape(text):
-    """Convert Unicode string to Trodas escapes"""
+    """Convert Unicode string to Trodas escapes."""
     for trados_escape, char in RTF_ESCAPES.items():
         text = text.replace(char, trados_escape)
     return text
 
 
 class TradosTxtDate:
-    """Manages the timestamps in the Trados .txt format of DDMMYYY, hh:mm:ss"""
+    """Manages the timestamps in the Trados .txt format of DDMMYYY, hh:mm:ss."""
 
     def __init__(self, newtime=None):
         self._time = None
@@ -118,14 +119,14 @@ class TradosTxtDate:
                 self.time = newtime
 
     def get_timestring(self):
-        """Get the time in the Trados time format"""
+        """Get the time in the Trados time format."""
         if not self._time:
             return None
-        else:
-            return time.strftime(TRADOS_TIMEFORMAT, self._time)
+        return time.strftime(TRADOS_TIMEFORMAT, self._time)
 
     def set_timestring(self, timestring):
-        """Set the time_struct object using a Trados time formated string
+        """
+        Set the time_struct object using a Trados time formated string.
 
         :param timestring: A Trados time string (DDMMYYYY, hh:mm:ss)
         :type timestring: String
@@ -135,11 +136,12 @@ class TradosTxtDate:
     timestring = property(get_timestring, set_timestring)
 
     def get_time(self):
-        """Get the time_struct object"""
+        """Get the time_struct object."""
         return self._time
 
     def set_time(self, newtime):
-        """Set the time_struct object
+        """
+        Set the time_struct object.
 
         :param newtime: a new time object
         :type newtime: time.time_struct
@@ -154,8 +156,7 @@ class TradosTxtDate:
     def __str__(self):
         if not self.timestring:
             return ""
-        else:
-            return self.timestring
+        return self.timestring
 
 
 class TradosUnit(base.TranslationUnit):
@@ -181,13 +182,13 @@ class TradosSoup(BeautifulSoup):
     MARKUP_MASSAGE = [
         (
             re.compile("<(?P<fulltag>(?P<tag>[^\\s\\/]+).*?)>(?P<content>.+)\r"),
-            lambda x: "<%(fulltag)s>%(content)s</%(tag)s>" % x.groupdict(),
+            lambda x: "<{fulltag}>{content}</{tag}>".format(**x.groupdict()),
         ),
     ]
 
 
 class TradosTxtTmFile(base.TranslationStore):
-    """A Trados translation memory file"""
+    """A Trados translation memory file."""
 
     Name = "Trados Translation Memory"
     Mimetypes = ["application/x-trados-tm"]
@@ -196,7 +197,7 @@ class TradosTxtTmFile(base.TranslationStore):
     default_encoding = "iso-8859-1"
 
     def __init__(self, inputfile=None, **kwargs):
-        """construct a Wordfast TM, optionally reading in from inputfile."""
+        """Construct a Wordfast TM, optionally reading in from inputfile."""
         super().__init__(**kwargs)
         self.filename = ""
         if inputfile is not None:

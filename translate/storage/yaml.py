@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-r"""Class that manages YAML data files for translation
-"""
+r"""Class that manages YAML data files for translation."""
 
 import uuid
 
@@ -42,7 +41,7 @@ class YAMLUnitId(base.UnitId):
 
 
 class YAMLUnit(base.DictUnit):
-    """A YAML entry"""
+    """A YAML entry."""
 
     IdClass = YAMLUnitId
 
@@ -77,12 +76,12 @@ class YAMLUnit(base.DictUnit):
 
 
 class YAMLFile(base.DictStore):
-    """A YAML file"""
+    """A YAML file."""
 
     UnitClass = YAMLUnit
 
     def __init__(self, inputfile=None, **kwargs):
-        """construct a YAML file, optionally reading in from inputfile."""
+        """Construct a YAML file, optionally reading in from inputfile."""
         super().__init__(**kwargs)
         self.filename = ""
         self._original = self.get_root_node()
@@ -94,7 +93,7 @@ class YAMLFile(base.DictStore):
             self.parse(inputfile)
 
     def get_root_node(self):
-        """Returns root node for serialize"""
+        """Returns root node for serialize."""
         return CommentedMap()
 
     @property
@@ -116,7 +115,7 @@ class YAMLFile(base.DictStore):
     def _parse_dict(self, data, prev):
         # Avoid using merged items, it is enough to have them once
         for k, v in data.non_merged_items():
-            yield from self._flatten(v, prev + [("key", k)])
+            yield from self._flatten(v, prev.extend("key", k))
 
     def _flatten(self, data, prev=None):
         """Flatten YAML dictionary."""
@@ -124,33 +123,32 @@ class YAMLFile(base.DictStore):
             prev = self.UnitClass.IdClass([])
         if isinstance(data, dict):
             yield from self._parse_dict(data, prev)
+        elif isinstance(data, str):
+            yield (prev, data)
+        elif isinstance(data, (bool, int)):
+            yield (prev, str(data))
+        elif isinstance(data, list):
+            for k, v in enumerate(data):
+                yield from self._flatten(v, prev.extend("index", k))
+        elif isinstance(data, TaggedScalar):
+            yield (prev, data.value)
+        elif data is None:
+            pass
         else:
-            if isinstance(data, str):
-                yield (prev, data)
-            elif isinstance(data, (bool, int)):
-                yield (prev, str(data))
-            elif isinstance(data, list):
-                for k, v in enumerate(data):
-                    yield from self._flatten(v, prev + [("index", k)])
-            elif isinstance(data, TaggedScalar):
-                yield (prev, data.value)
-            elif data is None:
-                pass
-            else:
-                raise ValueError(
-                    "We don't handle these values:\n"
-                    "Type: %s\n"
-                    "Data: %s\n"
-                    "Previous: %s" % (type(data), data, prev)
-                )
+            raise ValueError(
+                "We don't handle these values:\n"
+                f"Type: {type(data)}\n"
+                f"Data: {data}\n"
+                f"Previous: {prev}"
+            )
 
     @staticmethod
     def preprocess(data):
-        """Preprocess hook for child formats"""
+        """Preprocess hook for child formats."""
         return data
 
     def parse(self, input):
-        """parse the given file or file source string"""
+        """Parse the given file or file source string."""
         if hasattr(input, "name"):
             self.filename = input.name
         elif not getattr(self, "filename", ""):
@@ -207,7 +205,7 @@ class RubyYAMLFile(YAMLFile):
 
     def preprocess(self, data):
         if isinstance(data, CommentedMap) and len(data) == 1:
-            lang = list(data.keys())[0]
+            lang = next(iter(data.keys()))
             self.settargetlanguage(lang)
             if data[lang] is None:
                 data[lang] = CommentedMap()
@@ -215,14 +213,14 @@ class RubyYAMLFile(YAMLFile):
         return data
 
     def get_root_node(self):
-        """Returns root node for serialize"""
+        """Returns root node for serialize."""
         result = CommentedMap()
         result[self.targetlanguage or "en"] = CommentedMap()
         return result
 
     def _parse_dict(self, data, prev):
         # Does this look like a plural?
-        if data and all(x in cldr_plural_categories for x in data.keys()):
+        if data and all(x in cldr_plural_categories for x in data):
             # Ensure we have correct plurals ordering.
             values = [data[item] for item in cldr_plural_categories if item in data]
             yield (prev, multistring(values))

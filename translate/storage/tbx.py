@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""module for handling TBX glossary files"""
+"""module for handling TBX glossary files."""
 
 from lxml import etree
 
@@ -25,7 +25,8 @@ from translate.storage import lisa
 
 
 class tbxunit(lisa.LISAunit):
-    """A single term in the TBX file.  Provisional work is done to make several
+    """
+    A single term in the TBX file.  Provisional work is done to make several
     languages possible.
     """
 
@@ -34,7 +35,7 @@ class tbxunit(lisa.LISAunit):
     textNode = "term"
 
     def createlanguageNode(self, lang, text, purpose):
-        """returns a langset xml Element setup with given parameters"""
+        """Returns a langset xml Element setup with given parameters."""
         langset = etree.Element(self.languageNode)
         setXMLlang(langset, lang)
         tig = etree.SubElement(langset, "tig")  # or ntig with termGrp inside
@@ -54,7 +55,7 @@ class tbxunit(lisa.LISAunit):
     def _get_origin_element(self, origin: str):
         if origin == "pos":
             return self.namespaced("termNote")
-        elif origin == "definition":
+        if origin == "definition":
             return self.namespaced("descrip")
         return self.namespaced("note")
 
@@ -65,7 +66,7 @@ class tbxunit(lisa.LISAunit):
             self.xmlelement.remove(note)
 
     def addnote(self, text, origin=None, position="append"):
-        """Add a note specifically in a "note" tag"""
+        """Add a note specifically in a "note" tag."""
         if position != "append":
             self.removenotes(origin=origin)
 
@@ -79,7 +80,8 @@ class tbxunit(lisa.LISAunit):
             note.set("from", origin)
 
     def _getnotelist(self, origin=None):
-        """Returns the text from notes matching ``origin`` or all notes.
+        """
+        Returns the text from notes matching ``origin`` or all notes.
 
         :param origin: The origin of the note (or note type)
         :type origin: String

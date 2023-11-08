@@ -17,7 +17,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Convert HTML files to Gettext PO localization files.
+"""
+Convert HTML files to Gettext PO localization files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/html2po.html
 for examples and usage instructions.
@@ -60,8 +61,9 @@ def converthtml(
     duplicatestyle="msgctxt",
     keepcomments=False,
 ):
-    """reads in stdin using fromfileclass, converts using convertorclass,
-    writes to stdout
+    """
+    reads in stdin using fromfileclass, converts using convertorclass,
+    writes to stdout.
     """
     convertor = html2po()
     outputstore = convertor.convertfile(
@@ -120,7 +122,7 @@ class Html2POOptionParser(convert.ConvertOptionParser):
         return 1
 
     def recursiveprocess(self, options):
-        """Recurse through directories and process files. (override)"""
+        """Recurse through directories and process files. (override)."""
         if options.multifilestyle == "onefile":
             self.outputstore = po.pofile()
             super().recursiveprocess(options)
@@ -134,21 +136,22 @@ class Html2POOptionParser(convert.ConvertOptionParser):
             super().recursiveprocess(options)
 
     def isrecursive(self, fileoption, filepurpose="input"):
-        """Check if fileoption is a recursive file. (override)"""
+        """Check if fileoption is a recursive file. (override)."""
         if hasattr(self, "outputstore") and filepurpose == "output":
             return True
         return super().isrecursive(fileoption, filepurpose=filepurpose)
 
     def checkoutputsubdir(self, options, subdir):
-        """Check if subdir under options.output needs to be created,
-        creates if neccessary. Do nothing if in single-output-file mode. (override)
+        """
+        Check if subdir under options.output needs to be created,
+        creates if neccessary. Do nothing if in single-output-file mode. (override).
         """
         if hasattr(self, "outputstore"):
             return
         super().checkoutputsubdir(options, subdir)
 
     def openoutputfile(self, options, fulloutputpath):
-        """Open the output file, or do nothing if in single-output-file mode. (override)"""
+        """Open the output file, or do nothing if in single-output-file mode. (override)."""
         if hasattr(self, "outputstore"):
             return None
         return super().openoutputfile(options, fulloutputpath)

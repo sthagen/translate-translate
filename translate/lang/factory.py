@@ -29,7 +29,8 @@ prefix = "code_"
 
 @lru_cache(maxsize=128)
 def getlanguage(code):
-    """This returns a language class.
+    """
+    This returns a language class.
 
     :param code: The ISO 639 language code
     """
@@ -38,10 +39,7 @@ def getlanguage(code):
     try:
         if code is None:
             raise ImportError("Can't determine language code")
-        if code in ("or", "is", "as"):
-            internal_code = prefix + code
-        else:
-            internal_code = code
+        internal_code = prefix + code if code in ("or", "is", "as") else code
         module = import_module("translate.lang.%s" % internal_code)
         langclass = getattr(module, internal_code)
         return langclass(code)
@@ -52,18 +50,19 @@ def getlanguage(code):
             if isinstance(relatedlanguage, common.Common):
                 relatedlanguage = relatedlanguage.__class__(code)
             return relatedlanguage
-        else:
-            return common.Common(code)
+        return common.Common(code)
 
 
 def get_all_languages():
     """Return all language classes."""
     import translate.lang as package
 
-    is_language_module = lambda x: not (
-        x.startswith("test_")
-        or x in ("common", "data", "factory", "identify", "ngram", "poedit", "team")
-    )
+    def is_language_module(x):
+        return not (
+            x.startswith("test_")
+            or x in ("common", "data", "factory", "identify", "ngram", "poedit", "team")
+        )
+
     lang_codes = []
     for _imp, modname, _isp in pkgutil.walk_packages(package.__path__):
         if is_language_module(modname):

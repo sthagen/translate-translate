@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Module for parsing Markdown files for translation.
+"""
+Module for parsing Markdown files for translation.
 
 The principles for extraction of translation units are as follows:
 
@@ -33,13 +34,14 @@ White space within translation units is normalized, because the PO format does
 not preserve white space, and the translated Markdown content may have
 to be reflowed anyway.
 """
+from __future__ import annotations
+
 import re
 from itertools import chain
-from typing import Iterable, Tuple
+from typing import Iterable
 
-import mistletoe.block_token as block_token
-import mistletoe.span_token as span_token
 import mistletoe.token
+from mistletoe import block_token, span_token
 from mistletoe.markdown_renderer import (
     Fragment,
     LinkReferenceDefinition,
@@ -51,7 +53,7 @@ from translate.storage import base
 
 
 class MarkdownUnit(base.TranslationUnit):
-    """A unit of translatable/localisable markdown content"""
+    """A unit of translatable/localisable markdown content."""
 
     def __init__(self, source=None):
         super().__init__(source)
@@ -68,14 +70,14 @@ class MarkdownFile(base.TranslationStore):
     UnitClass = MarkdownUnit
 
     def __init__(self, inputfile=None, callback=None, max_line_length=None):
-        """Construct a new object instance.
+        """
+        Construct a new object instance.
 
-        Parameters:
-        - inputfile: if specified, the content of this file is read and parsed.
-        - callback: a function which takes a chunk of untranslated content as
+        :param inputfile: if specified, the content of this file is read and parsed.
+        :param callback: a function which takes a chunk of untranslated content as
           input and returns the corresponding translated content. Defaults to
           a no-op.
-        - max_line_length: if specified, the document is word wrapped to the
+        :param max_line_length: if specified, the document is word wrapped to the
           given line length when rendered.
         """
         base.TranslationStore.__init__(self)
@@ -89,7 +91,7 @@ class MarkdownFile(base.TranslationStore):
             self.parse(md_src)
 
     def parse(self, data):
-        """Process the given source string (binary)"""
+        """Process the given source string (binary)."""
         lines = data.decode().splitlines(keepends=False)
         with TranslatingMarkdownRenderer(
             self._translate_callback,
@@ -117,7 +119,7 @@ class MarkdownFile(base.TranslationStore):
 
 
 class TranslatingMarkdownRenderer(MarkdownRenderer):
-    def __init__(self, translate_callback, *extras, max_line_length: int = None):
+    def __init__(self, translate_callback, *extras, max_line_length: int | None = None):
         super().__init__(*extras, max_line_length=max_line_length)
         self.translate_callback = translate_callback
         self.bypass = False
@@ -330,9 +332,7 @@ class TranslatingMarkdownRenderer(MarkdownRenderer):
     def span_to_lines(
         self, tokens: Iterable[span_token.SpanToken], max_line_length: int
     ) -> Iterable[str]:
-        """
-        Renders a sequence of span tokens to markdown, with translation.
-        """
+        """Renders a sequence of span tokens to markdown, with translation."""
         # turn the span into fragments, which may include placeholders.
         # list-ify the iterator because we may need to traverse it more than once
         fragments = list(self.make_fragments(tokens))
@@ -399,7 +399,7 @@ class TranslatingMarkdownRenderer(MarkdownRenderer):
     @classmethod
     def trim_flanking_placeholders(
         cls, fragments: Iterable[Fragment]
-    ) -> Tuple[Iterable[Fragment], Iterable[Fragment], Iterable[Fragment]]:
+    ) -> tuple[Iterable[Fragment], Iterable[Fragment], Iterable[Fragment]]:
         """
         Splits leading and trailing placeholders and whitespace, and the main
         content, into separate lists. Placeholders marked as important are kept

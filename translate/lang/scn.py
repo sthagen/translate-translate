@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""This module represents the Sicilian language.
+"""
+This module represents the Sicilian language.
 
 .. seealso:: :wp:`Sicilian_language`
 """
@@ -28,7 +29,8 @@ from translate.lang import common
 
 
 def contains_illegal(illegal_substrings, string):
-    """Check if string contains any of the specified illegal substrings.
+    """
+    Check if string contains any of the specified illegal substrings.
 
     :param illegal_substrings: an iterable of illegal substrings
     :param string: the string to check against occurences of illegal substrings
@@ -43,7 +45,7 @@ sicilianconfig = CheckerConfig(
 
 
 class SicilianChecker(TranslationChecker):
-    """A Checker class for Sicilian"""
+    """A Checker class for Sicilian."""
 
     def __init__(self, **kwargs):
         checkerconfig = kwargs.get("checkerconfig")
@@ -57,7 +59,8 @@ class SicilianChecker(TranslationChecker):
 
     @critical
     def italianisms(self, str1, str2):
-        """Check if the translation contains common errors done by italophones.
+        """
+        Check if the translation contains common errors done by italophones.
 
         Mainly inspired by musttranslatewords(), but with a different logic: return True if
         the given word appears in the translation but not in the source (if it's in the source,
@@ -97,7 +100,10 @@ class SicilianChecker(TranslationChecker):
 
     @critical
     def vocalism(self, str1, str2):
-        """Check correct word-endings. All words should end with a/i/u, but a handful of exceptions:
+        """
+        Check correct word-endings.
+
+        All words should end with a/i/u, but a handful of exceptions:
 
           - me, to, so (possessive pronouns)
           - po (verb "putiri")
@@ -130,7 +136,8 @@ class SicilianChecker(TranslationChecker):
 
     @critical
     def suffixes(self, str1, str2):
-        """Check for common word suffixes to be written correctly.
+        """
+        Check for common word suffixes to be written correctly.
 
         :param str1: the source string
         :param str2: the target (translated) string
@@ -140,12 +147,12 @@ class SicilianChecker(TranslationChecker):
             "zzioni": "zziuni",
         }
 
-        stopwords = []
-
-        for word in self.config.lang.words(str2):
-            for suffix in suffixes:
-                if word not in str1 and word.lower().endswith(suffix):
-                    stopwords.append(f"{word} (-{suffixes[suffix]})")
+        stopwords = [
+            f"{word} (-{suffixes[suffix]})"
+            for word in self.config.lang.words(str2)
+            for suffix in suffixes
+            if word not in str1 and word.lower().endswith(suffix)
+        ]
 
         if stopwords:
             raise FilterFailure(

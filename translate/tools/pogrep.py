@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Grep XLIFF, Gettext PO and TMX localization files.
+"""
+Grep XLIFF, Gettext PO and TMX localization files.
 
 Matches are output to snippet files of the same type which can then be reviewed
 and later merged using :doc:`pomerge </commands/pomerge>`.
@@ -51,28 +52,25 @@ class GrepMatch:
     def get_getter(self):
         if self.part == "target":
             if self.unit.hasplural():
-                getter = lambda: self.unit.target.strings[self.part_n]
-            else:
-                getter = lambda: self.unit.target
-            return getter
-        elif self.part == "source":
+                return lambda: self.unit.target.strings[self.part_n]
+            return lambda: self.unit.target
+        if self.part == "source":
             if self.unit.hasplural():
-                getter = lambda: self.unit.source.strings[self.part_n]
-            else:
-                getter = lambda: self.unit.source
-            return getter
-        elif self.part == "notes":
+                return lambda: self.unit.source.strings[self.part_n]
+            return lambda: self.unit.source
+        if self.part == "notes":
 
             def getter():
                 return self.unit.getnotes()[self.part_n]
 
             return getter
-        elif self.part == "locations":
+        if self.part == "locations":
 
             def getter():
                 return self.unit.getlocations()[self.part_n]
 
             return getter
+        raise TypeError(f"Unsupported part: {self.part}")
 
     def get_setter(self):
         if self.part == "target":
@@ -89,6 +87,7 @@ class GrepMatch:
                     self.unit.target = value
 
             return setter
+        raise TypeError(f"Unsupported part: {self.part}")
 
     # SPECIAL METHODS #
     def __str__(self):
@@ -110,7 +109,8 @@ class GrepMatch:
 
 
 def real_index(string, nfc_index):
-    """Calculate the real index in the unnormalized string that corresponds to
+    """
+    Calculate the real index in the unnormalized string that corresponds to
     the index nfc_index in the normalized string.
     """
     length = nfc_index
@@ -129,10 +129,7 @@ def find_matches(unit, part, strings, re_search):
         if not string:
             continue
         normalized = data.normalize(string)
-        if normalized == string:
-            index_func = lambda s, i: i
-        else:
-            index_func = real_index
+        index_func = (lambda s, i: i) if normalized == string else real_index
         for matchobj in re_search.finditer(normalized):
             start = index_func(string, matchobj.start())
             end = index_func(string, matchobj.end())
@@ -153,7 +150,7 @@ class GrepFilter:
         encoding="utf-8",
         max_matches=0,
     ):
-        """builds a checkfilter using the given checker"""
+        """Builds a checkfilter using the given checker."""
         if isinstance(searchstring, str):
             self.searchstring = searchstring
         else:
@@ -200,7 +197,7 @@ class GrepFilter:
         return found
 
     def filterunit(self, unit):
-        """runs filters on an element"""
+        """Runs filters on an element."""
         if unit.isheader():
             return True
 
@@ -234,7 +231,7 @@ class GrepFilter:
         return False
 
     def filterfile(self, thefile):
-        """runs filters on a translation file object"""
+        """Runs filters on a translation file object."""
         thenewfile = type(thefile)()
         thenewfile.setsourcelanguage(thefile.sourcelanguage)
         thenewfile.settargetlanguage(thefile.targetlanguage)
@@ -266,16 +263,10 @@ class GrepFilter:
             old_length = len(matches)
 
             if self.search_target:
-                if unit.hasplural():
-                    targets = unit.target.strings
-                else:
-                    targets = [unit.target]
+                targets = unit.target.strings if unit.hasplural() else [unit.target]
                 matches.extend(find_matches(unit, "target", targets, self.re_search))
             if self.search_source:
-                if unit.hasplural():
-                    sources = unit.source.strings
-                else:
-                    sources = [unit.source]
+                sources = unit.source.strings if unit.hasplural() else [unit.source]
                 matches.extend(find_matches(unit, "source", sources, self.re_search))
             if self.search_notes:
                 matches.extend(
@@ -291,7 +282,7 @@ class GrepFilter:
             # expression could give enough results to cause performance
             # problems. The answer is probably not very useful at this scale.
             if self.max_matches and len(matches) > self.max_matches:
-                raise Exception("Too many matches found")
+                raise ValueError("Too many matches found")
 
             if len(matches) > old_length:
                 old_length = len(matches)
@@ -304,7 +295,7 @@ class GrepOptionParser(optrecurse.RecursiveOptionParser):
     """a specialized Option Parser for the grep tool..."""
 
     def parse_args(self, args=None, values=None):
-        """parses the command line options, handling implicit input/output args"""
+        """Parses the command line options, handling implicit input/output args."""
         (options, args) = optrecurse.optparse.OptionParser.parse_args(
             self, args, values
         )
@@ -333,7 +324,7 @@ class GrepOptionParser(optrecurse.RecursiveOptionParser):
         return (options, args)
 
     def set_usage(self, usage=None):
-        """sets the usage string - if usage not given, uses getusagestring for each option"""
+        """Sets the usage string - if usage not given, uses getusagestring for each option."""
         if usage is None:
             self.usage = "%prog searchstring " + " ".join(
                 self.getusagestring(option) for option in self.option_list
@@ -342,7 +333,7 @@ class GrepOptionParser(optrecurse.RecursiveOptionParser):
             super().set_usage(usage)
 
     def run(self):
-        """parses the arguments, and runs recursiveprocess with the resulting options"""
+        """Parses the arguments, and runs recursiveprocess with the resulting options."""
         (options, args) = self.parse_args()
         options.checkfilter = GrepFilter(
             options.searchstring,
@@ -358,7 +349,7 @@ class GrepOptionParser(optrecurse.RecursiveOptionParser):
 
 
 def rungrep(inputfile, outputfile, templatefile, checkfilter):
-    """reads in inputfile, filters using checkfilter, writes to outputfile"""
+    """Reads in inputfile, filters using checkfilter, writes to outputfile."""
     fromfile = factory.getobject(inputfile)
     tofile = checkfilter.filterfile(fromfile)
     if tofile.isempty():

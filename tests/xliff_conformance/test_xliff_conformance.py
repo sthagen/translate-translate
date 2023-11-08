@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 import os
-import os.path as path
+from os import path
 from subprocess import call
 
 import pytest
@@ -26,7 +26,7 @@ from lxml import etree
 @pytest.fixture(autouse=True, scope="module")
 def change_test_dir(request):
     os.chdir(request.fspath.dirname)
-    yield
+    yield None
     os.chdir(request.config.invocation_params.dir)
 
 
@@ -59,7 +59,7 @@ def test_po_to_xliff(xmllint):
 
 
 def cleardir(testdir):
-    """removes the test directory"""
+    """Removes the test directory."""
     if os.path.exists(testdir):
         for dirpath, subdirs, filenames in os.walk(testdir, topdown=False):
             for name in filenames:

@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""String processing utilities for extracting strings with various kinds of
-delimiters
+"""
+String processing utilities for extracting strings with various kinds of
+delimiters.
 """
 
 import html.entities
@@ -26,8 +27,9 @@ import re
 
 
 def find_all(searchin, substr):
-    """Returns a list of locations where substr occurs in searchin locations
-    are not allowed to overlap
+    """
+    Returns a list of locations where substr occurs in searchin locations
+    are not allowed to overlap.
     """
     location = 0
     locations = []
@@ -43,7 +45,8 @@ def find_all(searchin, substr):
 def extract(
     source, startdelim, enddelim, escape=None, startinstring=False, allowreentry=True
 ):
-    """Extracts a doublequote-delimited string from a string, allowing for
+    """
+    Extracts a doublequote-delimited string from a string, allowing for
     backslash-escaping returns tuple of (quoted string with quotes, still in
     string at end).
     """
@@ -83,7 +86,7 @@ def extract(
     else:
         enddelim_places = [pos + lenend for pos in enddelim_places]
     # Get a unique sorted list of the significant places in the string
-    significant_places = [0] + startdelim_places + enddelim_places + [len(source) - 1]
+    significant_places = [0, *startdelim_places, *enddelim_places, len(source) - 1]
     significant_places.sort()
     extracted = ""
     lastpos = None
@@ -118,7 +121,8 @@ def extractwithoutquotes(
     includeescapes=True,
     allowreentry=True,
 ):
-    """Extracts a doublequote-delimited string from a string, allowing for
+    """
+    Extracts a doublequote-delimited string from a string, allowing for
     backslash-escaping includeescapes can also be a function that takes the
     whole escaped string and returns the replaced version.
     """
@@ -158,7 +162,7 @@ def extractwithoutquotes(
     else:
         enddelim_places = [pos + lenend for pos in enddelim_places]
     # get a unique sorted list of the significant places in the string
-    significant_places = [0] + startdelim_places + enddelim_places + [len(source) - 1]
+    significant_places = [0, *startdelim_places, *enddelim_places, len(source) - 1]
     significant_places.sort()
     extracted = ""
     lastpos = 0
@@ -231,16 +235,17 @@ def extractwithoutquotes(
     return (extracted, instring)
 
 
+# TODO: investigate if ord is needed
 def _encode_entity_char(char, codepoint2name):
     charnum = ord(char)
     if charnum in codepoint2name:
         return "&%s;" % codepoint2name[charnum]
-    else:
-        return char
+    return char
 
 
 def entityencode(source, codepoint2name):
-    """Encode ``source`` using entities from ``codepoint2name``.
+    """
+    Encode ``source`` using entities from ``codepoint2name``.
 
     :param unicode source: Source string to encode
     :param codepoint2name: Dictionary mapping code points to entity names
@@ -280,13 +285,14 @@ def _has_entity_end(source):
     for char in source:
         if char == ";":
             return True
-        elif char == " ":
+        if char == " ":
             return False
     return False
 
 
 def entitydecode(source, name2codepoint):
-    """Decode ``source`` using entities from ``name2codepoint``.
+    """
+    Decode ``source`` using entities from ``name2codepoint``.
 
     :param unicode source: Source string to decode
     :param name2codepoint: Dictionary mapping entity names (without the
@@ -327,7 +333,8 @@ def entitydecode(source, name2codepoint):
 
 
 def htmlentityencode(source):
-    """Encode ``source`` using HTML entities e.g. © -> ``&copy;``
+    """
+    Encode ``source`` using HTML entities e.g. © -> ``&copy;``.
 
     :param unicode source: Source string to encode
     """
@@ -335,7 +342,8 @@ def htmlentityencode(source):
 
 
 def htmlentitydecode(source):
-    """Decode source using HTML entities e.g. ``&copy;`` -> ©.
+    """
+    Decode source using HTML entities e.g. ``&copy;`` -> ©.
 
     :param unicode source: Source string to decode
     """
@@ -343,8 +351,9 @@ def htmlentitydecode(source):
 
 
 def javapropertiesencode(source):
-    """Encodes source in the escaped-unicode encoding used by Java
-    .properties files
+    """
+    Encodes source in the escaped-unicode encoding used by Java
+    .properties files.
     """
     output = ""
     if source and source[0] == " ":
@@ -361,7 +370,8 @@ def javapropertiesencode(source):
 
 
 def java_utf8_properties_encode(source):
-    """Encodes source in the escaped-unicode encoding used by java utf-8
+    """
+    Encodes source in the escaped-unicode encoding used by java utf-8
     .properties files.
     """
     output = ""
@@ -378,8 +388,7 @@ def xwiki_properties_encode(source, encoding):
         source = source.replace("'", "''")
     if encoding == "utf-8":
         return java_utf8_properties_encode(source)
-    else:
-        return javapropertiesencode(source)
+    return javapropertiesencode(source)
 
 
 def escapespace(char):
@@ -402,8 +411,7 @@ def mozillaescapemarginspaces(source):
 
     if len(source) == 1:
         return escapespace(source)
-    else:
-        return escapespace(source[0]) + source[1:-1] + escapespace(source[-1])
+    return escapespace(source[0]) + source[1:-1] + escapespace(source[-1])
 
 
 propertyescapes = {
@@ -429,14 +437,15 @@ controlchars = {
 
 
 def escapecontrols(source):
-    """escape control characters in the given string"""
+    """Escape control characters in the given string."""
     for key, value in controlchars.items():
         source = source.replace(key, value)
     return source
 
 
 def propertiesdecode(source):
-    """Decodes source from the escaped-unicode encoding used by .properties
+    """
+    Decodes source from the escaped-unicode encoding used by .properties
     files.
 
     Java uses Latin1 by default, and Mozilla uses UTF-8 by default.
@@ -449,12 +458,13 @@ def propertiesdecode(source):
     s = 0
 
     def unichr2(i):
-        """Returns a Unicode string of one character with ordinal 32 <= i,
+        """
+        Returns a Unicode string of one character with ordinal 32 <= i,
         otherwise an escaped control character.
         """
-        if 32 <= i:
+        if i >= 32:
             return chr(i)
-        elif chr(i) in controlchars:
+        if chr(i) in controlchars:
             # we just return the character, unescaped
             # if people want to escape them they can use escapecontrols
             return chr(i)

@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Convert Gettext PO localization files to Java/Mozilla .properties files.
+"""
+Convert Gettext PO localization files to Java/Mozilla .properties files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/prop2po.html
 for examples and usage instructions.
@@ -32,7 +33,7 @@ eol = "\n"
 
 
 def applytranslation(key, propunit, inunit, mixedkeys):
-    """applies the translation for key in the po unit to the prop unit"""
+    """Applies the translation for key in the po unit to the prop unit."""
     # this converts the po-style string to a prop-style string
     value = inunit.target
     # handle mixed keys
@@ -198,8 +199,7 @@ class reprop:
                 postspacestart = len(line[delimiter_pos + 1 :])
                 postspaceend = len(line[delimiter_pos + 1 :].lstrip())
                 postspace = line[
-                    delimiter_pos
-                    + 1 : delimiter_pos
+                    delimiter_pos + 1 : delimiter_pos
                     + (postspacestart - postspaceend)
                     + 1
                 ]
@@ -226,15 +226,13 @@ class reprop:
                     self.inecho = False
                     assert isinstance(value, str)
                     returnline = "%(key)s%(del)s%(value)s%(term)s%(eol)s" % {
-                        "key": "%s%s%s"
-                        % (
+                        "key": "{}{}{}".format(
                             self.personality.key_wrap_char,
                             key,
                             self.personality.key_wrap_char,
                         ),
                         "del": delimiter if delimiter_pos != -1 or value else "",
-                        "value": "%s%s%s"
-                        % (
+                        "value": "{}{}{}".format(
                             self.personality.value_wrap_char,
                             self.personality.encode(value),
                             self.personality.value_wrap_char,
@@ -259,7 +257,7 @@ def convertstrings(
     outputthreshold=None,
     remove_untranslated=False,
 ):
-    """.strings specific convertor function"""
+    """.strings specific convertor function."""
     return convertprop(
         inputfile,
         outputfile,
@@ -280,7 +278,7 @@ def convertmozillaprop(
     remove_untranslated=False,
     outputthreshold=None,
 ):
-    """Mozilla specific convertor function"""
+    """Mozilla specific convertor function."""
     return convertprop(
         inputfile,
         outputfile,
@@ -309,11 +307,9 @@ def convertprop(
 
     if templatefile is None:
         raise ValueError("must have template file for properties files")
-        # convertor = po2prop()
-    else:
-        convertor = reprop(
-            templatefile, inputstore, personality, encoding, remove_untranslated
-        )
+    convertor = reprop(
+        templatefile, inputstore, personality, encoding, remove_untranslated
+    )
     outputprop = convertor.convertstore(includefuzzy)
     outputfile.write(outputprop)
     return True
@@ -338,8 +334,9 @@ def main(argv=None):
         default=properties.default_dialect,
         type="choice",
         choices=list(properties.dialects),
-        help="override the input file format: %s (for .properties files, default: %s)"
-        % (", ".join(properties.dialects), properties.default_dialect),
+        help="override the input file format: {} (for .properties files, default: {})".format(
+            ", ".join(properties.dialects), properties.default_dialect
+        ),
         metavar="TYPE",
     )
     parser.add_option(

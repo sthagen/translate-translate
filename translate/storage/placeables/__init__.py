@@ -44,7 +44,7 @@ Please refer to the XLIFF specification to get a better understanding.
 """
 
 from . import base, general, interfaces, xliff
-from .base import *
+from .base import *  # noqa: F403
 from .base import __all__ as all_your_base
 from .parse import parse
 from .strelem import StringElem
@@ -56,4 +56,5 @@ __all__ = (
     "parse",
     "StringElem",
     "xliff",
-) + all_your_base
+    *all_your_base,
+)

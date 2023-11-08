@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Converts properties files to additional Mozilla format files.
-"""
+"""Converts properties files to additional Mozilla format files."""
 
 import sys
 from io import BytesIO
@@ -27,7 +26,7 @@ from translate.storage import properties
 
 
 def prop2inc(pf):
-    """convert a properties file back to a .inc file with #defines in it"""
+    """Convert a properties file back to a .inc file with #defines in it."""
     # any leftover blanks will not be included at the end
     pendingblanks = []
     for unit in pf.units:
@@ -50,7 +49,7 @@ def prop2inc(pf):
 
 
 def prop2it(pf):
-    """convert a properties file back to a pseudo-properties .it file"""
+    """Convert a properties file back to a pseudo-properties .it file."""
     for unit in pf.units:
         for comment in unit.comments:
             if (
@@ -75,11 +74,7 @@ def prop2funny(src, itencoding="cp1252"):
     if not header.startswith("# converted from "):
         waspseudoprops = len([line for line in lines if line.startswith("# section:")])
         wasdefines = len(
-            [
-                line
-                for line in lines
-                if line.startswith("#filter") or line.startswith("#unfilter")
-            ]
+            [line for line in lines if line.startswith(("#filter", "#unfilter"))]
         )
     else:
         waspseudoprops = "pseudo-properties" in header
@@ -108,7 +103,7 @@ def po2inc(
     remove_untranslated=False,
     outputthreshold=None,
 ):
-    """wraps po2prop but converts outputfile to properties first"""
+    """Wraps po2prop but converts outputfile to properties first."""
     outputpropfile = BytesIO()
     if templatefile is not None:
         templatelines = templatefile.readlines()
@@ -141,7 +136,7 @@ def po2it(
     remove_untranslated=False,
     outputthreshold=None,
 ):
-    """wraps po2prop but converts outputfile to properties first"""
+    """Wraps po2prop but converts outputfile to properties first."""
     outputpropfile = BytesIO()
     if templatefile is not None:
         templatelines = templatefile.readlines()
@@ -178,7 +173,7 @@ def po2ini(
     remove_untranslated=False,
     outputthreshold=None,
 ):
-    """wraps po2prop but converts outputfile to properties first using UTF-8 encoding"""
+    """Wraps po2prop but converts outputfile to properties first using UTF-8 encoding."""
     return po2it(
         inputfile=inputfile,
         outputfile=outputfile,

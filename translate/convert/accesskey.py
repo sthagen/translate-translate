@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""functions used to manipulate access keys in strings"""
+"""functions used to manipulate access keys in strings."""
 
 
 from translate.storage.placeables.general import XMLEntityPlaceable
@@ -52,7 +52,8 @@ class UnitMixer:
 
     @staticmethod
     def mix_units(label_unit, accesskey_unit, target_unit):
-        """Mix the given units into the given target_unit if possible.
+        """
+        Mix the given units into the given target_unit if possible.
 
         Might return None if no match is possible.
         """
@@ -96,7 +97,7 @@ class UnitMixer:
                             labelentity[: labelentity.rfind(labelsuffix)] + akeytype
                         )
                         break
-        else:
+        if labelentity is None:
             for akeytype in self.accesskeysuffixes:
                 if entity.endswith(akeytype):
                     accesskeyentity = entity
@@ -114,7 +115,8 @@ class UnitMixer:
 
 
 def extract(string, accesskey_marker=DEFAULT_ACCESSKEY_MARKER):
-    """Extract the label and accesskey from a label+accesskey string
+    """
+    Extract the label and accesskey from a label+accesskey string.
 
     The function will also try to ignore &entities; which would obviously not
     contain accesskeys.
@@ -151,7 +153,8 @@ def extract(string, accesskey_marker=DEFAULT_ACCESSKEY_MARKER):
 
 
 def combine(label, accesskey, accesskey_marker=DEFAULT_ACCESSKEY_MARKER):
-    """Combine a label and and accesskey to form a label+accesskey string
+    """
+    Combine a label and and accesskey to form a label+accesskey string.
 
     We place an accesskey marker before the accesskey in the label and this
     creates a string with the two combined e.g. "File" + "F" = "&File"
@@ -177,10 +180,7 @@ def combine(label, accesskey, accesskey_marker=DEFAULT_ACCESSKEY_MARKER):
     in_entity = False
     accesskeyaltcasepos = -1
 
-    if accesskey.isupper():
-        accesskey_alt_case = accesskey.lower()
-    else:
-        accesskey_alt_case = accesskey.upper()
+    accesskey_alt_case = accesskey.lower() if accesskey.isupper() else accesskey.upper()
 
     while (accesskeypos < 0) and searchpos < len(label):
         searchchar = label[searchpos]

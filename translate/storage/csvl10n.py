@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""classes that hold units of comma-separated values (.csv) files (csvunit)
-or entire files (csvfile) for use with localisation
+"""
+classes that hold units of comma-separated values (.csv) files (csvunit)
+or entire files (csvfile) for use with localisation.
 """
 
 
@@ -85,12 +86,11 @@ class csvunit(base.TranslationUnit):
                 else:
                     result = self.developer_comments
             return result
-        elif origin == "translator":
+        if origin == "translator":
             return self.translator_comments
-        elif origin in ("programmer", "developer", "source code"):
+        if origin in ("programmer", "developer", "source code"):
             return self.developer_comments
-        else:
-            raise ValueError("Comment type not valid")
+        raise ValueError("Comment type not valid")
 
     def addnote(self, text, origin=None, position="append"):
         if origin in ("programmer", "developer", "source code"):
@@ -100,13 +100,12 @@ class csvunit(base.TranslationUnit):
                 self.developer_comments = text + "\n" + self.developer_comments
             else:
                 self.developer_comments = text
+        elif position == "append" and self.translator_comments:
+            self.translator_comments += "\n" + text
+        elif position == "prepend" and self.translator_comments:
+            self.translator_comments = self.translator_comments + "\n" + text
         else:
-            if position == "append" and self.translator_comments:
-                self.translator_comments += "\n" + text
-            elif position == "prepend" and self.translator_comments:
-                self.translator_comments = self.translator_comments + "\n" + text
-            else:
-                self.translator_comments = text
+            self.translator_comments = text
 
     def removenotes(self, origin=None):
         self.translator_comments = ""
@@ -123,7 +122,7 @@ class csvunit(base.TranslationUnit):
             self.fuzzy = "False"
 
     def match_header(self):
-        """see if unit might be a header"""
+        """See if unit might be a header."""
         some_value = False
         for key, value in self.todict().items():
             if value:
@@ -133,7 +132,7 @@ class csvunit(base.TranslationUnit):
         return some_value
 
     def add_spreadsheet_escapes(self, source, target):
-        """add common spreadsheet escapes to two strings"""
+        """Add common spreadsheet escapes to two strings."""
         for unescaped, escaped in self.spreadsheetescapes:
             if source.startswith(unescaped):
                 source = source.replace(unescaped, escaped, 1)
@@ -142,7 +141,7 @@ class csvunit(base.TranslationUnit):
         return source, target
 
     def remove_spreadsheet_escapes(self, source, target):
-        """remove common spreadsheet escapes from two strings"""
+        """Remove common spreadsheet escapes from two strings."""
         for unescaped, escaped in self.spreadsheetescapes:
             if source.startswith(escaped):
                 source = source.replace(escaped, unescaped, 1)
@@ -231,7 +230,8 @@ def try_dialects(inputfile, fieldnames, dialect):
 
 
 def valid_fieldnames(fieldnames):
-    """Check if fieldnames are valid, that is at least one field is identified
+    """
+    Check if fieldnames are valid, that is at least one field is identified
     as the source.
     """
     return any(
@@ -241,7 +241,7 @@ def valid_fieldnames(fieldnames):
 
 
 def detect_header(inputfile, dialect, fieldnames):
-    """Test if file has a header or not, also returns number of columns in first row"""
+    """Test if file has a header or not, also returns number of columns in first row."""
     try:
         reader = csv.reader(inputfile, dialect)
     except csv.Error:
@@ -260,8 +260,9 @@ def detect_header(inputfile, dialect, fieldnames):
 
 
 class csvfile(base.TranslationStore):
-    """This class represents a .csv file with various lines.  The default
-    format contains three columns: location, source, target
+    """
+    This class represents a .csv file with various lines.  The default
+    format contains three columns: location, source, target.
     """
 
     UnitClass = csvunit
@@ -302,10 +303,7 @@ class csvfile(base.TranslationStore):
             text = csvsrc.decode(self.encoding)
 
         sniffer = csv.Sniffer()
-        if sample_length:
-            sample = text[:sample_length]
-        else:
-            sample = text
+        sample = text[:sample_length] if sample_length else text
 
         try:
             self.dialect = sniffer.sniff(sample)
@@ -335,7 +333,7 @@ class csvfile(base.TranslationStore):
             first_row = False
 
     def serialize(self, out):
-        """Write to file"""
+        """Write to file."""
         source = self.getoutput()
         if isinstance(source, str):
             # Python 3

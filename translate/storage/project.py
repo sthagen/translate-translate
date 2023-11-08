@@ -25,7 +25,8 @@ __all__ = ("Project",)
 
 
 def split_extensions(filename):
-    """Split the given filename into a name and extensions part.  The
+    """
+    Split the given filename into a name and extensions part.  The
     extensions part is defined by any sequence of extensions, where an
     extension is a 3-letter, .-separated string or one of "po" or "properties".
     If the file name consists entirely out of extensions, the first part is
@@ -53,7 +54,8 @@ def split_extensions(filename):
 
 
 class Project:
-    """Manages a project store as well as the processes involved in a project
+    """
+    Manages a project store as well as the processes involved in a project
     workflow.
     """
 
@@ -75,7 +77,8 @@ class Project:
     def add_source_convert(
         self, srcfile, src_fname=None, convert_options=None, extension=None
     ):
-        """Convenience method that calls :meth:`~Project.add_source` and
+        """
+        Convenience method that calls :meth:`~Project.add_source` and
         :meth:`~Project.convert_forward` and returns the results from both.
         """
         srcfile, srcfname = self.add_source(srcfile, src_fname)
@@ -85,11 +88,16 @@ class Project:
         return srcfile, srcfname, transfile, transfname
 
     def close(self):
-        """Proxy for ``self.store.close()``."""
+        """
+        Close underlying store.
+
+        Proxy for ``self.store.close()``.
+        """
         self.store.close()
 
     def convert_forward(self, input_fname, template=None, output_fname=None, **options):
-        """Convert the given input file to the next type in the process:
+        """
+        Convert the given input file to the next type in the process.
 
         Source document (eg. ODT) -> Translation file (eg. XLIFF) ->
         Translated document (eg. ODT).
@@ -132,7 +140,7 @@ class Project:
                         break
 
         # Populate the conv_options dict with the options we can detect
-        conv_options = dict(in_fname=input_fname)
+        conv_options = {"in_fname": input_fname}
 
         if input_fname in self.store.convert_map:
             out_name, tmpl_name = self.store.convert_map[input_fname]
@@ -171,7 +179,7 @@ class Project:
             output_ext_parts = output_ext_parts[:-1]
         else:
             output_ext_parts.append(converted_ext)
-        output_fname += os.extsep.join([""] + output_ext_parts)
+        output_fname += os.extsep.join(["", *output_ext_parts])
 
         if os.path.isfile(output_fname):
             # If the output file already exist, we can't assume that it's safe
@@ -190,7 +198,8 @@ class Project:
         return outputfile, output_fname
 
     def export_file(self, fname, destfname):
-        """Export the file with the specified filename to the given
+        """
+        Export the file with the specified filename to the given
         destination.  This method will raise
         :exc:`~translate.storage.projstore.FileNotInProjectError` via the call
         to :meth:`~translate.storage.projstore.ProjectStore.get_file` if
@@ -200,11 +209,19 @@ class Project:
             fp.write(self.store.get_file(fname).read())
 
     def get_file(self, fname):
-        """Proxy for ``self.store.get_file()``."""
+        """
+        Return store filename.
+
+        Proxy for ``self.store.get_file()``.
+        """
         return self.store.get_file(fname)
 
     def get_proj_filename(self, realfname):
-        """Proxy for ``self.store.get_proj_filename()``."""
+        """
+        Return project filename.
+
+        Proxy for ``self.store.get_proj_filename()``.
+        """
         return self.store.get_proj_filename(realfname)
 
     def get_real_filename(self, projfname):
@@ -216,13 +233,25 @@ class Project:
         return rfname
 
     def remove_file(self, projfname, ftype=None):
-        """Proxy for ``self.store.remove_file()``."""
+        """
+        Remove a file.
+
+        Proxy for ``self.store.remove_file()``.
+        """
         self.store.remove_file(projfname, ftype)
 
     def save(self, filename=None):
-        """Proxy for ``self.store.save()``."""
+        """
+        Save a store.
+
+        Proxy for ``self.store.save()``.
+        """
         self.store.save(filename)
 
     def update_file(self, proj_fname, infile):
-        """Proxy for ``self.store.update_file()``."""
+        """
+        Update a file.
+
+        Proxy for ``self.store.update_file()``.
+        """
         self.store.update_file(proj_fname, infile)

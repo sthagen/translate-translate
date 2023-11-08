@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Convert flat XML files to Gettext PO localization files.
+"""
+Convert flat XML files to Gettext PO localization files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/flatxml2po.html
 for examples and usage instructions.
@@ -54,8 +55,7 @@ class flatxml2po:
 
     def convert_unit(self, unit):
         """Convert a source format unit to a target format unit."""
-        target_unit = self.TargetUnitClass.buildfromunit(unit)
-        return target_unit
+        return self.TargetUnitClass.buildfromunit(unit)
 
     def convert_store(self):
         """Convert a single source file to a target format file."""

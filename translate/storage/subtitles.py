@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Class that manages subtitle files for translation.
+"""
+Class that manages subtitle files for translation.
 
 This class makes use of the subtitle functionality of ``gaupol``.
 
@@ -57,7 +58,7 @@ except ImportError:
 
 
 class SubtitleUnit(base.TranslationUnit):
-    """A subtitle entry that is translatable"""
+    """A subtitle entry that is translatable."""
 
     init_time = "00:00:00.000"
 
@@ -73,8 +74,7 @@ class SubtitleUnit(base.TranslationUnit):
     def getnotes(self, origin=None):
         if origin in ["programmer", "developer", "source code", None]:
             return "visible for %d seconds" % self._duration
-        else:
-            return ""
+        return ""
 
     def getlocations(self):
         return [f"{self._start}-->{self._end}"]
@@ -90,12 +90,12 @@ class MicroDVDUnit(SubtitleUnit):
 
 
 class SubtitleFile(base.TranslationStore):
-    """A subtitle file"""
+    """A subtitle file."""
 
     UnitClass = SubtitleUnit
 
     def __init__(self, inputfile=None, **kwargs):
-        """construct an Subtitle file, optionally reading in from inputfile."""
+        """Construct an Subtitle file, optionally reading in from inputfile."""
         super().__init__(**kwargs)
         self.filename = None
         self._subtitlefile = None
@@ -146,7 +146,7 @@ class SubtitleFile(base.TranslationStore):
 
     @classmethod
     def parsefile(cls, storefile):
-        """parse the given file"""
+        """Parse the given file."""
         newstore = cls()
         newstore._parsefile(storefile)
         return newstore
@@ -178,7 +178,7 @@ class SubtitleFile(base.TranslationStore):
 
 
 class SubRipFile(SubtitleFile):
-    """specialized class for SubRipFile's only"""
+    """specialized class for SubRipFile's only."""
 
     Name = "SubRip subtitles file"
     Extensions = ["srt"]
@@ -192,7 +192,7 @@ class SubRipFile(SubtitleFile):
 
 
 class MicroDVDFile(SubtitleFile):
-    """specialized class for SubRipFile's only"""
+    """specialized class for SubRipFile's only."""
 
     Name = "MicroDVD subtitles file"
     Extensions = ["sub"]
@@ -207,7 +207,7 @@ class MicroDVDFile(SubtitleFile):
 
 
 class AdvSubStationAlphaFile(SubtitleFile):
-    """specialized class for SubRipFile's only"""
+    """specialized class for SubRipFile's only."""
 
     Name = "Advanced Substation Alpha subtitles file"
     Extensions = ["ass"]
@@ -221,7 +221,7 @@ class AdvSubStationAlphaFile(SubtitleFile):
 
 
 class SubStationAlphaFile(SubtitleFile):
-    """specialized class for SubRipFile's only"""
+    """specialized class for SubRipFile's only."""
 
     Name = "Substation Alpha subtitles file"
     Extensions = ["ssa"]

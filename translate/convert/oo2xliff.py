@@ -17,7 +17,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Convert an OpenOffice.org (SDF) localization file to XLIFF localization files.
+"""
+Convert an OpenOffice.org (SDF) localization file to XLIFF localization files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/oo2po.html
 for examples and usage instructions.
@@ -36,7 +37,7 @@ class oo2xliff:
     def __init__(
         self, sourcelanguage, targetlanguage, blankmsgstr=False, long_keys=False
     ):
-        """construct an oo2xliff converter for the specified languages"""
+        """Construct an oo2xliff converter for the specified languages."""
         self.sourcelanguage = sourcelanguage
         self.targetlanguage = targetlanguage
         self.blankmsgstr = blankmsgstr
@@ -44,7 +45,7 @@ class oo2xliff:
 
     @staticmethod
     def maketargetunit(part1, part2, translators_comment, key, subkey):
-        """makes a base unit (.po or XLIFF) out of a subkey of two parts"""
+        """Makes a base unit (.po or XLIFF) out of a subkey of two parts."""
         # TODO: Do better
         text1 = getattr(part1, subkey)
         if text1 == "":
@@ -63,24 +64,24 @@ class oo2xliff:
         return unit
 
     def convertelement(self, theoo):
-        """convert an oo element into a list of base units (.po or XLIFF)"""
+        """Convert an oo element into a list of base units (.po or XLIFF)."""
         if self.sourcelanguage in theoo.languages:
             part1 = theoo.languages[self.sourcelanguage]
         else:
             logging.error(
-                "/".join(theoo.lines[0].getkey()) + "language not found: %s",
+                "%s language not found: %s",
+                "/".join(theoo.lines[0].getkey()),
                 self.sourcelanguage,
             )
             return []
         if self.blankmsgstr:
             # use a blank part2
             part2 = oo.ooline()
+        elif self.targetlanguage in theoo.languages:
+            part2 = theoo.languages[self.targetlanguage]
         else:
-            if self.targetlanguage in theoo.languages:
-                part2 = theoo.languages[self.targetlanguage]
-            else:
-                # if the language doesn't exist, the translation is missing ... so make it blank
-                part2 = oo.ooline()
+            # if the language doesn't exist, the translation is missing ... so make it blank
+            part2 = oo.ooline()
         if "x-comment" in theoo.languages:
             translators_comment = theoo.languages["x-comment"]
         else:
@@ -94,7 +95,7 @@ class oo2xliff:
         return unitlist
 
     def convertstore(self, theoofile, duplicatestyle="msgctxt"):
-        """converts an entire oo file to a base class format (.po or XLIFF)"""
+        """Converts an entire oo file to a base class format (.po or XLIFF)."""
         thetargetfile = xliff.xlifffile()
         thetargetfile.setsourcelanguage(self.sourcelanguage)
         thetargetfile.settargetlanguage(self.targetlanguage)
@@ -107,7 +108,7 @@ class oo2xliff:
 
 
 def verifyoptions(options):
-    """verifies the commandline options"""
+    """Verifies the commandline options."""
     if not options.targetlanguage:
         raise ValueError("You must specify the target language.")
 
@@ -122,7 +123,7 @@ def convertoo(
     duplicatestyle="msgctxt",
     multifilestyle="single",
 ):
-    """reads in stdin using inputstore class, converts using convertorclass, writes to stdout"""
+    """Reads in stdin using inputstore class, converts using convertorclass, writes to stdout."""
     inputstore = oo.oofile()
     if hasattr(inputfile, "filename"):
         inputfilename = inputfile.filename
@@ -132,20 +133,17 @@ def convertoo(
     inputstore.parse(inputfile.read())
     if not sourcelanguage:
         testlangtype = targetlanguage or (inputstore and inputstore.languages[0]) or ""
-        if testlangtype.isdigit():
-            sourcelanguage = "01"
-        else:
-            sourcelanguage = "en-US"
+        sourcelanguage = "01" if testlangtype.isdigit() else "en-US"
     if sourcelanguage not in inputstore.languages:
         logger.warning(
-            "sourcelanguage '%s' not found in inputfile '%s' " "(contains %s)",
+            "sourcelanguage '%s' not found in inputfile '%s' (contains %s)",
             sourcelanguage,
             inputfilename,
             ", ".join(inputstore.languages),
         )
     if not pot and (targetlanguage and targetlanguage not in inputstore.languages):
         logger.warning(
-            "targetlanguage '%s' not found in inputfile '%s' " "(contains %s)",
+            "targetlanguage '%s' not found in inputfile '%s' (contains %s)",
             targetlanguage,
             inputfilename,
             ", ".join(inputstore.languages),

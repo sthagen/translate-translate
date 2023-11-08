@@ -17,7 +17,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Convert Markdown files to Gettext PO localization files.
+"""
+Convert Markdown files to Gettext PO localization files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/md2po.html
 for examples and usage instructions.
@@ -66,7 +67,7 @@ class MD2POOptionParser(convert.ConvertOptionParser):
             storeunit.addlocations(tu.getlocations())
 
     def recursiveprocess(self, options):
-        """Recurse through directories and process files. (override)"""
+        """Recurse through directories and process files. (override)."""
         if options.multifilestyle == "onefile":
             self.outputstore = po.pofile()
             super().recursiveprocess(options)
@@ -80,21 +81,22 @@ class MD2POOptionParser(convert.ConvertOptionParser):
             super().recursiveprocess(options)
 
     def isrecursive(self, fileoption, filepurpose="input"):
-        """Check if fileoption is a recursive file. (override)"""
+        """Check if fileoption is a recursive file. (override)."""
         if hasattr(self, "outputstore") and filepurpose == "output":
             return True
         return super().isrecursive(fileoption, filepurpose=filepurpose)
 
     def checkoutputsubdir(self, options, subdir):
-        """Check if subdir under options.output needs to be created, and
-        create if neccessary. Do nothing if in single-output-file mode. (override)
+        """
+        Check if subdir under options.output needs to be created, and
+        create if neccessary. Do nothing if in single-output-file mode. (override).
         """
         if hasattr(self, "outputstore"):
             return
         super().checkoutputsubdir(options, subdir)
 
     def openoutputfile(self, options, fulloutputpath):
-        """Open the output file, or do nothing if in single-output-file mode. (override)"""
+        """Open the output file, or do nothing if in single-output-file mode. (override)."""
         if hasattr(self, "outputstore"):
             return None
         return super().openoutputfile(options, fulloutputpath)

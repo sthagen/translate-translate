@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-r"""Classes that hold units of .dtd files (:class:`dtdunit`) or entire files
+r"""
+Classes that hold units of .dtd files (:class:`dtdunit`) or entire files
 (:class:`dtdfile`).
 
 These are specific .dtd files for localisation used by mozilla.
@@ -105,8 +106,7 @@ def quoteforandroid(source):
     # "\\&apos;" or "\\'".
     source = source.replace("'", "\\u0027")
     source = source.replace('"', "\\&quot;")
-    value = quotefordtd(source)  # value is an UTF-8 encoded string.
-    return value
+    return quotefordtd(source)  # value is an UTF-8 encoded string.
 
 
 def unquotefromandroid(source):
@@ -115,8 +115,7 @@ def unquotefromandroid(source):
     value = value.replace("\\&apos;", "'")
     value = value.replace("\\'", "'")
     value = value.replace("\\u0027", "'")
-    value = value.replace('\\"', '"')  # This converts \&quot; to ".
-    return value
+    return value.replace('\\"', '"')  # This converts \&quot; to ".
 
 
 _DTD_CODEPOINT2NAME = {
@@ -157,7 +156,7 @@ _DTD_NAME2CODEPOINT = {
 
 
 def unquotefromdtd(source):
-    """unquotes a quoted dtd definition"""
+    """Unquotes a quoted dtd definition."""
     # extract the string, get rid of quoting
     if len(source) == 0:
         source = '""'
@@ -173,7 +172,8 @@ def unquotefromdtd(source):
 
 
 def removeinvalidamps(name, value):
-    """Find and remove ampersands that are not part of an entity definition.
+    """
+    Find and remove ampersands that are not part of an entity definition.
 
     A stray & in a DTD file can break an application's ability to parse the
     file. In Mozilla localisation this is very important and these can break the
@@ -192,11 +192,9 @@ def removeinvalidamps(name, value):
 
     def is_valid_entity_name(name):
         """Check that supplied *name* is a valid entity name."""
-        if name.replace(".", "").replace("_", "").isalnum():
-            return True
-        elif name[0] == "#" and name[1:].isalnum():
-            return True
-        return False
+        return name.replace(".", "").replace("_", "").isalnum() or (
+            name[0] == "#" and name[1:].isalnum()
+        )
 
     amppos = 0
     invalid_amps = []
@@ -221,7 +219,7 @@ class dtdunit(base.TranslationUnit):
     """An entity definition from a DTD file (and any associated comments)."""
 
     def __init__(self, source="", android=False):
-        """construct the dtdunit, prepare it for parsing"""
+        """Construct the dtdunit, prepare it for parsing."""
         self.android = android
 
         super().__init__(source)
@@ -238,15 +236,14 @@ class dtdunit(base.TranslationUnit):
     # Note that source and target are equivalent for monolingual units
     @property
     def source(self):
-        """gets the unquoted source string"""
+        """Gets the unquoted source string."""
         if self.android:
             return unquotefromandroid(self.definition)
-        else:
-            return unquotefromdtd(self.definition)
+        return unquotefromdtd(self.definition)
 
     @source.setter
     def source(self, source):
-        """Sets the definition to the quoted value of source"""
+        """Sets the definition to the quoted value of source."""
         if self.android:
             self.definition = quoteforandroid(source)
         else:
@@ -255,14 +252,14 @@ class dtdunit(base.TranslationUnit):
 
     @property
     def target(self):
-        """gets the unquoted target string"""
+        """Gets the unquoted target string."""
         if self.android:
             return unquotefromandroid(self.definition)
         return unquotefromdtd(self.definition)
 
     @target.setter
     def target(self, target):
-        """Sets the definition to the quoted value of target"""
+        """Sets the definition to the quoted value of target."""
         if target is None:
             target = ""
         if self.android:
@@ -287,7 +284,7 @@ class dtdunit(base.TranslationUnit):
         self.entity = location
 
     def isblank(self):
-        """returns whether this dtdunit doesn't actually have an entity definition"""
+        """Returns whether this dtdunit doesn't actually have an entity definition."""
         # for dtds, we currently return a blank string if there is no .entity (==location in other files)
         # TODO: this needs to work better with base class expectations
         return self.entity is None
@@ -298,7 +295,7 @@ class dtdunit(base.TranslationUnit):
         return True
 
     def parse(self, dtdsrc):
-        """read the first dtd element from the source code into this object, return linesprocessed"""
+        """Read the first dtd element from the source code into this object, return linesprocessed."""
         self.comments = []
         # make all the lists the same
         self._locfilenotes = self.comments
@@ -433,7 +430,7 @@ class dtdunit(base.TranslationUnit):
                             self.entityhelp = None
                             e = 0
                             continue
-                        elif self.entitypart == "definition":
+                        if self.entitypart == "definition":
                             self.entityhelp = (e, line[e])
                             self.instring = False
                 if self.entitypart == "parameter":
@@ -495,11 +492,11 @@ class dtdunit(base.TranslationUnit):
         return linesprocessed
 
     def __str__(self):
-        """convert to a string."""
+        """Convert to a string."""
         return self.getoutput()
 
     def getoutput(self):
-        """convert the dtd entity back to string form"""
+        """Convert the dtd entity back to string form."""
         lines = []
         lines.extend([comment for commenttype, comment in self.comments])
         lines.extend(self.unparsedlines)
@@ -542,7 +539,7 @@ class dtdfile(base.TranslationStore):
     UnitClass = dtdunit
 
     def __init__(self, inputfile=None, android=False):
-        """construct a dtdfile, optionally reading in from inputfile"""
+        """Construct a dtdfile, optionally reading in from inputfile."""
         super().__init__()
         self.filename = getattr(inputfile, "name", "")
         self.android = android
@@ -551,7 +548,7 @@ class dtdfile(base.TranslationStore):
             self.parse(dtdsrc)
 
     def parse(self, dtdsrc):
-        """read the source code of a dtd file in and include them as dtdunits in self.units"""
+        """Read the source code of a dtd file in and include them as dtdunits in self.units."""
         start = 0
         end = 0
         lines = dtdsrc.split(b"\n")
@@ -588,7 +585,7 @@ class dtdfile(base.TranslationStore):
                 start += linesprocessed
 
     def serialize(self, out):
-        """Write content to file"""
+        """Write content to file."""
         content = b""
         for dtd in self.units:
             unit_str = str(dtd).encode(self.encoding)
@@ -599,7 +596,8 @@ class dtdfile(base.TranslationStore):
             out.truncate(0)
 
     def _valid_store(self, content):
-        """Validate the store to determine if it is valid
+        """
+        Validate the store to determine if it is valid.
 
         This uses ElementTree to parse the DTD
 

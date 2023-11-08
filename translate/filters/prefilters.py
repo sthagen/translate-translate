@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Filters that strings can be passed through before certain tests.
-"""
+"""Filters that strings can be passed through before certain tests."""
 
 import re
 
@@ -26,7 +25,8 @@ from translate.misc import quote
 
 
 def removekdecomments(str1):
-    r"""Remove KDE-style PO comments.
+    r"""
+    Remove KDE-style PO comments.
 
     KDE comments start with ``_:[space]`` and end with a literal ``\n``.
     Example::
@@ -55,20 +55,19 @@ def removekdecomments(str1):
 
 
 def filteraccelerators(accelmarker):
-    """Returns a function that filters accelerators marked using *accelmarker*
+    """
+    Returns a function that filters accelerators marked using *accelmarker*
     from a strings.
 
     :param string accelmarker: Accelerator marker character
     :rtype: Function
     :return: fn(str1, acceplist=None)
     """
-    if accelmarker is None:
-        accelmarkerlen = 0
-    else:
-        accelmarkerlen = len(accelmarker)
+    accelmarkerlen = 0 if accelmarker is None else len(accelmarker)
 
     def filtermarkedaccelerators(str1, acceptlist=None):
-        """Modifies the accelerators in *str1* marked with the given
+        """
+        Modifies the accelerators in *str1* marked with the given
         *accelmarker*, using a given *acceptlist* filter.
         """
         acclocs, badlocs = decoration.findaccelerators(str1, accelmarker, acceptlist)
@@ -84,7 +83,8 @@ def filteraccelerators(accelmarker):
 
 
 def varname(variable, startmarker, endmarker):
-    r"""Variable filter that returns the variable name without the marking
+    r"""
+    Variable filter that returns the variable name without the marking
     punctuation.
 
     .. note:: Currently this function simply returns *variable* unchanged, no
@@ -98,16 +98,16 @@ def varname(variable, startmarker, endmarker):
     # if the punctuation were included, we'd do the following:
     if startmarker is None:
         return variable[: variable.rfind(endmarker)]
-    elif endmarker is None:
+    if endmarker is None:
         return variable[variable.find(startmarker) + len(startmarker) :]
-    else:
-        return variable[
-            variable.find(startmarker) + len(startmarker) : variable.rfind(endmarker)
-        ]
+    return variable[
+        variable.find(startmarker) + len(startmarker) : variable.rfind(endmarker)
+    ]
 
 
 def varnone(variable, startmarker, endmarker):
-    """Variable filter that returns an empty string.
+    """
+    Variable filter that returns an empty string.
 
     :rtype: String
     :return: Empty string
@@ -116,7 +116,8 @@ def varnone(variable, startmarker, endmarker):
 
 
 def filtervariables(startmarker, endmarker, varfilter):
-    """Returns a function that filters variables marked using *startmarker* and
+    """
+    Returns a function that filters variables marked using *startmarker* and
     *endmarker* from a string.
 
     :param string startmarker: Start of variable marker
@@ -125,19 +126,15 @@ def filtervariables(startmarker, endmarker, varfilter):
     :rtype: Function
     :return: fn(str1)
     """
-    if startmarker is None:
-        startmarkerlen = 0
-    else:
-        startmarkerlen = len(startmarker)
-    if endmarker is None:
-        endmarkerlen = 0
-    elif type(endmarker) is int:
+    startmarkerlen = 0 if startmarker is None else len(startmarker)
+    if endmarker is None or isinstance(endmarker, int):
         endmarkerlen = 0
     else:
         endmarkerlen = len(endmarker)
 
     def filtermarkedvariables(str1):
-        r"""Modifies the variables in *str1* marked with a given *\*marker*,
+        r"""
+        Modifies the variables in *str1* marked with a given *\*marker*,
         using a given filter.
         """
         varlocs = decoration.findmarkedvariables(str1, startmarker, endmarker)
@@ -164,7 +161,8 @@ word_with_apos_re = re.compile(r"(?u)\w+'\w+")
 
 
 def filterwordswithpunctuation(str1):
-    """Goes through a list of known words that have punctuation and removes the
+    """
+    Goes through a list of known words that have punctuation and removes the
     punctuation from them.
     """
     if "'" not in str1:
@@ -188,5 +186,4 @@ def filterwordswithpunctuation(str1):
             lastpos = pos + len(word)
         newstr1 += str1[lastpos:]
         return newstr1
-    else:
-        return str1
+    return str1

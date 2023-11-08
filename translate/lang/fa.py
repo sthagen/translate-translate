@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""This module represents the Persian language.
+"""
+This module represents the Persian language.
 
 .. seealso:: :wp:`Persian_language`
 """
@@ -46,8 +47,7 @@ def guillemets(text):
             text = re.sub("(.|^)`([^']+)'", convertquotation, text)
         elif singlecount % 2 == 0:
             text = re.sub("(.|^)'([^']+)'", convertquotation, text)
-    text = re.sub("(.|^)“([^”]+)”", convertquotation, text)
-    return text
+    return re.sub("(.|^)“([^”]+)”", convertquotation, text)
 
 
 class fa(common.Common):

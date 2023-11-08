@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 import shutil
 import tempfile
@@ -64,7 +65,8 @@ class BundleProjectStore(ProjectStore):
 
     # METHODS #
     def append_file(self, afile, fname, ftype="trans", delete_orig=False):
-        """Append the given file to the project with the given filename, marked
+        """
+        Append the given file to the project with the given filename, marked
         to be of type ``ftype`` ('src', 'trans', 'tgt').
 
         :param delete_orig: If ``True``, as set by
@@ -84,10 +86,8 @@ class BundleProjectStore(ProjectStore):
         self._zip_add(fname, afile)
 
         if delete_orig and hasattr(afile, "name") and afile.name not in self._tempfiles:
-            try:
+            with contextlib.suppress(Exception):
                 os.unlink(afile.name)
-            except Exception:
-                pass
 
         return self.get_file(fname), fname
 
@@ -98,10 +98,8 @@ class BundleProjectStore(ProjectStore):
         tempfiles = [tmpf for tmpf, prjf in self._tempfiles.items() if prjf == fname]
         if tempfiles:
             for tmpf in tempfiles:
-                try:
+                with contextlib.suppress(Exception):
                     os.unlink(tmpf)
-                except Exception:
-                    pass
                 del self._tempfiles[tmpf]
 
     def close(self):
@@ -117,7 +115,8 @@ class BundleProjectStore(ProjectStore):
         self._tempfiles = {}
 
     def get_file(self, fname):
-        """Retrieve a project file (source, translation or target file) from
+        """
+        Retrieve a project file (source, translation or target file) from
         the project archive.
         """
         retfile = None
@@ -176,10 +175,7 @@ class BundleProjectStore(ProjectStore):
         """Save all project files to the bundle zip file."""
         self._update_from_tempfiles()
 
-        if filename:
-            newzip = ZipFile(filename, "w")
-        else:
-            newzip = self._create_temp_zipfile()
+        newzip = ZipFile(filename, "w") if filename else self._create_temp_zipfile()
 
         # Write project file for the new zip bundle
         newzip.writestr("project.xtp", self._generate_settings())
@@ -196,7 +192,8 @@ class BundleProjectStore(ProjectStore):
         self._replace_project_zip(newzip)
 
     def update_file(self, pfname, infile):
-        """Updates the file with the given project file name with the contents
+        """
+        Updates the file with the given project file name with the contents
         of ``infile``.
 
         :returns: the results from :meth:`BundleProjStore.append_file`.
@@ -227,7 +224,8 @@ class BundleProjectStore(ProjectStore):
         return ZipFile(newzipfname, "w")
 
     def _replace_project_zip(self, zfile):
-        """Replace the currently used zip file (``self.zip``) with the given
+        """
+        Replace the currently used zip file (``self.zip``) with the given
         zip file. Basically, ``os.rename(zfile.filename,
         self.zip.filename)``.
         """
@@ -259,7 +257,7 @@ class BundleProjectStore(ProjectStore):
         """Delete the files with the given names from the zip file (``self.zip``)."""
         # Sanity checking
         if not isinstance(fnames, (list, tuple)):
-            raise ValueError("fnames must be list or tuple: %s" % (fnames))
+            raise TypeError("fnames must be list or tuple: %s" % (fnames))
         if not self.zip:
             raise ValueError("No zip file to work on")
         zippedfiles = self.zip.namelist()

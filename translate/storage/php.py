@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Classes that hold units of PHP localisation files :class:`phpunit` or
+"""
+Classes that hold units of PHP localisation files :class:`phpunit` or
 entire files :class:`phpfile`. These files are used in translating many
 PHP based applications.
 
@@ -105,7 +106,8 @@ class PHPLexer(FilteredLexer):
         return token
 
     def extract_comments(self, end):
-        """Extract comments related to given parser positions.
+        """
+        Extract comments related to given parser positions.
 
         Must be called sequentially for consequent statements.
         """
@@ -171,7 +173,8 @@ class PHPLexer(FilteredLexer):
 
 
 def phpencode(text, quotechar="'"):
-    """Convert Python string to PHP escaping.
+    """
+    Convert Python string to PHP escaping.
 
     The encoding is implemented for
     `'single quote' <http://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.single>`_
@@ -201,23 +204,20 @@ def phpencode(text, quotechar="'"):
         for a, b in escapes:
             text = text.replace(a, b)
         return text
-    else:
-        return text.replace("%s" % quotechar, "\\%s" % quotechar)
+    return text.replace("%s" % quotechar, "\\%s" % quotechar)
 
 
 def phpdecode(text, quotechar="'"):
     """Convert PHP escaped string to a Python string."""
-
     escape_encoding = "unicode_escape"
 
     def decode_octal_hex(match):
-        r"""decode Octal \NNN and Hex values"""
+        r"""Decode Octal \NNN and Hex values."""
         if "octal" in match.groupdict():
             return match.groupdict()["octal"].encode("latin-1").decode(escape_encoding)
-        elif "hex" in match.groupdict():
+        if "hex" in match.groupdict():
             return match.groupdict()["hex"].encode("latin-1").decode(escape_encoding)
-        else:
-            return match.group
+        return match.group
 
     if not text:
         return text
@@ -236,10 +236,8 @@ def phpdecode(text, quotechar="'"):
         for a, b in escapes:
             text = text.replace(a, b)
         text = re.sub(r"(?P<octal>\\[0-7]{1,3})", decode_octal_hex, text)
-        text = re.sub(r"(?P<hex>\\x[0-9A-Fa-f]{1,2})", decode_octal_hex, text)
-        return text
-    else:
-        return text.replace("\\'", "'").replace("\\\\", "\\")
+        return re.sub(r"(?P<hex>\\x[0-9A-Fa-f]{1,2})", decode_octal_hex, text)
+    return text.replace("\\'", "'").replace("\\\\", "\\")
 
 
 class phpunit(base.TranslationUnit):
@@ -297,7 +295,7 @@ class phpunit(base.TranslationUnit):
             phpencode(self.get_raw_value(), self.escape_type),
         )
         joiner = "\n" + indent
-        return indent + joiner.join(self._comments + [out])
+        return indent + joiner.join([*self._comments, out])
 
     def addlocation(self, location):
         self.name = location
@@ -317,8 +315,7 @@ class phpunit(base.TranslationUnit):
     def getnotes(self, origin=None):
         if origin in ["programmer", "developer", "source code", None]:
             return "\n".join(self._comments)
-        else:
-            return super().getnotes(origin)
+        return super().getnotes(origin)
 
     def removenotes(self, origin=None):
         self._comments = []
@@ -452,7 +449,7 @@ class phpfile(base.TranslationStore):
         def concatenate(item):
             if isinstance(item, str):
                 return item
-            elif isinstance(item, Variable):
+            if isinstance(item, Variable):
                 return item.name
             assert isinstance(item, BinaryOp)
             return concatenate(item.left) + concatenate(item.right)
@@ -476,25 +473,7 @@ class phpfile(base.TranslationStore):
                         lexer.extract_comments(item.lexpositions[1]),
                     )
             elif isinstance(item, Assignment):
-                if isinstance(item.node, ArrayOffset):
-                    name = lexer.extract_name("EQUALS", *item.lexpositions)
-                    if isinstance(item.expr, Array):
-                        handle_array(name, item.expr.nodes, lexer)
-                    elif isinstance(item.expr, str):
-                        self.create_and_add_unit(
-                            name,
-                            item.expr,
-                            lexer.extract_quote(),
-                            lexer.extract_comments(item.lexpositions[1]),
-                        )
-                    elif isinstance(item.expr, BinaryOp) and item.expr.op == ".":
-                        self.create_and_add_unit(
-                            name,
-                            concatenate(item.expr),
-                            lexer.extract_quote(),
-                            lexer.extract_comments(item.lexpositions[1]),
-                        )
-                elif isinstance(item.node, Variable):
+                if isinstance(item.node, (ArrayOffset, Variable)):
                     name = lexer.extract_name("EQUALS", *item.lexpositions)
                     if isinstance(item.expr, Array):
                         handle_array(name, item.expr.nodes, lexer)

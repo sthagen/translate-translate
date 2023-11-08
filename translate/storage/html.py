@@ -17,7 +17,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #
 
-"""module for parsing html files for translation"""
+"""module for parsing html files for translation."""
 
 import html.parser
 import re
@@ -32,7 +32,7 @@ html.parser.piclose = re.compile(r"\?>")
 
 
 class htmlunit(base.TranslationUnit):
-    """A unit of translatable/localisable HTML content"""
+    """A unit of translatable/localisable HTML content."""
 
     def __init__(self, source=None):
         super().__init__(source)
@@ -161,7 +161,8 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         return string
 
     def guess_encoding(self, htmlsrc):
-        """Returns the encoding of the html text.
+        """
+        Returns the encoding of the html text.
 
         We look for 'charset=' within a meta tag to do this.
         """
@@ -328,6 +329,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         name = attrs_dict["name"].lower() if "name" in attrs_dict else None
         if name in self.TRANSLATABLE_METADATA and "content" in attrs_dict:
             return self.create_attribute_tu("content", attrs_dict["content"])
+        return None
 
     @staticmethod
     def translatable_attribute_matches_tag(attrname, tag):
@@ -348,6 +350,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
                     self.getpos()[1] + 1,
                 ),
             }
+        return None
 
     def emit_attribute_translation_units(self, markup):
         if "attribute_tus" in markup:
@@ -420,7 +423,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         if popped != tag:
             raise ParseError(
                 "Mismatched closing tag: "
-                "expected '%s' got '%s' at line %s" % (popped, tag, self.getpos()[0])
+                f"expected '{popped}' got '{tag}' at line {self.getpos()[0]}"
             )
 
         self.append_markup({"type": "endtag", "html_content": "</%s>" % tag})
@@ -458,14 +461,14 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         self.append_markup({"type": "data", "html_content": data})
 
     def handle_charref(self, name):
-        """Handle entries in the form &#NNNN; e.g. &#8417;"""
+        """Handle entries in the form &#NNNN; e.g. &#8417;."""
         if name.lower().startswith("x"):
             self.handle_data(chr(int(name[1:], 16)))
         else:
             self.handle_data(chr(int(name)))
 
     def handle_entityref(self, name):
-        """Handle named entities of the form &aaaa; e.g. &rsquo;"""
+        """Handle named entities of the form &aaaa; e.g. &rsquo;."""
         converted = html5.get(name + ";")
         if name in ["gt", "lt", "amp"] or not converted:
             self.handle_data("&%s;" % name)

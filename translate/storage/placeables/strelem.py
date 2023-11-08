@@ -22,8 +22,16 @@ Contains the base :class:`StringElem` class that represents a node in a
 parsed rich-string tree. It is the base class of all placeables.
 """
 
+import contextlib
 import logging
-import sys
+
+
+def filter_all(e):
+    return True
+
+
+def filter_editable(e):
+    return e.iseditable
 
 
 class ElementNotFoundError(ValueError):
@@ -64,7 +72,7 @@ class StringElem:
         else:
             for elem in sub:
                 if not isinstance(elem, (str, StringElem)):
-                    raise ValueError(elem)
+                    raise TypeError(elem)
             self.sub = sub
             self.prune()
 
@@ -87,7 +95,8 @@ class StringElem:
         return item in str(self)
 
     def __eq__(self, rhs):
-        """:returns: ``True`` if (and only if) all members as well as sub-trees
+        """
+        :returns: ``True`` if (and only if) all members as well as sub-trees
         are equal. False otherwise.
         """
         if not isinstance(rhs, StringElem):
@@ -170,7 +179,8 @@ class StringElem:
 
     # METHODS #
     def apply_to_strings(self, f):
-        """Apply ``f`` to all actual strings in the tree.
+        """
+        Apply ``f`` to all actual strings in the tree.
 
         :param f: Must take one (str or unicode) argument and return a
                   string or unicode.
@@ -181,7 +191,8 @@ class StringElem:
                     elem.sub[i] = f(elem.sub[i])
 
     def copy(self):
-        """Returns a copy of the sub-tree.  This should be overridden in
+        """
+        Returns a copy of the sub-tree.  This should be overridden in
         sub-classes with more data.
 
         .. note:: ``self.renderer`` is **not** copied.
@@ -212,7 +223,8 @@ class StringElem:
         del parent.sub[subidx]
 
     def delete_range(self, start_index, end_index):
-        """Delete the text in the range given by the string-indexes
+        """
+        Delete the text in the range given by the string-indexes
         ``start_index`` and ``end_index``.
 
         Partial nodes will only be removed if they are editable.
@@ -245,7 +257,8 @@ class StringElem:
             # If {end} is "between" elements, we use the one on the "left"
             end["elem"] = end["elem"][0]
             end["offset"] = end["offset"][0]
-        assert start["elem"].isleaf() and end["elem"].isleaf()
+        assert start["elem"].isleaf()
+        assert end["elem"].isleaf()
 
         # logging.debug('FROM %s TO %s' % (start, end))
 
@@ -338,9 +351,7 @@ class StringElem:
         #        range_nodes[-1] is end['elem'])
         # logging.debug("Nodes in delete range: %s" % (str(range_nodes)))
 
-        marked_nodes = (
-            []
-        )  # Contains nodes that have been marked for deletion (directly or inderectly (via parent)).
+        marked_nodes = []  # Contains nodes that have been marked for deletion (directly or inderectly (via parent)).
         for node in range_nodes[1:-1]:
             if [n for n in marked_nodes if n is node]:
                 continue
@@ -368,10 +379,8 @@ class StringElem:
         end_offset = self.elem_offset(end["elem"])
 
         for node in marked_nodes:
-            try:
+            with contextlib.suppress(ElementNotFoundError):
                 self.delete_elem(node)
-            except ElementNotFoundError:
-                pass
 
         if start["elem"] is not end["elem"]:
             if start_offset == start["index"] or (
@@ -394,7 +403,7 @@ class StringElem:
     def depth_first(self, filter=None):
         """Returns a list of the nodes in the tree in depth-first order."""
         if filter is None or not callable(filter):
-            filter = lambda e: True
+            filter = filter_all
         elems = []
         if filter(self):
             elems.append(self)
@@ -408,12 +417,13 @@ class StringElem:
                 elems.extend(sub.depth_first(filter))
         return elems
 
-    def encode(self, encoding=sys.getdefaultencoding()):
+    def encode(self, encoding="utf-8"):
         """More ``unicode`` class emulation."""
         return str(self).encode(encoding)
 
     def elem_offset(self, elem):
-        """Find the offset of ``elem`` in the current tree.
+        """
+        Find the offset of ``elem`` in the current tree.
 
         This cannot be reliably used if ``self.renderer`` is used and even
         less so if the rendering function renders the string differently
@@ -439,13 +449,13 @@ class StringElem:
                 for s in e.sub:
                     if str(s) == str(elem):
                         return offset + leafoffset
-                    else:
-                        leafoffset += len(str(s))
+                    leafoffset += len(str(s))
                 offset += len(e)
         return -1
 
     def elem_at_offset(self, offset):
-        """Get the ``StringElem`` in the tree that contains the string rendered
+        """
+        Get the ``StringElem`` in the tree that contains the string rendered
         at the given offset.
         """
         if offset < 0 or offset > len(self):
@@ -461,7 +471,8 @@ class StringElem:
         return elem
 
     def find(self, x):
-        """Find sub-string ``x`` in this string tree and return the position at
+        """
+        Find sub-string ``x`` in this string tree and return the position at
         which it starts.
         """
         if isinstance(x, str):
@@ -475,11 +486,12 @@ class StringElem:
         return [elem for elem in self.flatten() if x in str(elem)]
 
     def flatten(self, filter=None):
-        """Flatten the tree by returning a depth-first search over the tree's
+        """
+        Flatten the tree by returning a depth-first search over the tree's
         leaves.
         """
         if filter is None or not callable(filter):
-            filter = lambda e: True
+            filter = filter_all
         return list(self.iter_depth_first(lambda e: e.isleaf() and filter(e)))
 
     def get_ancestor_where(self, child, criteria):
@@ -489,7 +501,8 @@ class StringElem:
         return self.get_ancestor_where(parent, criteria)
 
     def get_index_data(self, index):
-        """Get info about the specified range in the tree.
+        """
+        Get info about the specified range in the tree.
 
         :returns: A dictionary with the following items:
 
@@ -512,7 +525,8 @@ class StringElem:
         return info
 
     def get_parent_elem(self, child):
-        """Searches the current sub-tree for and returns the parent of the
+        """
+        Searches the current sub-tree for and returns the parent of the
         ``child`` element.
         """
         for elem in self.iter_depth_first():
@@ -524,7 +538,8 @@ class StringElem:
         return None
 
     def insert(self, offset, text, preferred_parent=None):
-        """Insert the given text at the specified offset of this string-tree's
+        """
+        Insert the given text at the specified offset of this string-tree's
         string (Unicode) representation.
         """
         if offset < 0 or offset > len(self):
@@ -532,7 +547,7 @@ class StringElem:
         if isinstance(text, str):
             text = StringElem(text)
         if not isinstance(text, StringElem):
-            raise ValueError("text must be of type StringElem")
+            raise TypeError("text must be of type StringElem")
 
         def checkleaf(elem, text):
             if elem.isleaf() and type(text) is StringElem and text.isleaf():
@@ -563,22 +578,19 @@ class StringElem:
                 oelem.prune()
                 return True
             # 1.2 #
-            else:
-                # logging.debug('Case 1.2')
-                oparent = self.get_ancestor_where(oelem, lambda x: x.iseditable)
-                if oparent is not None:
-                    oparent.sub.insert(0, checkleaf(oparent, text))
-                    return True
-                else:
-                    self.sub.insert(0, checkleaf(self, text))
-                    return True
-            return False
+            # logging.debug('Case 1.2')
+            oparent = self.get_ancestor_where(oelem, filter_editable)
+            if oparent is not None:
+                oparent.sub.insert(0, checkleaf(oparent, text))
+                return True
+            self.sub.insert(0, checkleaf(self, text))
+            return True
 
         # Case 2 #
         if offset == len(self):
             # logging.debug('Case 2')
             last = self.flatten()[-1]
-            parent = self.get_ancestor_where(last, lambda x: x.iseditable)
+            parent = self.get_ancestor_where(last, filter_editable)
             if parent is None:
                 parent = self
             preferred_type = type(preferred_parent)
@@ -587,7 +599,7 @@ class StringElem:
             if preferred_parent is oelem:
                 # The preferred parent is still in this StringElem
                 return oelem.insert(len_oelem, text)
-            elif oelem_type == preferred_type:
+            if oelem_type == preferred_type:
                 # oelem has the right type
                 return oelem.insert(len_oelem, text)
 
@@ -610,8 +622,7 @@ class StringElem:
                     else:
                         oelem.sub = [StringElem(head), text, StringElem(tail)]
                     return True
-                else:
-                    return oelem.insert(eoffset, text)
+                return oelem.insert(eoffset, text)
             return False
 
         # And the only case left: Case 4 #
@@ -636,7 +647,7 @@ class StringElem:
             return True
 
         # 4.2 #
-        elif before.iseditable and oelem.iseditable:
+        if before.iseditable and oelem.iseditable:
             # logging.debug('Case 4.2')
             # We can add to either, but we try hard to add to the correct one
             # so that we avoid inserting text in the wrong place on undo, for
@@ -647,10 +658,10 @@ class StringElem:
             if preferred_parent is oelem:
                 # The preferred parent is still in this StringElem
                 return oelem.insert(0, text)
-            elif oelem_type == preferred_type and not before_type == preferred_type:
+            if oelem_type == preferred_type and before_type != preferred_type:
                 # oelem has the right type and before has the wrong type
                 return oelem.insert(0, text)
-            elif oelem_type != preferred_type and before_type != preferred_type:
+            if preferred_type not in (oelem_type, before_type):
                 # Both are the wrong type, so we add it as if neither were
                 # editable
                 bparent = self.get_parent_elem(before)
@@ -666,12 +677,12 @@ class StringElem:
             return before.insert(len(before), text)  # Reinterpret as a case 2
 
         # 4.3 #
-        elif before.iseditable and not oelem.iseditable:
+        if before.iseditable and not oelem.iseditable:
             # logging.debug('Case 4.3')
             return before.insert(len(before), text)  # Reinterpret as a case 2
 
         # 4.4 #
-        elif not before.iseditable and oelem.iseditable:
+        if not before.iseditable and oelem.iseditable:
             # logging.debug('Case 4.4')
             return oelem.insert(0, text)  # Reinterpret as a case 1
 
@@ -782,9 +793,7 @@ class StringElem:
             parent.sub.insert(0, text)
             return True
 
-        logging.debug(
-            f"Could not insert between {repr(left)} and {repr(right)}... odd."
-        )
+        logging.debug("Could not insert between %r and %r... odd.", left, right)
         return False
 
     def isleaf(self):
@@ -801,7 +810,7 @@ class StringElem:
     def iter_depth_first(self, filter=None):
         """Iterate through the nodes in the tree in dept-first order."""
         if filter is None or not callable(filter):
-            filter = lambda e: True
+            filter = filter_all
         if filter(self):
             yield self
         for sub in self.sub:
@@ -813,13 +822,14 @@ class StringElem:
                 yield from sub.iter_depth_first(filter)
 
     def map(self, f, filter=None):
-        """Apply ``f`` to all nodes for which ``filter`` returned ``True``
+        """
+        Apply ``f`` to all nodes for which ``filter`` returned ``True``
         (optional).
         """
         if filter is not None and not callable(filter):
             raise ValueError("filter is not callable or None")
         if filter is None:
-            filter = lambda e: True
+            filter = filter_all
 
         for elem in self.depth_first():
             if filter(elem):
@@ -827,7 +837,8 @@ class StringElem:
 
     @classmethod
     def parse(cls, pstr):
-        """Parse an instance of this class from the start of the given string.
+        """
+        Parse an instance of this class from the start of the given string.
         This method should be implemented by any sub-class that wants to
         parseable by :mod:`translate.storage.placeables.parse`.
 
@@ -839,11 +850,12 @@ class StringElem:
         return cls(pstr)
 
     def print_tree(self, indent=0, verbose=False):
-        """Print the tree from the current instance's point in an indented
+        """
+        Print the tree from the current instance's point in an indented
         manner.
         """
         indent_prefix = " " * indent * 2
-        out = f"{indent_prefix}{self.__class__.__name__} [{str(self)}]"
+        out = f"{indent_prefix}{self.__class__.__name__} [{self!s}]"
         if verbose:
             out += " " + repr(self)
 
@@ -929,7 +941,8 @@ class StringElem:
 
     # TODO: Write unit test for this method
     def remove_type(self, ptype):
-        r"""Replace nodes with type ``ptype`` with base ``StringElem``\s,
+        r"""
+        Replace nodes with type ``ptype`` with base ``StringElem``\s,
         containing the same sub-elements. This is only applicable to elements
         below the element tree root node.
         """
@@ -945,7 +958,8 @@ class StringElem:
                 )
 
     def translate(self):
-        """Transform the sub-tree according to some class-specific needs.  This
+        """
+        Transform the sub-tree according to some class-specific needs.  This
         method should be either overridden in implementing sub-classes or
         dynamically replaced by specific applications.
 

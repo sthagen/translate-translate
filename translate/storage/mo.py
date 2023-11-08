@@ -25,7 +25,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Module for parsing Gettext .mo files for translation.
+"""
+Module for parsing Gettext .mo files for translation.
 
 The coding of .mo files was produced from `Gettext documentation
 <http://www.gnu.org/software/gettext/manual/gettext.html#MO-Files>`_,
@@ -50,7 +51,7 @@ POT_HEADER = re.compile(r"^POT-Creation-Date:.*(\n|$)", re.IGNORECASE | re.MULTI
 
 
 def mounpack(filename="messages.mo"):
-    """Helper to unpack Gettext MO files into a Python string"""
+    """Helper to unpack Gettext MO files into a Python string."""
     with open(filename, "rb") as fh:
         s = fh.read()
         print("\\x%02x" * len(s) % tuple(map(ord, s)))
@@ -114,7 +115,7 @@ class mounit(base.TranslationUnit):
         super().__init__(source)
 
     def getcontext(self):
-        """Get the message context"""
+        """Get the message context."""
         # Still need to handle KDE comments
         if self.msgctxt is None:
             return None
@@ -124,11 +125,11 @@ class mounit(base.TranslationUnit):
         self.msgctxt = [context]
 
     def isheader(self):
-        """Is this a header entry?"""
+        """Is this a header entry?."""
         return self.source == ""
 
     def istranslatable(self):
-        """Is this message translateable?"""
+        """Is this message translateable?."""
         return bool(self.source)
 
 
@@ -148,7 +149,7 @@ class mofile(poheader.poheader, base.TranslationStore):
             self.parsestring(inputfile)
 
     def serialize(self, out):
-        """Output a string representation of the MO data file"""
+        """Output a string representation of the MO data file."""
         # check the header of this file for the copyright note of this function
 
         def add_to_hash_table(string, i):
@@ -216,8 +217,8 @@ class mofile(poheader.poheader, base.TranslationStore):
         # The string table first has the list of keys, then the list of values.
         # Each entry has first the size of the string, then the file offset.
         for o1, l1, o2, l2 in offsets:
-            koffsets = koffsets + [l1, o1 + keystart]
-            voffsets = voffsets + [l2, o2 + valuestart]
+            koffsets = [*koffsets, l1, o1 + keystart]
+            voffsets = [*voffsets, l2, o2 + valuestart]
         offsets = koffsets + voffsets
         out.write(
             struct.pack(
@@ -239,7 +240,7 @@ class mofile(poheader.poheader, base.TranslationStore):
             out.write(strs)
 
     def parse(self, input):
-        """parses the given file or file source string"""
+        """Parses the given file or file source string."""
         if hasattr(input, "name"):
             self.filename = input.name
         elif not getattr(self, "filename", ""):

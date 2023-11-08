@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Convert XLIFF localization files to Gettext PO localization files.
+"""
+Convert XLIFF localization files to Gettext PO localization files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/xliff2po.html
 for examples and usage instructions.
@@ -28,7 +29,7 @@ from translate.storage import po, xliff
 class xliff2po:
     @staticmethod
     def converttransunit(transunit):
-        """makes a pounit from the given transunit"""
+        """Makes a pounit from the given transunit."""
         thepo = po.pounit()
 
         # Header
@@ -63,7 +64,7 @@ class xliff2po:
         return thepo
 
     def convertstore(self, inputfile, duplicatestyle="msgctxt"):
-        """Converts a .xliff file to .po format"""
+        """Converts a .xliff file to .po format."""
         XliffFile = xliff.xlifffile.parsestring(inputfile)
         thetargetfile = po.pofile()
         targetheader = thetargetfile.header()
@@ -92,8 +93,9 @@ class xliff2po:
 
 
 def convertxliff(inputfile, outputfile, templates, duplicatestyle="msgctxt"):
-    """reads in stdin using fromfileclass, converts using convertorclass,
-    writes to stdout
+    """
+    reads in stdin using fromfileclass, converts using convertorclass,
+    writes to stdout.
     """
     convertor = xliff2po()
     outputstore = convertor.convertstore(inputfile, duplicatestyle)

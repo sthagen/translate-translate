@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Segment Gettext PO, XLIFF and TMX localization files at the sentence level.
+"""
+Segment Gettext PO, XLIFF and TMX localization files at the sentence level.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/posegment.html
 for examples and usage instructions.
@@ -41,8 +42,7 @@ class segment:
         if unit.istranslated() and (len(sourcesegments) != len(targetsegments)):
             if not self.onlyaligned:
                 return [unit]
-            else:
-                return None
+            return None
         # We could do more here to check if the lengths correspond more or less,
         # certain quality checks are passed, etc.  But for now this is a good
         # start.
@@ -81,7 +81,7 @@ def segmentfile(
     stripspaces=True,
     onlyaligned=False,
 ):
-    """reads in inputfile, segments it then, writes to outputfile"""
+    """Reads in inputfile, segments it then, writes to outputfile."""
     # note that templatefile is not used, but it is required by the converter...
     inputstore = factory.getobject(inputfile)
     if inputstore.isempty():

@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Module for handling Qt linguist (.ts) files.
+"""
+Module for handling Qt linguist (.ts) files.
 
 This will eventually replace the older ts.py which only supports the older
 format. While converters haven't been updated to use this module, we retain
@@ -77,7 +78,6 @@ class tsunit(lisa.LISAunit):
 
     def createlanguageNode(self, lang, text, purpose):
         """Returns an xml Element setup with given parameters."""
-
         assert purpose
         if purpose == "target":
             purpose = "translation"
@@ -120,8 +120,7 @@ class tsunit(lisa.LISAunit):
         if self.hasplural():
             numerus_nodes = targetnode.findall(self.namespaced("numerusform"))
             return multistring([node.text or "" for node in numerus_nodes])
-        else:
-            return targetnode.text or ""
+        return targetnode.text or ""
 
     @target.setter
     def target(self, target):
@@ -158,7 +157,7 @@ class tsunit(lisa.LISAunit):
         return self.xmlelement.get("numerus") == "yes"
 
     def addnote(self, text, origin=None, position="append"):
-        """Add a note specifically in the appropriate *comment* tag"""
+        """Add a note specifically in the appropriate *comment* tag."""
         current_notes = self.getnotes(origin)
         self.removenotes(origin)
         if origin in ["programmer", "developer", "source code"]:
@@ -212,7 +211,7 @@ class tsunit(lisa.LISAunit):
             self._gettargetnode().attrib.pop("type")
 
     def isreview(self):
-        """States whether this unit needs to be reviewed"""
+        """States whether this unit needs to be reviewed."""
         return self._gettype() == "unfinished"
 
     def isfuzzy(self):
@@ -234,10 +233,8 @@ class tsunit(lisa.LISAunit):
         if context_name is not None:
             if self.source:
                 return context_name + self.source
-            else:
-                return context_name
-        else:
-            return self.source
+            return context_name
+        return self.source
 
     def istranslatable(self):
         # Found a file in the wild with no context and an empty source. This
@@ -368,9 +365,8 @@ class tsunit(lisa.LISAunit):
             # format doesn't really do
             if self.target:
                 return self.S_FUZZY
-            else:
-                return self.S_UNTRANSLATED
-        elif type == "vanished":
+            return self.S_UNTRANSLATED
+        if type == "vanished":
             return self.S_OBSOLETE
         return self.statemap[type]
 
@@ -419,7 +415,8 @@ class tsfile(lisa.LISAfile):
             self.body = self.document.getroot()
 
     def getsourcelanguage(self):
-        """Get the source language for this .ts file.
+        """
+        Get the source language for this .ts file.
 
         The 'sourcelanguage' attribute was only added to the TS format in
         Qt v4.5. We return 'en' if there is no sourcelanguage set.
@@ -437,7 +434,8 @@ class tsfile(lisa.LISAfile):
         return lang
 
     def gettargetlanguage(self):
-        """Get the target language for this .ts file.
+        """
+        Get the target language for this .ts file.
 
         :return: ISO code e.g. af, fr, pt_BR
         :rtype: String
@@ -445,7 +443,8 @@ class tsfile(lisa.LISAfile):
         return data.normalize_code(self.header.get("language"))
 
     def settargetlanguage(self, targetlanguage):
-        """Set the target language for this .ts file to *targetlanguage*.
+        """
+        Set the target language for this .ts file to *targetlanguage*.
 
         :param targetlanguage: ISO code e.g. af, fr, pt_BR
         :type targetlanguage: String
@@ -454,7 +453,7 @@ class tsfile(lisa.LISAfile):
             self.header.set("language", targetlanguage)
 
     def _createcontext(self, contextname, comment=None):
-        """Creates a context node with an optional comment"""
+        """Creates a context node with an optional comment."""
         context = etree.SubElement(
             self.document.getroot(), self.namespaced(self.bodyNode)
         )
@@ -485,7 +484,8 @@ class tsfile(lisa.LISAfile):
     def addunit(
         self, unit, new=True, contextname=None, comment=None, createifmissing=True
     ):
-        """Adds the given unit to the last used body node (current context).
+        """
+        Adds the given unit to the last used body node (current context).
 
         If the contextname is specified, switch to that context (creating it if
         allowed by createifmissing).
@@ -502,7 +502,8 @@ class tsfile(lisa.LISAfile):
         return unit
 
     def _switchcontext(self, contextname, comment, createifmissing=False):
-        """Switch the current context to the one named contextname, optionally
+        """
+        Switch the current context to the one named contextname, optionally
         creating it if it doesn't exist.
         """
         self._contextname = contextname

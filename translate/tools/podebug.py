@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Insert debug messages into XLIFF and Gettext PO localization files.
+"""
+Insert debug messages into XLIFF and Gettext PO localization files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/podebug.html
 for examples and usage instructions.
@@ -115,7 +116,7 @@ class podebug:
         return StringElem("")
 
     def rewrite_chef(self, string):
-        """Rewrite using Mock Swedish as made famous by Monty Python"""
+        """Rewrite using Mock Swedish as made famous by Monty Python."""
         if not isinstance(string, StringElem):
             string = StringElem(string)
         # From Dive into Python which itself got it elsewhere
@@ -172,8 +173,7 @@ class podebug:
 
         for element in string_elements:
             if element.istranslatable:
-                for character in str(element):
-                    transformed.append(transform(character))
+                transformed.extend(transform(character) for character in str(element))
             else:
                 transformed.append(element.sub[0])
 
@@ -184,7 +184,7 @@ class podebug:
     )
 
     def rewrite_unicode(self, string):
-        """Convert to Unicode characters that look like the source string"""
+        """Convert to Unicode characters that look like the source string."""
         if not isinstance(string, StringElem):
             string = StringElem(string)
 
@@ -197,17 +197,16 @@ class podebug:
         def transformer(s):
             if self.preserveplaceholders:
                 return self.transform_characters_preserving_placeholders(s, transpose)
-            else:
-                return "".join(transpose(c) for c in s)
+            return "".join(transpose(c) for c in s)
 
         self.apply_to_translatables(string, transformer)
         return string
 
     REWRITE_FLIPPED_MAP = (
         "¡„#$%⅋,()⁎+´-˙/012Ɛᔭ59Ƚ86:;<=>¿@"
-        + "∀ԐↃᗡƎℲ⅁HIſӼ⅂WNOԀÒᴚS⊥∩ɅＭX⅄Z"
-        + "[\\]ᵥ_,"
-        + "ɐqɔpǝɟƃɥıɾʞʅɯuodbɹsʇnʌʍxʎz"
+        "∀ԐↃᗡƎℲ⅁HIſӼ⅂WNOԀÒᴚS⊥∩ɅＭX⅄Z"
+        "[\\]ᵥ_,"
+        "ɐqɔpǝɟƃɥıɾʞʅɯuodbɹsʇnʌʍxʎz"
     )
     # Brackets should be swapped if the string will be reversed in memory.
     # If a right-to-left override is used, the brackets should be
@@ -235,8 +234,7 @@ class podebug:
                 return "\u202e" + self.transform_characters_preserving_placeholders(
                     s, transpose
                 )
-            else:
-                return "\u202e" + "".join(transpose(c) for c in s)
+            return "\u202e" + "".join(transpose(c) for c in s)
             # To reverse instead of using the RTL override:
             # return ''.join(reversed([transpose(c) for c in s]))
 
@@ -255,8 +253,7 @@ class podebug:
         def transformer(s):
             if self.preserveplaceholders:
                 return self.transform_characters_preserving_placeholders(s, transpose)
-            else:
-                return "".join(transpose(c) for c in s)
+            return "".join(transpose(c) for c in s)
 
         self.apply_to_translatables(string, transformer)
         return string
@@ -274,9 +271,9 @@ class podebug:
         for location in unit.getlocations():
             if location.startswith("Common.xcu#..Common.View.Localisation"):
                 return True
-            elif location.startswith("profile.lng#STR_DIR_MENU_NEW_"):
+            if location.startswith("profile.lng#STR_DIR_MENU_NEW_"):
                 return True
-            elif location.startswith("profile.lng#STR_DIR_MENU_WIZARD_"):
+            if location.startswith("profile.lng#STR_DIR_MENU_WIZARD_"):
                 return True
         return False
 
@@ -314,18 +311,12 @@ class podebug:
             if self.ignorefunc(unit):
                 return unit
         if prefix.find("@hash_placeholder@") != -1:
-            if unit.getlocations():
-                hashable = unit.getlocations()[0]
-            else:
-                hashable = unit.source
+            hashable = unit.getlocations()[0] if unit.getlocations() else unit.source
             prefix = prefix.replace(
                 "@hash_placeholder@",
                 md5(hashable.encode("utf-8")).hexdigest()[: self.hash_len],
             )
-        if unit.istranslated():
-            rich_string = unit.rich_target
-        else:
-            rich_string = unit.rich_source
+        rich_string = unit.rich_target if unit.istranslated() else unit.rich_source
         if not isinstance(rich_string, StringElem):
             rich_string = [
                 rich_parse(string, podebug_parsers) for string in rich_string
@@ -377,7 +368,7 @@ class podebug:
         for unit in store.units:
             if not unit.istranslatable():
                 continue
-            unit = self.convertunit(unit, prefix)
+            self.convertunit(unit, prefix)
         return store
 
     @staticmethod

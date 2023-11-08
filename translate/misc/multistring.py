@@ -16,22 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Supports a hybrid Unicode string that can also have a list of alternate
-strings in the strings attribute
+"""
+Supports a hybrid Unicode string that can also have a list of alternate
+strings in the strings attribute.
 """
 
 
 class multistring(str):
-    def __new__(newtype, string=""):
+    def __new__(cls, string=""):
         if isinstance(string, list):
             if not string:
                 raise ValueError("multistring must contain at least one string")
-            newstring = str.__new__(newtype, string[0])
+            newstring = str.__new__(cls, string[0])
             newstring.strings = [newstring] + [
-                multistring.__new__(newtype, altstring) for altstring in string[1:]
+                multistring.__new__(cls, altstring) for altstring in string[1:]
             ]
         else:
-            newstring = str.__new__(newtype, string)
+            newstring = str.__new__(cls, string)
             newstring.strings = [newstring]
         return newstring
 
@@ -49,14 +50,12 @@ class multistring(str):
             parentcompare = cmp_compat(str(self), otherstring)
             if parentcompare:
                 return parentcompare
-            else:
-                return cmp_compat(self.strings[1:], otherstring.strings[1:])
-        elif isinstance(otherstring, str):
+            return cmp_compat(self.strings[1:], otherstring.strings[1:])
+        if isinstance(otherstring, str):
             return cmp_compat(str(self), otherstring)
-        elif isinstance(otherstring, list) and otherstring:
+        if isinstance(otherstring, list) and otherstring:
             return cmp_compat(self, multistring(otherstring))
-        else:
-            return cmp_compat(str(type(self)), str(type(otherstring)))
+        return cmp_compat(str(type(self)), str(type(otherstring)))
 
     def __hash__(self):
         return hash(str(self))

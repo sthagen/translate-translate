@@ -11,12 +11,9 @@ from . import test_convert
 class TestPOT2PO:
     @staticmethod
     def convertpot(potsource, posource=None):
-        """helper that converts pot source to po source without requiring files"""
+        """Helper that converts pot source to po source without requiring files."""
         potfile = BytesIO(potsource.encode())
-        if posource:
-            pofile = BytesIO(posource.encode())
-        else:
-            pofile = None
+        pofile = BytesIO(posource.encode()) if posource else None
         pooutfile = BytesIO()
         pot2po.convertpot(potfile, pooutfile, pofile)
         pooutfile.seek(0)
@@ -24,14 +21,14 @@ class TestPOT2PO:
 
     @staticmethod
     def singleunit(pofile):
-        """checks that the pofile contains a single non-header unit, and returns it"""
+        """Checks that the pofile contains a single non-header unit, and returns it."""
         assert len(pofile.units) == 2
         assert pofile.units[0].isheader()
         print(pofile.units[1])
         return pofile.units[1]
 
     def test_convertpot_blank(self):
-        """checks that the convertpot function is working for a simple file initialisation"""
+        """Checks that the convertpot function is working for a simple file initialisation."""
         potsource = (
             """#: simple.label%ssimple.accesskey\nmsgid "A &hard coded newline.\\n"\nmsgstr ""\n"""
             % po.lsep
@@ -40,7 +37,7 @@ class TestPOT2PO:
         assert str(self.singleunit(newpo)) == potsource
 
     def test_convertpot_blank_plurals(self):
-        """checks that the convertpot function is working for initialising plurals correctly"""
+        """Checks that the convertpot function is working for initialising plurals correctly."""
         potsource = r"""msgid ""
 msgstr""
 
@@ -62,7 +59,7 @@ msgstr[0] ""
         assert str(self.singleunit(newpo)) == poexpected
 
     def test_merging_simple(self):
-        """checks that the convertpot function is working for a simple merge"""
+        """Checks that the convertpot function is working for a simple merge."""
         potsource = (
             """#: simple.label%ssimple.accesskey\nmsgid "A &hard coded newline.\\n"\nmsgstr ""\n"""
             % po.lsep
@@ -75,7 +72,7 @@ msgstr[0] ""
         assert str(self.singleunit(newpo)) == posource
 
     def test_merging_messages_marked_fuzzy(self):
-        """test that when we merge PO files with a fuzzy message that it remains fuzzy"""
+        """Test that when we merge PO files with a fuzzy message that it remains fuzzy."""
         potsource = (
             """#: simple.label%ssimple.accesskey\nmsgid "A &hard coded newline.\\n"\nmsgstr ""\n"""
             % po.lsep
@@ -88,7 +85,7 @@ msgstr[0] ""
         assert str(self.singleunit(newpo)) == posource
 
     def test_merging_plurals_with_fuzzy_matching(self):
-        """test that when we merge PO files with a fuzzy message that it remains fuzzy"""
+        """Test that when we merge PO files with a fuzzy message that it remains fuzzy."""
         potsource = r"""#: file.cpp:2
 msgid "%d manual"
 msgid_plural "%d manuals"
@@ -115,7 +112,7 @@ msgstr[1] "%d handleidings."
 
     @mark.xfail(reason="Not implemented - review if this is even correct")
     def test_merging_msgid_change(self):
-        """tests that if the msgid changes but the location stays the same that we merge"""
+        """Tests that if the msgid changes but the location stays the same that we merge."""
         potsource = """#: simple.label\n#: simple.accesskey\nmsgid "Its &hard coding a newline.\\n"\nmsgstr ""\n"""
         posource = """#: simple.label\n#: simple.accesskey\nmsgid "A &hard coded newline.\\n"\nmsgstr "&Hart gekoeerde nuwe lyne\\n"\n"""
         poexpected = """#: simple.label\n#: simple.accesskey\n#, fuzzy\nmsgid "Its &hard coding a newline.\\n"\nmsgstr "&Hart gekoeerde nuwe lyne\\n"\n"""
@@ -124,7 +121,7 @@ msgstr[1] "%d handleidings."
         assert str(self.singleunit(newpo)) == poexpected
 
     def test_merging_location_change(self):
-        """tests that if the location changes but the msgid stays the same that we merge"""
+        """Tests that if the location changes but the msgid stays the same that we merge."""
         potsource = (
             """#: new_simple.label%snew_simple.accesskey\nmsgid "A &hard coded newline.\\n"\nmsgstr ""\n"""
             % po.lsep
@@ -144,9 +141,8 @@ msgstr[1] "%d handleidings."
     def test_merging_location_and_whitespace_change(self):
         """
         test that even if the location changes that if the msgid
-        only has whitespace changes we can still merge
+        only has whitespace changes we can still merge.
         """
-
         potsource = (
             """#: singlespace.label%ssinglespace.accesskey\nmsgid "&We have spaces"\nmsgstr ""\n"""
             % po.lsep
@@ -167,11 +163,11 @@ msgstr[1] "%d handleidings."
         """
         test that when we have a PO in ambiguous (Gettext form) and merge with
         disamabiguous (KDE comment form) that we don't duplicate the
-        location #: comments
+        location #: comments.
         """
         potsource = (
             """#: location.c:1\nmsgid ""\n"_: location.c:1\\n"\n"Source"\nmsgstr ""\n\n"""
-            + """#: location.c:10\nmsgid ""\n"_: location.c:10\\n"\n"Source"\nmsgstr ""\n"""
+            """#: location.c:10\nmsgid ""\n"_: location.c:10\\n"\n"Source"\nmsgstr ""\n"""
         )
         posource = (
             """#: location.c:1\n#: location.c:10\nmsgid "Source"\nmsgstr "Target"\n\n"""
@@ -185,7 +181,7 @@ msgstr[1] "%d handleidings."
 
     @mark.xfail(reason="Not Implemented - needs review")
     def test_merging_accelerator_changes(self):
-        """test that a change in the accelerator localtion still allows merging"""
+        """Test that a change in the accelerator localtion still allows merging."""
         potsource = """#: someline.c\nmsgid "A&bout"\nmsgstr ""\n"""
         posource = """#: someline.c\nmsgid "&About"\nmsgstr "&Info"\n"""
         poexpected = """#: someline.c\nmsgid "A&bout"\nmsgstr "&Info"\n"""
@@ -205,7 +201,7 @@ msgstr[1] "%d handleidings."
         assert str(newpounit) == posource
 
     def test_merging_automatic_comments_dont_duplicate(self):
-        """ensure that we can merge #. comments correctly"""
+        """Ensure that we can merge #. comments correctly."""
         potsource = """#. Row 35\nmsgid "&About"\nmsgstr ""\n"""
         posource = """#. Row 35\nmsgid "&About"\nmsgstr "&Info"\n"""
         newpo = self.convertpot(potsource, posource)
@@ -213,7 +209,7 @@ msgstr[1] "%d handleidings."
         assert str(newpounit) == posource
 
     def test_merging_automatic_comments_new_overides_old(self):
-        """ensure that new #. comments override the old comments"""
+        """Ensure that new #. comments override the old comments."""
         potsource = """#. new comment\n#: someline.c\nmsgid "&About"\nmsgstr ""\n"""
         posource = """#. old comment\n#: someline.c\nmsgid "&About"\nmsgstr "&Info"\n"""
         poexpected = (
@@ -224,7 +220,7 @@ msgstr[1] "%d handleidings."
         assert str(newpounit) == poexpected
 
     def test_merging_comments_with_blank_comment_lines(self):
-        """test that when we merge a comment that has a blank line we keep the blank line"""
+        """Test that when we merge a comment that has a blank line we keep the blank line."""
         potsource = """#: someline.c\nmsgid "About"\nmsgstr ""\n"""
         posource = """# comment1\n#\n# comment2\n#: someline.c\nmsgid "About"\nmsgstr "Omtrent"\n"""
         poexpected = posource
@@ -255,7 +251,7 @@ msgstr "Sekuriteit"
         assert str(newpounit) == poexpected
 
     def test_merging_msgidcomments(self):
-        """ensure that we can merge msgidcomments messages"""
+        """Ensure that we can merge msgidcomments messages."""
         potsource = r"""#: window.width
 msgid ""
 "_: Do not translate this.\n"
@@ -273,7 +269,7 @@ msgstr "36em"
         assert str(newpounit) == posource
 
     def test_merging_msgid_with_msgidcomment(self):
-        """test that we can merge an otherwise identical string that has a different msgid"""
+        """Test that we can merge an otherwise identical string that has a different msgid."""
         potsource = r"""#: pref.certs.title
 msgid ""
 "_: pref.certs.title\n"
@@ -310,7 +306,7 @@ msgstr "Sertifikate"
         assert str(newpounit) == expected
 
     def test_merging_plurals(self):
-        """ensure that we can merge plural messages"""
+        """Ensure that we can merge plural messages."""
         potsource = """msgid "One"\nmsgid_plural "Two"\nmsgstr[0] ""\nmsgstr[1] ""\n"""
         posource = """msgid "One"\nmsgid_plural "Two"\nmsgstr[0] "Een"\nmsgstr[1] "Twee"\nmsgstr[2] "Drie"\n"""
         newpo = self.convertpot(potsource, posource)
@@ -319,7 +315,7 @@ msgstr "Sertifikate"
         assert str(newpounit) == posource
 
     def test_merging_obsoleting_messages(self):
-        """check that we obsolete messages no longer present in the new file"""
+        """Check that we obsolete messages no longer present in the new file."""
         # add emtpy msgid line to help factory identify format
         potsource = 'msgid ""\nmsgstr ""\n'
         posource = '# Some comment\n#. Extracted comment\n#: obsoleteme:10\nmsgid "One"\nmsgstr "Een"\n'
@@ -330,7 +326,7 @@ msgstr "Sertifikate"
         assert str(newpounit) == expected
 
     def test_not_obsoleting_empty_messages(self):
-        """check that we don't obsolete (and keep) untranslated messages"""
+        """Check that we don't obsolete (and keep) untranslated messages."""
         # add emtpy msgid line to help factory identify format
         potsource = 'msgid ""\nmsgstr ""\n'
         posource = '#: obsoleteme:10\nmsgid "One"\nmsgstr ""\n'
@@ -340,7 +336,7 @@ msgstr "Sertifikate"
         assert len(newpo.units) == 1
 
     def test_merging_new_before_obsolete(self):
-        """test to check that we place new blank message before obsolete messages"""
+        """Test to check that we place new blank message before obsolete messages."""
         potsource = """#: newline.c\nmsgid "&About"\nmsgstr ""\n"""
         posource = """#~ msgid "Old"\n#~ msgstr "Oud"\n"""
         newpo = self.convertpot(potsource, posource)
@@ -360,7 +356,7 @@ msgstr "Sertifikate"
         assert str(newpo.units[2]) == posource
 
     def test_merging_resurect_obsolete_messages(self):
-        """check that we can reuse old obsolete messages if the message comes back"""
+        """Check that we can reuse old obsolete messages if the message comes back."""
         potsource = """#: resurect.c\nmsgid "&About"\nmsgstr ""\n"""
         posource = """#~ msgid "&About"\n#~ msgstr "&Omtrent"\n"""
         expected = """#: resurect.c\nmsgid "&About"\nmsgstr "&Omtrent"\n"""
@@ -372,10 +368,10 @@ msgstr "Sertifikate"
         assert str(newpounit) == expected
 
     def test_merging_resurect_obsolete_messages_into_msgidcomment(self):
-        """check that we can reuse old obsolete messages even if the recipient has a msgidcomment"""
+        """Check that we can reuse old obsolete messages even if the recipient has a msgidcomment."""
         potsource = (
             """#: resurect1.c\nmsgid "About"\nmsgstr ""\n\n"""
-            + """#: resurect2.c\nmsgid ""\n"_: resurect2.c\\n"\n"About"\nmsgstr ""\n"""
+            """#: resurect2.c\nmsgid ""\n"_: resurect2.c\\n"\n"About"\nmsgstr ""\n"""
         )
         posource = """#~ msgid "About"\n#~ msgstr "Omtrent"\n"""
         expected1 = """#: resurect1.c\nmsgid "About"\nmsgstr "Omtrent"\n"""
@@ -388,7 +384,7 @@ msgstr "Sertifikate"
         assert str(newpo.units[2]) == expected2
 
     def test_header_initialisation(self):
-        """test to check that we initialise the header correctly"""
+        """Test to check that we initialise the header correctly."""
         potsource = r"""#, fuzzy
 msgid ""
 msgstr ""
@@ -438,7 +434,7 @@ msgstr ""
         assert bytes(newpo).decode("utf-8") == expected
 
     def test_merging_comments(self):
-        """Test that we can merge comments correctly"""
+        """Test that we can merge comments correctly."""
         potsource = """#. Don't do it!\n#: file.py:1\nmsgid "One"\nmsgstr ""\n"""
         posource = """#. Don't do it!\n#: file.py:2\nmsgid "One"\nmsgstr "Een"\n"""
         poexpected = """#. Don't do it!\n#: file.py:1\nmsgid "One"\nmsgstr "Een"\n"""
@@ -448,7 +444,7 @@ msgstr ""
         assert str(newpounit) == poexpected
 
     def test_merging_typecomments(self):
-        """Test that we can merge with typecomments"""
+        """Test that we can merge with typecomments."""
         potsource = """#: file.c:1\n#, c-format\nmsgid "%d pipes"\nmsgstr ""\n"""
         posource = """#: file.c:2\nmsgid "%d pipes"\nmsgstr "%d pype"\n"""
         poexpected = (
@@ -468,7 +464,7 @@ msgstr ""
         assert newpounit.hastypecomment("c-format")
 
     def test_msgctxt(self):
-        """Test that msgctxt is migrated correctly"""
+        """Test that msgctxt is migrated correctly."""
         potsource = """
 #: something.h:5
 msgctxt "context1"
@@ -826,7 +822,7 @@ msgstr ""
 
 
 class TestPOT2POCommand(test_convert.TestConvertCommand, TestPOT2PO):
-    """Tests running actual pot2po commands on files"""
+    """Tests running actual pot2po commands on files."""
 
     convertmodule = pot2po
 

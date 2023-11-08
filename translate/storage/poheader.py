@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""class that handles all header functions for a header in a po file"""
+"""class that handles all header functions for a header in a po file."""
 
 import re
 import time
@@ -36,7 +36,8 @@ default_header = {
 
 
 def parseheaderstring(input):
-    """Parses an input string with the definition of a PO header and returns
+    """
+    Parses an input string with the definition of a PO header and returns
     the interpreted values as a dictionary.
     """
     headervalues = {}
@@ -50,14 +51,12 @@ def parseheaderstring(input):
 
 
 def tzstring():
-    """Returns the timezone as a string in the format [+-]0000, eg +0200.
+    """
+    Returns the timezone as a string in the format [+-]0000, eg +0200.
 
     :rtype: str
     """
-    if time.daylight:
-        tzoffset = time.altzone
-    else:
-        tzoffset = time.timezone
+    tzoffset = time.altzone if time.daylight else time.timezone
 
     hours, minutes = time.gmtime(abs(tzoffset))[3:5]
     if tzoffset > 0:
@@ -66,7 +65,8 @@ def tzstring():
 
 
 def update(existing, add=False, **kwargs):
-    """Update an existing header dictionary with the values in kwargs, adding
+    """
+    Update an existing header dictionary with the values in kwargs, adding
     new values only if add is true.
 
     :return: Updated dictionary of header entries
@@ -99,9 +99,10 @@ def update(existing, add=False, **kwargs):
 
 
 class poheader:
-    """This class implements functionality for manipulation of po file headers.
+    """
+    This class implements functionality for manipulation of po file headers.
     This class is a mix-in class and useless on its own. It must be used from
-    all classes which represent a po file
+    all classes which represent a po file.
     """
 
     x_generator = "Translate Toolkit %s" % __version__.sver
@@ -124,7 +125,7 @@ class poheader:
     ]
 
     def init_headers(self, charset="UTF-8", encoding="8bit", **kwargs):
-        """sets default values for po headers"""
+        """Sets default values for po headers."""
         # FIXME: we need to allow at least setting target language, pluralforms and generator
         headerdict = self.makeheaderdict(charset=charset, encoding=encoding, **kwargs)
         self.updateheader(add=True, **headerdict)
@@ -144,7 +145,8 @@ class poheader:
         report_msgid_bugs_to=None,
         **kwargs,
     ):
-        """Create a header dictionary with useful defaults.
+        """
+        Create a header dictionary with useful defaults.
 
         pot_creation_date can be None (current date) or a value (datetime or string)
         po_revision_date can be None (form), False (=pot_creation_date), True (=now),
@@ -197,7 +199,8 @@ class poheader:
         return update(defaultargs, add=True, **kwargs)
 
     def header(self):
-        """Returns the header element, or None. Only the first element is
+        """
+        Returns the header element, or None. Only the first element is
         allowed to be a header. Note that this could still return an empty
         header element, if present.
         """
@@ -206,11 +209,11 @@ class poheader:
         candidate = self.units[0]
         if candidate.isheader():
             return candidate
-        else:
-            return None
+        return None
 
     def parseheader(self):
-        """Parses the PO header and returns the interpreted values as a
+        """
+        Parses the PO header and returns the interpreted values as a
         dictionary.
         """
         header = self.header()
@@ -219,7 +222,8 @@ class poheader:
         return parseheaderstring(header.target)
 
     def updateheader(self, add=False, **kwargs):
-        """Updates the fields in the PO style header.
+        """
+        Updates the fields in the PO style header.
 
         This will create a header if add == True.
         """
@@ -265,14 +269,8 @@ class poheader:
             return None, None
         nplural = re.findall("nplurals=(.+?);", pluralformvalue)
         plural = re.findall("plural=(.+?);?$", pluralformvalue)
-        if not nplural or nplural[0] == "INTEGER":
-            nplural = None
-        else:
-            nplural = nplural[0]
-        if not plural or plural[0] == "EXPRESSION":
-            plural = None
-        else:
-            plural = plural[0]
+        nplural = None if not nplural or nplural[0] == "INTEGER" else nplural[0]
+        plural = None if not plural or plural[0] == "EXPRESSION" else plural[0]
         return nplural, plural
 
     def updateheaderplural(self, nplurals, plural):
@@ -284,7 +282,8 @@ class poheader:
         )
 
     def gettargetlanguage(self):
-        """Return the target language based on information in the header.
+        """
+        Return the target language based on information in the header.
 
         The target language is determined in the following sequence:
           1. Use the 'Language' entry in the header.
@@ -298,8 +297,7 @@ class poheader:
 
             if langcode_ire.match(lang):
                 return lang
-            else:
-                lang = None
+            lang = None
         if "X-Poedit-Language" in header:
             from translate.lang import poedit
 
@@ -315,7 +313,8 @@ class poheader:
         return None
 
     def settargetlanguage(self, lang):
-        """Set the target language in the header.
+        """
+        Set the target language in the header.
 
         This removes any custom Poedit headers if they exist.
 
@@ -328,7 +327,8 @@ class poheader:
             )
 
     def getprojectstyle(self):
-        """Return the project based on information in the header.
+        """
+        Return the project based on information in the header.
 
         The project is determined in the following sequence:
           1. Use the 'X-Project-Style' entry in the header.
@@ -351,7 +351,7 @@ class poheader:
         if accelerator is not None:
             if accelerator == "~":
                 return "openoffice"
-            elif accelerator == "&":
+            if accelerator == "&":
                 return "mozilla"
         project_id = header.get("Project-Id-Version")
         if project_id is not None and "gnome" in project_id.lower():
@@ -360,7 +360,8 @@ class poheader:
         return None
 
     def setprojectstyle(self, project_style):
-        """Set the project in the header.
+        """
+        Set the project in the header.
 
         :param project_style: the new project
         :type project_style: str
@@ -368,13 +369,13 @@ class poheader:
         self.updateheader(add=True, X_Project_Style=project_style)
 
     def mergeheaders(self, otherstore):
-        """Merges another header with this header.
+        """
+        Merges another header with this header.
 
         This header is assumed to be the template.
 
         :type otherstore: :class:`~translate.storage.base.TranslationStore`
         """
-
         newvalues = otherstore.parseheader()
         retain_list = (
             "Project-Id-Version",
@@ -428,11 +429,10 @@ class poheader:
                 contribexists = True
                 if year in line:
                     break
-                else:
-                    # The contributor is there, but not for this year
-                    if line[-1] == ".":
-                        line = line[:-1]
-                    contriblines[i] = f"{line}, {year}."
+                # The contributor is there, but not for this year
+                if line[-1] == ".":
+                    line = line[:-1]
+                contriblines[i] = f"{line}, {year}."
 
         if not contribexists:
             # Add a new contributor
@@ -447,7 +447,8 @@ class poheader:
         header.addnote("\n".join(postlines))
 
     def makeheader(self, **kwargs):
-        """Create a header for the given filename.
+        """
+        Create a header for the given filename.
 
         Check .makeheaderdict() for information on parameters.
         """

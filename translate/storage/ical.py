@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Class that manages iCalender files for translation.
+"""
+Class that manages iCalender files for translation.
 
 iCalendar files follow the `RFC2445 <https://tools.ietf.org/html/rfc2445>`_
 specification.
@@ -61,7 +62,7 @@ ICAL_UNIT_LOCATION_RE = re.compile("\\[(?P<uid>.+)\\](?P<property>.+)")
 
 
 class icalunit(base.TranslationUnit):
-    """An ical entry that is translatable"""
+    """An ical entry that is translatable."""
 
     def __init__(self, source=None, **kwargs):
         self.location = ""
@@ -77,12 +78,12 @@ class icalunit(base.TranslationUnit):
 
 
 class icalfile(base.TranslationStore):
-    """An ical file"""
+    """An ical file."""
 
     UnitClass = icalunit
 
     def __init__(self, inputfile=None, **kwargs):
-        """construct an ical file, optionally reading in from inputfile."""
+        """Construct an ical file, optionally reading in from inputfile."""
         super().__init__(**kwargs)
         self.filename = ""
         self._icalfile = None
@@ -107,7 +108,7 @@ class icalfile(base.TranslationStore):
             _outicalfile.serialize(out)
 
     def parse(self, input):
-        """parse the given file or file source string"""
+        """Parse the given file or file source string."""
         if hasattr(input, "name"):
             self.filename = input.name
         elif not getattr(self, "filename", ""):

@@ -26,6 +26,7 @@
 #       might be a little less Pythonic. See os.system() calls for more
 #       details.
 
+import contextlib
 import glob
 import os
 import shutil
@@ -39,10 +40,10 @@ join = os.path.join
 try:
     # Make sure that all convertion tools are available
     from translate.convert import moz2po, po2moz, po2prop, txt2po  # noqa: F401
-except ImportError:
-    raise Exception(
+except ImportError as error:
+    raise ImportError(
         "Could not find the Translate Toolkit convertion tools. Please check your installation."
-    )
+    ) from error
 
 DEFAULT_TARGET_APP = "browser"
 langpack_release = "1"
@@ -79,7 +80,8 @@ class CommandError(Exception):
 
 
 def delfiles(pattern, path, files):
-    """Delete files with names in C{files} matching glob-pattern C{glob} in the
+    """
+    Delete files with names in C{files} matching glob-pattern C{glob} in the
     directory specified by C{path}.
 
     This function is meant to be used with C{os.walk}
@@ -108,14 +110,14 @@ def run(cmd, expected_status=0, stdout=None, stderr=None, shell=False):
 
 
 def get_langs(lang_args):
-    """Returns the languages to handle based on the languages specified on the
+    """
+    Returns the languages to handle based on the languages specified on the
     command-line.
 
     If "ALL" was specified, the languages are read from the Mozilla product's
     C{shipped-locales} file. If "ZA" was specified, all South African languages
     are selected.
     """
-
     langs = []
 
     if isinstance(lang_args, str):
@@ -142,7 +144,8 @@ def get_langs(lang_args):
 
         elif lang == "ZA":
             # South African languages
-            langs = langs + [
+            langs = [
+                *langs,
                 "af",
                 "en_ZA",
                 "nr",
@@ -170,7 +173,6 @@ def get_langs(lang_args):
 
 def checkout(cvstag, langs):
     """Check-out needed files from Mozilla's CVS."""
-
     olddir = os.getcwd()
     if cvstag != "-A":
         cvstag = "-r %s" % (cvstag)
@@ -239,7 +241,7 @@ def checkout(cvstag, langs):
             # "No such file or directory" errors are fine.
             # The rest we raise again.
             if oe.errno != 2:
-                raise oe
+                raise
 
     os.chdir(mozilladir)
     run(["cvs", "up", join("tools", "l10n")])
@@ -263,7 +265,7 @@ def checkout(cvstag, langs):
     except OSError as oe:
         # "No such file or directory" errors are fine. The rest we raise again.
         if oe.errno != 2:
-            raise oe
+            raise
 
     if mozversion < "3":
         for f in [
@@ -306,10 +308,8 @@ def pack_pot(includes):
         else:
             inc.append(fn)
 
-    try:
+    with contextlib.suppress(OSError):
         os.makedirs(potpacks)
-    except OSError:
-        pass
 
     packname = join(potpacks, f"{products[targetapp]}-{mozversion}-{timestamp}")
     run(
@@ -319,22 +319,26 @@ def pack_pot(includes):
             packname + ".tar.bz2",
             join(l10ndir, "en-US"),
             join(l10ndir, "pot"),
+            *inc,
         ]
-        + inc
     )
     run(
-        ["zip", "-qr9", packname + ".zip", join(l10ndir, "en-US"), join(l10ndir, "pot")]
-        + inc
+        [
+            "zip",
+            "-qr9",
+            packname + ".zip",
+            join(l10ndir, "en-US"),
+            join(l10ndir, "pot"),
+            *inc,
+        ]
     )
 
 
 def pack_po(lang, buildlang):
     timestamp = time.strftime("%Y%m%d")
 
-    try:
+    with contextlib.suppress(OSError):
         os.makedirs(popacks)
-    except OSError:
-        pass
 
     print("    %s" % (lang))
     packname = join(
@@ -367,7 +371,6 @@ def pack_po(lang, buildlang):
 
 def pre_po2moz_hacks(lang, buildlang, debug):
     """Hacks that should be run before running C{po2moz}."""
-
     # Protect the real original PO dir
     temp_po = tempfile.mkdtemp()
     shutil.copytree(join(podir, buildlang), join(temp_po, buildlang))
@@ -415,7 +418,6 @@ def pre_po2moz_hacks(lang, buildlang, debug):
 
 def post_po2moz_hacks(lang, buildlang):
     """Hacks that should be run after running C{po2moz}."""
-
     # Hack to fix creating Thunderber installer
     inst_inc_po = join(podir_updated, lang, "mail", "installer", "installer.inc.po")
     if os.path.isfile(inst_inc_po):
@@ -455,10 +457,9 @@ def post_po2moz_hacks(lang, buildlang):
             dir = dir[len(enUS) + 1 :]
 
         if os.path.isfile(join(enUS, dir, filename)):
-            try:
+            # Don't worry if the directory already exists
+            with contextlib.suppress(OSError):
                 os.makedirs(join(l10ndir, language, dir))
-            except OSError:
-                pass  # Don't worry if the directory already exists
             shutil.copy2(join(enUS, dir, filename), join(l10ndir, language, dir))
 
     def copyfiletype(filetype, language):
@@ -498,7 +499,7 @@ def migrate_lang(lang, buildlang, recover, update_transl, debug):
         except OSError as oe:
             # "File exists" errors are fine. The rest we raise again.
             if oe.errno != 17:
-                raise oe
+                raise
 
         shutil.copytree(join(podir_recover, buildlang), join(podir, buildlang))
 
@@ -541,7 +542,7 @@ def migrate_lang(lang, buildlang, recover, update_transl, debug):
     if debug:
         args.append("--fuzzy")
 
-    run(["po2moz"] + args)
+    run(["po2moz", *args])
     ###################################################
 
     post_po2moz_hacks(lang, buildlang)
@@ -580,7 +581,6 @@ def migrate_lang(lang, buildlang, recover, update_transl, debug):
 
 def create_diff(lang, buildlang):
     """Create CVS-diffs for all languages."""
-
     if not os.path.isdir("diff"):
         os.mkdir("diff")
 
@@ -610,7 +610,6 @@ def create_diff(lang, buildlang):
 
 def create_langpack(lang, buildlang):
     """Builds a XPI and installers for languages."""
-
     print("    %s" % (lang))
 
     olddir = os.getcwd()
@@ -651,7 +650,6 @@ def create_langpack(lang, buildlang):
 
 def create_option_parser():
     """Creates and returns cmd-line option parser."""
-
     from argparse import ArgumentParser
 
     parser = ArgumentParser(usage=USAGE)
@@ -766,7 +764,7 @@ def main(
     langpack=False,
     verbose=True,
 ):
-    global options, targetapp
+    global targetapp  # noqa: PLW0603
     options["verbose"] = verbose
     targetapp = mozproduct
     langs = get_langs(langs)

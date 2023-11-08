@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Classes that hold units of .rc files (:class:`rcunit`) or entire files
+"""
+Classes that hold units of .rc files (:class:`rcunit`) or entire files
 (:class:`rcfile`) used in translating Windows Resources.
 
 .. note:::
@@ -78,10 +79,9 @@ def extract_id(values):
     for value in values:
         if isinstance(value, str) and value.startswith('"'):
             continue
-        else:
-            if isinstance(value, str):
-                return value
-            break
+        if isinstance(value, str):
+            return value
+        break
 
     return "UNKNOWN_ID"
 
@@ -98,7 +98,7 @@ def escape_to_rc(string):
 
 
 class rcunit(base.TranslationUnit):
-    """A unit of an rc file"""
+    """A unit of an rc file."""
 
     def __init__(self, source="", **kwargs):
         """Construct a blank rcunit."""
@@ -115,7 +115,7 @@ class rcunit(base.TranslationUnit):
 
     @source.setter
     def source(self, source):
-        """Sets the source AND the target to be equal"""
+        """Sets the source AND the target to be equal."""
         self._rich_source = None
         self._value = source or ""
 
@@ -125,7 +125,7 @@ class rcunit(base.TranslationUnit):
 
     @target.setter
     def target(self, target):
-        """.. note:: This also sets the ``.source`` attribute!"""
+        """.. note:: This also sets the ``.source`` attribute!."""
         self._rich_target = None
         self.source = target
 
@@ -136,9 +136,8 @@ class rcunit(base.TranslationUnit):
     def getoutput(self):
         """Convert the element back into formatted lines for a .rc file."""
         if self.isblank():
-            return "".join(self.comments + ["\n"])
-        else:
-            return "".join(self.comments + [f"{self.name}={self._value}\n"])
+            return "".join([*self.comments, "\n"])
+        return "".join([*self.comments, f"{self.name}={self._value}\n"])
 
     def getlocations(self):
         return [self.name]
@@ -159,11 +158,10 @@ class rcunit(base.TranslationUnit):
 
 def rc_statement():
     """
-    Generate a RC statement parser that can be used to parse a RC file
+    Generate a RC statement parser that can be used to parse a RC file.
 
     :rtype: pyparsing.ParserElement
     """
-
     one_line_comment = Combine("//" + rest_of_line)
 
     comments = c_style_comment ^ one_line_comment
@@ -273,7 +271,8 @@ def generate_menu_pre_name(block_type, block_id):
 
 
 def generate_popup_pre_name(pre_name, caption):
-    """Return the pre-name generated for subelements of a popup.
+    """
+    Return the pre-name generated for subelements of a popup.
 
     :param pre_name: The pre_name that already have the popup.
     :param caption: The caption (whitout quotes) of the popup.
@@ -339,7 +338,6 @@ class rcfile(base.TranslationStore):
 
     def add_popup_units(self, pre_name, popup):
         """Transverses the popup tree making new units as needed."""
-
         if popup.caption:
             newunit = rcunit(escape_to_python(popup.caption[1:-1]))
             newunit.name = generate_popup_caption_name(pre_name)

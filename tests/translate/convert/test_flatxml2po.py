@@ -1,4 +1,4 @@
-"""Tests converting flat XML files to Gettext PO localization files"""
+"""Tests converting flat XML files to Gettext PO localization files."""
 
 from io import BytesIO
 
@@ -10,7 +10,7 @@ from . import test_convert
 class TestFlatXML2PO:
     @staticmethod
     def _convert(xmlstring, templatestring=None, **kwargs):
-        """Helper that converts xml source to po target without requiring files"""
+        """Helper that converts xml source to po target without requiring files."""
         inputfile = BytesIO(xmlstring.encode())
         templatefile = None
         if templatestring:
@@ -30,10 +30,11 @@ class TestFlatXML2PO:
 
     @staticmethod
     def _do_assert_store(actual):
-        """Asserts whether the passed actual store contains two assumed units:
+        """
+        Asserts whether the passed actual store contains two assumed units:
         'one' => 'One'
         'two' => 'Two'
-        (plus a header present by default)
+        (plus a header present by default).
         """
         assert actual.units[0].isheader()
         assert len(actual.units) == 3
@@ -117,7 +118,8 @@ class TestFlatXML2PO:
         self._do_assert_store(actual)
 
     def test_empty_file_is_empty_store(self):
-        """Test a conversion that starts with an empty file.
+        """
+        Test a conversion that starts with an empty file.
 
         This must not trigger the element name validation
         or cause other issues. An empty store is expected.
@@ -130,7 +132,7 @@ class TestFlatXML2PO:
 
 
 class TestFlatXML2POCommand(test_convert.TestConvertCommand):
-    """Tests running actual flatxml2po commands on files"""
+    """Tests running actual flatxml2po commands on files."""
 
     convertmodule = flatxml2po
 

@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""This class implements the functionality for handling plain text files, or
+"""
+This class implements the functionality for handling plain text files, or
 similar wiki type files.
 
 Supported formats are
@@ -62,10 +63,10 @@ flavours = {
 
 
 class TxtUnit(base.TranslationUnit):
-    """This class represents a block of text from a text file"""
+    """This class represents a block of text from a text file."""
 
     def __init__(self, source="", **kwargs):
-        """Construct the txtunit"""
+        """Construct the txtunit."""
         super().__init__(source)
         # Note that source and target are equivalent for monolingual units.
         self.source = source
@@ -74,17 +75,17 @@ class TxtUnit(base.TranslationUnit):
         self.location = []
 
     def __str__(self):
-        """Convert a txt unit to a string"""
+        """Convert a txt unit to a string."""
         return f"{self.pretext}{self.source}{self.posttext}"
 
     @property
     def target(self):
-        """gets the unquoted target string"""
+        """Gets the unquoted target string."""
         return self.source
 
     @target.setter
     def target(self, target):
-        """Sets the definition to the quoted value of target"""
+        """Sets the definition to the quoted value of target."""
         self._rich_target = None
         self.source = target
 
@@ -96,7 +97,7 @@ class TxtUnit(base.TranslationUnit):
 
 
 class TxtFile(base.TranslationStore):
-    """This class represents a text file, made up of txtunits"""
+    """This class represents a text file, made up of txtunits."""
 
     UnitClass = TxtUnit
 
@@ -110,7 +111,7 @@ class TxtFile(base.TranslationStore):
             self.parse(txtsrc)
 
     def parse(self, lines):
-        """Read in text lines and create txtunits from the blocks of text"""
+        """Read in text lines and create txtunits from the blocks of text."""
         if self.no_segmentation:
             self.addsourceunit("".join(line.decode(self.encoding) for line in lines))
             return

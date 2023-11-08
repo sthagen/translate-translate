@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""This module represents the Afrikaans language.
+"""
+This module represents the Afrikaans language.
 
 .. seealso:: :wp:`Afrikaans_language`
 """
@@ -34,8 +35,8 @@ class af(common.Common):
 
     validdoublewords = [""]
 
-    punctuation = "".join(
-        [common.Common.commonpunc, common.Common.quotes, common.Common.miscpunc]
+    punctuation = (
+        f"{common.Common.commonpunc}{common.Common.quotes}{common.Common.miscpunc}"
     )
     sentenceend = ".!?…"
     sentencere = re.compile(

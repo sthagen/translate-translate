@@ -17,7 +17,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Module for parsing Qt .qm files.
+"""
+Module for parsing Qt .qm files.
 
 .. note::
 
@@ -69,7 +70,7 @@ QM_MAGIC_NUMBER = (0x3CB86418, 0xCAEF9C95, 0xCD211CBF, 0x60A1BDDD)
 
 
 def qmunpack(file_="messages.qm"):
-    """Helper to unpack Qt .qm files into a Python string"""
+    """Helper to unpack Qt .qm files into a Python string."""
     with open(file_, "rb") as fh:
         s = fh.read()
         print("\\x%02x" * len(s) % tuple(map(ord, s)))
@@ -95,8 +96,8 @@ class qmfile(base.TranslationStore):
             self.parsestring(inputfile)
 
     def serialize(self, out):
-        """Output a string representation of the .qm data file"""
-        raise Exception("Writing of .qm files is not supported yet")
+        """Output a string representation of the .qm data file."""
+        raise NotImplementedError("Writing of .qm files is not supported yet")
 
     def parse(self, input):
         """Parses the given file or file source string."""
@@ -137,8 +138,7 @@ class qmfile(base.TranslationStore):
                 messages_data = struct.unpack(
                     ">%db" % length,
                     input[
-                        startsection
-                        + sectionheader : startsection
+                        startsection + sectionheader : startsection
                         + sectionheader
                         + length
                     ],
@@ -208,4 +208,4 @@ class qmfile(base.TranslationStore):
                 return
 
     def savefile(self, storefile):
-        raise Exception("Writing of .qm files is not supported yet")
+        raise NotImplementedError("Writing of .qm files is not supported yet")

@@ -72,13 +72,12 @@ def get_converter(in_ext, out_ext=None, templ_ext=None):
             convert_candidates = converters[(in_ext, templ_ext)]
         else:
             raise UnsupportedConversionError(in_ext, out_ext, templ_ext)
+    elif in_ext in converters:
+        convert_candidates = converters[in_ext]
+    elif (in_ext,) in converters:
+        convert_candidates = converters[(in_ext,)]
     else:
-        if in_ext in converters:
-            convert_candidates = converters[in_ext]
-        elif (in_ext,) in converters:
-            convert_candidates = converters[(in_ext,)]
-        else:
-            raise UnsupportedConversionError(in_ext, out_ext)
+        raise UnsupportedConversionError(in_ext, out_ext)
 
     convert_fn = None
     if not out_ext:
@@ -108,7 +107,8 @@ def get_output_extensions(ext):
 
 
 def convert(inputfile, template=None, options=None, convert_options=None):
-    """Convert the given input file to an appropriate output format, optionally
+    """
+    Convert the given input file to an appropriate output format, optionally
     using the given template file and further options.
 
     If the output extension (format) cannot be inferred the first converter

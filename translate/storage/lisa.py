@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Parent class for LISA standards (TMX, TBX, XLIFF)"""
+"""Parent class for LISA standards (TMX, TBX, XLIFF)."""
+
+import contextlib
 
 from lxml import etree
 
@@ -53,7 +55,7 @@ class LISAunit(base.TranslationUnit):
     This is mostly for correcting XLIFF behaviour."""
 
     def __init__(self, source, empty=False, **kwargs):
-        """Constructs a unit containing the given source string"""
+        """Constructs a unit containing the given source string."""
         self._rich_source = None
         self._rich_target = None
         if empty:
@@ -64,7 +66,7 @@ class LISAunit(base.TranslationUnit):
         super().__init__(source)
 
     def __eq__(self, other):
-        """Compares two units"""
+        """Compares two units."""
         if not isinstance(other, LISAunit):
             return super().__eq__(other)
         languageNodes = self.getlanguageNodes()
@@ -85,7 +87,8 @@ class LISAunit(base.TranslationUnit):
         return True
 
     def namespaced(self, name):
-        """Returns name in Clark notation.
+        """
+        Returns name in Clark notation.
 
         For example ``namespaced("source")`` in an XLIFF document
         might return::
@@ -135,14 +138,14 @@ class LISAunit(base.TranslationUnit):
     def get_target_dom(self, lang=None):
         if lang:
             return self.getlanguageNode(lang=lang)
-        else:
-            return self.getlanguageNode(lang=None, index=1)
+        return self.getlanguageNode(lang=None, index=1)
 
     target_dom = property(get_target_dom)
 
     def gettarget(self, lang=None):
-        """retrieves the "target" text (second entry), or the entry in the
-        specified language, if it exists
+        """
+        retrieves the "target" text (second entry), or the entry in the
+        specified language, if it exists.
         """
         return self.getNodeText(
             self.get_target_dom(lang),
@@ -150,8 +153,9 @@ class LISAunit(base.TranslationUnit):
         )
 
     def settarget(self, target, lang="xx", append=False):
-        """Sets the "target" string (second language), or alternatively appends
-        to the list
+        """
+        Sets the "target" string (second language), or alternatively appends
+        to the list.
         """
         # XXX: we really need the language - can't really be optional, and we
         # need to propagate it
@@ -169,10 +173,8 @@ class LISAunit(base.TranslationUnit):
             else:
                 if self.textNode:
                     terms = languageNode.iter(self.namespaced(self.textNode))
-                    try:
+                    with contextlib.suppress(StopIteration):
                         languageNode = next(terms)
-                    except StopIteration:
-                        pass
                 languageNode.text = target
         else:
             self.set_target_dom(None, False)
@@ -187,10 +189,11 @@ class LISAunit(base.TranslationUnit):
 
     @staticmethod
     def createlanguageNode(lang, text, purpose=None):
-        """Returns a xml Element setup with given parameters to represent a
+        """
+        Returns a xml Element setup with given parameters to represent a
         single language entry. Has to be overridden.
         """
-        return None
+        return
 
     def getlanguageNodes(self):
         """Returns a list of all nodes that contain per language information."""
@@ -208,8 +211,7 @@ class LISAunit(base.TranslationUnit):
         else:  # have to use index
             if index >= len(languageNodes):
                 return None
-            else:
-                return languageNodes[index]
+            return languageNodes[index]
         return None
 
     def getNodeText(self, languageNode, xml_space="preserve"):
@@ -225,8 +227,7 @@ class LISAunit(base.TranslationUnit):
                 return getText(node, xml_space)
             # didn't have the structure we expected
             return None
-        else:
-            return getText(languageNode, xml_space)
+        return getText(languageNode, xml_space)
 
     def __str__(self):
         # 'unicode' encoding keeps the unicode status of the output
@@ -288,10 +289,10 @@ class LISAfile(base.TranslationStore):
 
     def addheader(self):
         """Method to be overridden to initialise headers, etc."""
-        pass
 
     def namespaced(self, name):
-        """Returns name in Clark notation.
+        """
+        Returns name in Clark notation.
 
         For example ``namespaced("source")`` in an XLIFF document
         might return::
@@ -303,7 +304,8 @@ class LISAfile(base.TranslationStore):
         return namespaced(self.namespace, name)
 
     def initbody(self):
-        """Initialises self.body so it never needs to be retrieved from the XML
+        """
+        Initialises self.body so it never needs to be retrieved from the XML
         again.
         """
         self.namespace = self.document.getroot().nsmap.get(None, None)
@@ -330,7 +332,7 @@ class LISAfile(base.TranslationStore):
         return treestring
 
     def serialize(self, out=None):
-        """Converts to a string containing the file's XML"""
+        """Converts to a string containing the file's XML."""
         root = self.document.getroot()
         xml_quote_format = "'"
         xml_encoding = self.encoding.lower()
@@ -362,7 +364,7 @@ class LISAfile(base.TranslationStore):
         out.write(treestring)
 
     def parse(self, xml):
-        """Populates this object from the given xml string"""
+        """Populates this object from the given xml string."""
         if not hasattr(self, "filename"):
             self.filename = getattr(xml, "name", "")
         if hasattr(xml, "read"):

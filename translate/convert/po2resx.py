@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Convert Gettext PO localisation files to .Net Resource (.resx) files.
+"""
+Convert Gettext PO localisation files to .Net Resource (.resx) files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/resx2po.html
 for examples and usage instructions.
@@ -81,8 +82,7 @@ def convertresx(
 
     if templatefile is None:
         raise ValueError("Must have template file for RESX files")
-    else:
-        convertor = po2resx(templatefile, inputstore)
+    convertor = po2resx(templatefile, inputstore)
 
     outputstring = convertor.convertstore(includefuzzy)
     outputfile.write(outputstring)

@@ -1,4 +1,5 @@
-"""selector - WSGI delegation based on URL path and method.
+"""
+selector - WSGI delegation based on URL path and method.
 
 (See the docstring of selector.Selector.)
 
@@ -15,24 +16,23 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to 
-the Free Software Foundation, Inc., 51 Franklin Street, 
+License along with this library; if not, write to
+the Free Software Foundation, Inc., 51 Franklin Street,
 Fifth Floor, Boston, MA  02110-1301  USA
 
 Luke Arno can be found at http://lukearno.com/
 
 """
 
+import contextlib
 import re
 from itertools import starmap
 from wsgiref.util import shift_path_info
 
-try:
+# resolver not essential for basic featurs
+# FIXME: this library is overkill, simplify
+with contextlib.suppress(ImportError):
     from resolver import resolve
-except ImportError:
-    # resolver not essential for basic featurs
-    # FIXME: this library is overkill, simplify
-    pass
 
 
 class MappingFileError(Exception):
@@ -69,7 +69,8 @@ def not_found(environ, start_response):
 
 
 class Selector:
-    """WSGI middleware for URL paths and HTTP method based delegation.
+    """
+    WSGI middleware for URL paths and HTTP method based delegation.
 
     See http://lukearno.com/projects/selector/
 
@@ -105,7 +106,8 @@ class Selector:
         self.consume_path = consume_path
 
     def slurp(self, mappings, prefix=None, parser=None, wrap=None):
-        """Slurp in a whole list (or iterable) of mappings.
+        """
+        Slurp in a whole list (or iterable) of mappings.
 
         Prefix and parser args will override self.parser and self.args
         for the given mappings.
@@ -128,7 +130,8 @@ class Selector:
             self.prefix = oldprefix
 
     def add(self, path, method_dict=None, prefix=None, **http_methods):
-        """Add a mapping.
+        """
+        Add a mapping.
 
         HTTP methods can be specified in a dict or using kwargs,
         but kwargs will override if both are given.
@@ -190,19 +193,19 @@ class Selector:
                         methods,
                         match.group(0),
                     )
-                elif "_ANY_" in method_dict:
+                if "_ANY_" in method_dict:
                     return (
                         method_dict["_ANY_"],
                         match.groupdict(),
                         methods,
                         match.group(0),
                     )
-                else:
-                    return self.status405, {}, methods, ""
+                return self.status405, {}, methods, ""
         return self.status404, {}, [], ""
 
     def slurp_file(self, the_file, prefix=None, parser=None, wrap=None):
-        """Read mappings from a simple text file.
+        """
+        Read mappings from a simple text file.
 
         Format looks like this::
 
@@ -261,7 +264,8 @@ class Selector:
             self.prefix = oldprefix
 
     def _parse_line(self, line, path, methods):
-        """Parse one line of a mapping file.
+        """
+        Parse one line of a mapping file.
 
         This method is for the use of selector.slurp_file.
         """
@@ -298,7 +302,8 @@ class Selector:
 
 
 class SimpleParser:
-    r"""Callable to turn path expressions into regexes with named groups.
+    r"""
+    Callable to turn path expressions into regexes with named groups.
 
     For instance ``"/hello/{name}"`` becomes ``r"^\/hello\/(?P<name>[^\^.]+)$"``
 
@@ -358,7 +363,8 @@ class SimpleParser:
 
     @staticmethod
     def lastly(regex):
-        """Process the result of __call__ right before it returns.
+        """
+        Process the result of __call__ right before it returns.
 
         Adds the ^ and the $ to the beginning and the end, respectively.
         """
@@ -366,7 +372,8 @@ class SimpleParser:
 
     @staticmethod
     def openended(regex):
-        """Process the result of ``__call__`` right before it returns.
+        """
+        Process the result of ``__call__`` right before it returns.
 
         Adds the ^ to the beginning but no $ to the end.
         Called as a special alternative to lastly.
@@ -419,10 +426,10 @@ class SimpleParser:
         self._pos = 0
         if url_pattern.endswith("|"):
             return self.openended(self.parse(url_pattern[:-1]))
-        else:
-            return self.lastly(self.parse(url_pattern))
+        return self.lastly(self.parse(url_pattern))
 
 
+# TODO: Is this needed?
 class EnvironDispatcher:
     """Dispatch based on list of rules."""
 
@@ -431,13 +438,15 @@ class EnvironDispatcher:
         self.rules = rules
 
     def __call__(self, environ, start_response):
-        """Call the first app whose predicate is true.
+        """
+        Call the first app whose predicate is true.
 
         Each predicate is passes the environ to evaluate.
         """
         for predicate, app in self.rules:
             if predicate(environ):
                 return app(environ, start_response)
+        return None
 
 
 class MiddlewareComposer:
@@ -449,7 +458,8 @@ class MiddlewareComposer:
         self.rules = rules
 
     def __call__(self, environ, start_response):
-        """Apply each middleware whose predicate is true.
+        """
+        Apply each middleware whose predicate is true.
 
         Each predicate is passes the environ to evaluate.
 
@@ -484,7 +494,8 @@ class Naked:
     _exposed = True
 
     def _is_exposed(self, obj):
-        """Determine if obj should be exposed.
+        """
+        Determine if obj should be exposed.
 
         If ``self._expose_all`` is True, always return True.
         Otherwise, look at obj._exposed.
@@ -494,14 +505,13 @@ class Naked:
     def __call__(self, environ, start_response):
         """Dispatch to the method named by the next bit of PATH_INFO."""
         name = shift_path_info(
-            dict(SCRIPT_NAME=environ["SCRIPT_NAME"], PATH_INFO=environ["PATH_INFO"])
+            {"SCRIPT_NAME": environ["SCRIPT_NAME"], "PATH_INFO": environ["PATH_INFO"]}
         )
         callable = getattr(self, name or "index", None)
         if callable is not None and self._is_exposed(callable):
             shift_path_info(environ)
             return callable(environ, start_response)
-        else:
-            return self._not_found(environ, start_response)
+        return self._not_found(environ, start_response)
 
 
 class ByMethod:
@@ -518,9 +528,10 @@ class ByMethod:
 
 
 def pliant(func):
-    """Decorate an unbound wsgi callable taking args from
-    ``wsgiorg.routing_args``
-    ::
+    """
+    Decorate an unbound wsgi callable taking args from ``wsgiorg.routing_args``.
+
+    .. code-block:: python
 
         @pliant
         def app(environ, start_response, arg1, arg2, foo='bar'):
@@ -538,9 +549,10 @@ def pliant(func):
 
 
 def opliant(meth):
-    """Decorate a bound wsgi callable taking args from
-    ``wsgiorg.routing_args``
-    ::
+    """
+    Decorate a bound wsgi callable taking args from ``wsgiorg.routing_args``.
+
+    .. code-block:: python
 
         class App:
             @opliant

@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Translate HTML files using Gettext PO localization files.
+"""
+Translate HTML files using Gettext PO localization files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/html2po.html
 for examples and usage instructions.
@@ -45,7 +46,7 @@ class po2html:
         return unit.source
 
     def mergestore(self, inputstore, templatetext, includefuzzy):
-        """Convert a file to html format"""
+        """Convert a file to html format."""
         self.inputstore = inputstore
         self.inputstore.require_index()
         self.includefuzzy = includefuzzy
@@ -65,8 +66,7 @@ def converthtml(
     convertor = po2html()
     if templatefile is None:
         raise ValueError("must have template file for HTML files")
-    else:
-        outputstring = convertor.mergestore(inputstore, templatefile, includefuzzy)
+    outputstring = convertor.mergestore(inputstore, templatefile, includefuzzy)
     outputfile.write(outputstring.encode("utf-8"))
     return 1
 
@@ -119,8 +119,7 @@ class PO2HtmlOptionParser(convert.ConvertOptionParser):
                 )
             except Exception:
                 self.warning(
-                    "Error processing: input %s, output %s, template %s"
-                    % (options.input, fulloutputpath, fulltemplatepath),
+                    f"Error processing: input {options.input}, output {fulloutputpath}, template {fulltemplatepath}",
                     options,
                     sys.exc_info(),
                 )
@@ -172,10 +171,7 @@ class PO2HtmlOptionParser(convert.ConvertOptionParser):
     def isvalidtemplatename(self, filename):
         """Checks if this is a valid template/output filename."""
         _, ext = self.splitext(filename)
-        for (_, templateformat), _ in self.outputoptions.items():
-            if ext == templateformat:
-                return True
-        return False
+        return any(ext == templateformat for _, templateformat in self.outputoptions)
 
 
 def main(argv=None):

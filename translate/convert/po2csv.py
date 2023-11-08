@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Convert Gettext PO localization files to Comma-Separated Value (.csv) files.
+"""
+Convert Gettext PO localization files to Comma-Separated Value (.csv) files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/csv2po.html
 for examples and usage instructions.
@@ -31,23 +32,20 @@ class po2csv:
         return " ".join(inputunit.getlocations())
 
     def convertunit(self, inputunit):
-        csvunit = csvl10n.csvunit()
         if inputunit.isheader():
             return None
-            # csvunit.location = "location"
-            # csvunit.source = "source"
-            # csvunit.target = "target"
-        elif inputunit.isblank():
+        if inputunit.isblank():
             return None
-        else:
-            csvunit.location = self.convertcomments(inputunit)
-            csvunit.source = inputunit.source
-            csvunit.target = inputunit.target
-            csvunit.setcontext(inputunit.getcontext())
+        csvunit = csvl10n.csvunit()
+        csvunit.location = self.convertcomments(inputunit)
+        csvunit.source = inputunit.source
+        csvunit.target = inputunit.target
+        csvunit.setcontext(inputunit.getcontext())
         return csvunit
 
     def convertplurals(self, inputunit):
-        """Convert PO plural units
+        """
+        Convert PO plural units.
 
         We only convert the first plural form.  So languages with multiple
         plurals are not handled.  For single plural languages we simply
@@ -77,7 +75,7 @@ class po2csv:
 
 
 def convertcsv(inputfile, outputfile, templatefile, columnorder=None):
-    """reads in inputfile using po, converts using po2csv, writes to outputfile"""
+    """Reads in inputfile using po, converts using po2csv, writes to outputfile."""
     # note that templatefile is not used, but it is required by the converter...
     inputstore = po.pofile(inputfile)
     if inputstore.isempty():

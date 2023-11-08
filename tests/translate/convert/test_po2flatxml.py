@@ -1,4 +1,4 @@
-"""Tests converting Gettext PO localization files to flat XML files"""
+"""Tests converting Gettext PO localization files to flat XML files."""
 
 from io import BytesIO
 
@@ -17,7 +17,7 @@ msgstr "Two"
 
     @staticmethod
     def _convert(postring, templatestring=None, **kwargs):
-        """Helper that converts po source to xml target without requiring files"""
+        """Helper that converts po source to xml target without requiring files."""
         inputfile = BytesIO(postring.encode())
         templatefile = None
         if templatestring:
@@ -80,7 +80,8 @@ msgstr "Two"
         assert actual == expected
 
     def test_default_namespace(self):
-        """Test a conversion with a default namespace.
+        """
+        Test a conversion with a default namespace.
 
         This conversion requires a template that specifies the namespace
         as default namespace; otherwise it will be generated.
@@ -132,7 +133,7 @@ msgstr "Two"
 
 
 class TestPO2FlatXMLCommand(test_convert.TestConvertCommand):
-    """Tests running actual po2flatxml commands on files"""
+    """Tests running actual po2flatxml commands on files."""
 
     convertmodule = po2flatxml
     expected_options = [

@@ -54,7 +54,8 @@ class LanguageIdentifier:
         self.ngram = NGram(model_dir)
 
     def _load_config(self, conf_file):
-        """Load the mapping of language names to language codes as given in the
+        """
+        Load the mapping of language names to language codes as given in the
         configuration file.
         """
         with open(conf_file) as fp:
@@ -72,7 +73,7 @@ class LanguageIdentifier:
                 # Remove trailing '[_-]-utf8' from code
                 if lcode.endswith("-utf8"):
                     lcode = lcode[: -len("-utf8")]
-                if lcode.endswith("-") or lcode.endswith("_"):
+                if lcode.endswith(("-", "_")):
                     lcode = lcode[:-1]
 
                 self._lang_codes[lname] = lcode
@@ -87,7 +88,8 @@ class LanguageIdentifier:
         return result
 
     def identify_source_lang(self, instore):
-        """Identify the source language of the given translation store or
+        """
+        Identify the source language of the given translation store or
         units.
 
         :type  instore: ``TranslationStore`` or list or tuple of
@@ -109,7 +111,8 @@ class LanguageIdentifier:
         return self.identify_lang(text)
 
     def identify_target_lang(self, instore):
-        """Identify the target language of the given translation store or
+        """
+        Identify the target language of the given translation store or
         units.
 
         :type  instore: ``TranslationStore`` or list or tuple of

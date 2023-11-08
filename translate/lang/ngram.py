@@ -19,7 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Ngram models for language guessing.
+"""
+Ngram models for language guessing.
 
 .. note:: Orignal code from http://thomas.mangin.me.uk/data/source/ngram.py
 """
@@ -68,8 +69,7 @@ class _NGram:
         sorted = [(self.ngrams[k], k) for k in self.ngrams]
         sorted.sort()
         sorted.reverse()
-        sorted = sorted[:nb_ngrams]
-        return sorted
+        return sorted[:nb_ngrams]
 
     def normalise(self):
         ngrams = {}

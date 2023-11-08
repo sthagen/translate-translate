@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Class that manages .ini files for translation
+"""
+Class that manages .ini files for translation.
 
 .. note::: A simple summary of what is permissible follows.
 
@@ -50,7 +51,7 @@ def register_dialect(dialect):
 
 
 class Dialect:
-    """Base class for differentiating dialect options and functions"""
+    """Base class for differentiating dialect options and functions."""
 
     name = None
 
@@ -80,14 +81,14 @@ class DialectInno(DialectDefault):
 
 
 class iniunit(base.TranslationUnit):
-    """A INI file entry"""
+    """A INI file entry."""
 
     def __init__(self, source=None, **kwargs):
         if source:
             self.source = source
             self.location = f"[default]{hex(hash(source))}"
         else:
-            self.location = f"[default]{str(uuid.uuid4())}"
+            self.location = f"[default]{uuid.uuid4()!s}"
         super().__init__(source)
 
     def addlocation(self, location):
@@ -106,12 +107,12 @@ class iniunit(base.TranslationUnit):
 
 
 class inifile(base.TranslationStore):
-    """An INI file"""
+    """An INI file."""
 
     UnitClass = iniunit
 
     def __init__(self, inputfile=None, dialect="default", **kwargs):
-        """construct an INI file, optionally reading in from inputfile."""
+        """Construct an INI file, optionally reading in from inputfile."""
         self._dialect = dialects.get(
             dialect, DialectDefault
         )()  # fail correctly/use getattr/

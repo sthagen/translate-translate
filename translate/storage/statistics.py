@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Module to provide statistics and related functionality.
-
-"""
+"""Module to provide statistics and related functionality."""
 
 
 from translate.lang import factory
@@ -86,7 +84,6 @@ class Statistics:
 
     def untranslated_unitcount(self):
         """Returns the number of untranslated units."""
-
         return len(self.untranslated_units())
 
     @staticmethod
@@ -116,19 +113,18 @@ class Statistics:
 
     def translated_wordcount(self):
         """Returns the number of translated words in this object."""
-
         text = self.get_source_text(self.translated_units())
         return self.wordcount(text)
 
     def untranslated_wordcount(self):
         """Returns the number of untranslated words in this object."""
-
         text = self.get_source_text(self.untranslated_units())
         return self.wordcount(text)
 
     @staticmethod
     def classifyunit(unit):
-        """Returns a list of the classes that the unit belongs to.
+        """
+        Returns a list of the classes that the unit belongs to.
 
         :param unit: the unit to classify
         """
@@ -142,12 +138,12 @@ class Statistics:
         # TODO: decoding should not be done here
         #        checkresult = self.checker.run_filters(unit, unit.source, unit.target)
         checkresult = {}
-        for checkname, checkmessage in checkresult.items():
-            classes.append("check-" + checkname)
+        classes.extend("check-" + checkname for checkname in checkresult)
         return classes
 
     def classifyunits(self):
-        """Makes a dictionary of which units fall into which classifications.
+        """
+        Makes a dictionary of which units fall into which classifications.
 
         This method iterates over all units.
         """
@@ -183,7 +179,8 @@ class Statistics:
             )
 
     def reclassifyunit(self, item):
-        """Updates the classification of a unit in self.classification.
+        """
+        Updates the classification of a unit in self.classification.
 
         :param item: an integer that is an index in .getunits().
         """

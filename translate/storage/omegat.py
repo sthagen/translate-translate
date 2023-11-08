@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Manage the OmegaT glossary format
+"""
+Manage the OmegaT glossary format.
 
 OmegaT glossary format is used by the
 `OmegaT <http://www.omegat.org/en/omegat.html>`_ computer aided
@@ -47,7 +48,8 @@ OMEGAT_FIELDNAMES = ["source", "target", "comment"]
 
 
 class OmegaTDialect(csv.Dialect):
-    """Describe the properties of an OmegaT generated TAB-delimited glossary
+    """
+    Describe the properties of an OmegaT generated TAB-delimited glossary
     file.
     """
 
@@ -60,7 +62,7 @@ csv.register_dialect("omegat", OmegaTDialect)
 
 
 class OmegaTUnit(base.TranslationUnit):
-    """An OmegaT glossary unit"""
+    """An OmegaT glossary unit."""
 
     def __init__(self, source=None):
         self._dict = {}
@@ -69,11 +71,12 @@ class OmegaTUnit(base.TranslationUnit):
         super().__init__(source)
 
     def getdict(self):
-        """Get the dictionary of values for a OmegaT line"""
+        """Get the dictionary of values for a OmegaT line."""
         return self._dict
 
     def setdict(self, newdict):
-        """Set the dictionary of values for a OmegaT line
+        """
+        Set the dictionary of values for a OmegaT line.
 
         :param newdict: a new dictionary with OmegaT line elements
         :type newdict: Dict
@@ -86,10 +89,9 @@ class OmegaTUnit(base.TranslationUnit):
     def _get_field(self, key):
         if key not in self._dict:
             return None
-        elif self._dict[key]:
+        if self._dict[key]:
             return self._dict[key]
-        else:
-            return ""
+        return ""
 
     def _set_field(self, key, newvalue):
         if newvalue is None:
@@ -141,7 +143,7 @@ class OmegaTUnit(base.TranslationUnit):
 
 
 class OmegaTFile(base.TranslationStore):
-    """An OmegaT glossary file"""
+    """An OmegaT glossary file."""
 
     Name = "OmegaT Glossary"
     Mimetypes = ["application/x-omegat-glossary"]
@@ -157,7 +159,7 @@ class OmegaTFile(base.TranslationStore):
             self.parse(inputfile)
 
     def parse(self, input):
-        """parsese the given file or file source string"""
+        """Parsese the given file or file source string."""
         if hasattr(input, "name"):
             self.filename = input.name
         elif not getattr(self, "filename", ""):
@@ -194,7 +196,7 @@ class OmegaTFile(base.TranslationStore):
 
 
 class OmegaTFileTab(OmegaTFile):
-    """An OmegaT glossary file in the default system encoding"""
+    """An OmegaT glossary file in the default system encoding."""
 
     Name = "OmegaT Glossary"
     Mimetypes = ["application/x-omegat-glossary"]

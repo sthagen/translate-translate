@@ -28,7 +28,7 @@ From the GNU gettext manual:
      #, FLAG...
      msgctxt CONTEXT                   (Gettext 0.15)
      msgid UNTRANSLATED-STRING
-     msgstr TRANSLATED-STRING
+     msgstr TRANSLATED-STRING.
 """
 
 import re
@@ -95,7 +95,8 @@ class ParseState:
 
 
 def read_prevmsgid_lines(parse_state):
-    """Read all the lines belonging starting with #|. These lines contain the
+    """
+    Read all the lines belonging starting with #|. These lines contain the
     previous msgid and msgctxt info. We strip away the leading '#| ' and read
     until we stop seeing #|.
     """
@@ -160,8 +161,7 @@ def parse_comment(parse_state, unit):
         else:
             append(unit.othercomments, next_line)
         return parse_state.read_line()
-    else:
-        return None
+    return None
 
 
 def parse_comments(parse_state, unit):
@@ -238,6 +238,7 @@ def parse_message(
         return parse_multiple_quoted(
             parse_state, msg_list, msg_comment_list, start_of_string_len
         )
+    return None
 
 
 def parse_msgctxt(parse_state, unit):

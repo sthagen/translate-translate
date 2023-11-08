@@ -4,7 +4,7 @@ from translate.lang import common
 
 
 def test_characters():
-    """Test the basic characters segmentation"""
+    """Test the basic characters segmentation."""
     language = common.Common
     assert language.characters("") == []
     assert language.characters("Four") == ["F", "o", "u", "r"]
@@ -40,8 +40,8 @@ def test_words():
 def test_word_khmer():
     language = common.Common
     # Let's test Khmer with zero width space (\u200b)
-    words = language.words("ផ្ដល់​យោបល់")
-    print("ផ្ដល់​យោបល់")
+    words = language.words("ផ្ដល់\u200bយោបល់")
+    print("ផ្ដល់\u200bយោបល់")
     print(language.words("ផ្ដល់<200b>យោបល់"))
     print(["ផ្ដល់", "យោបល់"])
     assert words == ["ផ្ដល់", "យោបល់"]
@@ -108,15 +108,15 @@ def test_numstart():
 
 
 def test_punctranslate():
-    """Test the basic punctranslate function"""
+    """Test the basic punctranslate function."""
     language = common.Common
-    assert not language.punctranslate("A...") == "A…"
+    assert language.punctranslate("A...") != "A…"
     language.puncdict = {"...": "…"}
     assert language.punctranslate("A...") == "A…"
 
 
 def test_length_difference():
-    """Test the heuristics of the length difference function"""
+    """Test the heuristics of the length difference function."""
     # Expansion with no code
     assert common.Common.length_difference(10) == 6
     assert common.Common.length_difference(100) == 15
@@ -124,5 +124,5 @@ def test_length_difference():
 
 
 def test_alter_length():
-    """Test that we create the correct length by adding or removing characters"""
+    """Test that we create the correct length by adding or removing characters."""
     assert common.Common.alter_length("One two three") == "One twOne two three"

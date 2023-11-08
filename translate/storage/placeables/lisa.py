@@ -78,20 +78,16 @@ _class_dictionary = {
 
 def make_placeable(node, xml_space):
     _namespace, tag = misc.parse_tag(node.tag)
-    if tag in _class_dictionary:
-        klass, maker = _class_dictionary[tag]
-    else:
-        klass, maker = xliff.UnknownXML, make_unknown
+    klass, maker = _class_dictionary.get(tag, (xliff.UnknownXML, make_unknown))
     return maker(klass, node, xml_space)
 
 
 def as_unicode(string):
     if isinstance(string, str):
         return string
-    elif isinstance(string, StringElem):
+    if isinstance(string, StringElem):
         return str(string)
-    else:
-        return string.decode("utf-8")
+    return string.decode("utf-8")
 
 
 def xml_to_strelem(dom_node, xml_space="preserve"):

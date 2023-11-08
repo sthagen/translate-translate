@@ -21,7 +21,7 @@ class TestXLIFF2PO:
 
     @staticmethod
     def xliff2po(xliffsource):
-        """helper that converts xliff source to po source without requiring files"""
+        """Helper that converts xliff source to po source without requiring files."""
         inputfile = BytesIO(xliffsource.encode())
         convertor = xliff2po.xliff2po()
         outputpo = convertor.convertstore(inputfile)
@@ -55,9 +55,8 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit"""
 
         minixlf = (
-            (
-                self.xliffskeleton
-                % """<trans-unit id="1" restype="x-gettext-domain-header" approved="no" xml:space="preserve">
+            self.xliffskeleton
+            % """<trans-unit id="1" restype="x-gettext-domain-header" approved="no" xml:space="preserve">
   <source>%s</source>
   <target>%s</target>
   <note from="po-translator">Zulu translation of program ABC</note>
@@ -66,9 +65,7 @@ Content-Transfer-Encoding: 8bit"""
     <source>gras</source>
     <target>utshani</target>
   </trans-unit>"""
-            )
-            % (headertext, headertext)
-        )
+        ) % (headertext, headertext)
 
         print(minixlf)
         pofile = self.xliff2po(minixlf)
@@ -81,7 +78,7 @@ Content-Transfer-Encoding: 8bit"""
         assert potext.index("MIME-Version: 1.0\\n")
 
     def test_translatorcomments(self):
-        """Tests translator comments"""
+        """Tests translator comments."""
         minixlf = (
             self.xliffskeleton
             % """<trans-unit>
@@ -125,7 +122,7 @@ it</note>
         assert potext.index("# Couldn't do\n# it\n") >= 0
 
     def test_autocomment(self):
-        """Tests automatic comments"""
+        """Tests automatic comments."""
         minixlf = (
             self.xliffskeleton
             % """<trans-unit>
@@ -169,7 +166,7 @@ garbage</note>
         assert potext.index("#. Note that this is\n#. garbage\n") >= 0
 
     def test_locations(self):
-        """Tests location comments (#:)"""
+        """Tests location comments (#:)."""
         minixlf = (
             self.xliffskeleton
             % """<trans-unit id="1">
@@ -194,7 +191,7 @@ garbage</note>
         assert "place.py" in locations
 
     def test_fuzzy(self):
-        """Tests fuzzyness"""
+        """Tests fuzzyness."""
         minixlf = (
             self.xliffskeleton
             % """<trans-unit approved="no">
@@ -221,7 +218,7 @@ garbage</note>
         assert pofile.units[3].isfuzzy()
 
     def test_plurals(self):
-        """Tests fuzzyness"""
+        """Tests fuzzyness."""
         minixlf = (
             self.xliffskeleton
             % """<group id="1" restype="x-gettext-plurals">
@@ -245,7 +242,7 @@ garbage</note>
 
 
 class TestBasicXLIFF2PO(test_convert.TestConvertCommand, TestXLIFF2PO):
-    """This tests a basic XLIFF file without xmlns attribute"""
+    """This tests a basic XLIFF file without xmlns attribute."""
 
     convertmodule = xliff2po
     expected_options = [
@@ -278,7 +275,7 @@ class TestBasicXLIFF2PO(test_convert.TestConvertCommand, TestXLIFF2PO):
 
 
 class TestXLIFF2POCommand(test_convert.TestConvertCommand, TestXLIFF2PO):
-    """Tests running actual xliff2po commands on files"""
+    """Tests running actual xliff2po commands on files."""
 
     convertmodule = xliff2po
     expected_options = [
@@ -288,14 +285,13 @@ class TestXLIFF2POCommand(test_convert.TestConvertCommand, TestXLIFF2PO):
 
     @staticmethod
     def singleelement(pofile):
-        """checks that the pofile contains a single non-header element, and returns it"""
+        """Checks that the pofile contains a single non-header element, and returns it."""
         if isinstance(pofile, poheader):
             assert len(pofile.units) == 2
             assert pofile.units[0].isheader()
             return pofile.units[1]
-        else:
-            assert len(pofile.units) == 1
-            return pofile.units[0]
+        assert len(pofile.units) == 1
+        return pofile.units[0]
 
     def test_preserve_filename(self):
         """Ensures that the filename is preserved."""
@@ -313,7 +309,7 @@ class TestXLIFF2POCommand(test_convert.TestConvertCommand, TestXLIFF2PO):
         assert xlifffile.filename.endswith("snippet.xlf")
 
     def test_simple_pot(self):
-        """tests the simplest possible conversion to a pot file"""
+        """Tests the simplest possible conversion to a pot file."""
         xliffsource = (
             self.xliffskeleton
             % """<trans-unit xml:space="preserve">
@@ -329,7 +325,7 @@ class TestXLIFF2POCommand(test_convert.TestConvertCommand, TestXLIFF2PO):
         assert poelement.target == ""
 
     def test_simple_po(self):
-        """tests the simplest possible conversion to a po file"""
+        """Tests the simplest possible conversion to a po file."""
         xliffsource = (
             self.xliffskeleton
             % """<trans-unit xml:space="preserve">
@@ -345,7 +341,7 @@ class TestXLIFF2POCommand(test_convert.TestConvertCommand, TestXLIFF2PO):
         assert poelement.target == "matlhapolosa"
 
     def test_remove_duplicates(self):
-        """test that removing of duplicates works correctly"""
+        """Test that removing of duplicates works correctly."""
         xliffsource = (
             self.xliffskeleton
             % """<trans-unit xml:space="preserve">

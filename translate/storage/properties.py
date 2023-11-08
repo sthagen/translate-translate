@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-r"""Classes that hold units of .properties, and similar, files that are used in
+r"""
+Classes that hold units of .properties, and similar, files that are used in
 translating Java, Mozilla, MacOS and other software.
 
 The :class:`propfile` class is a monolingual class with :class:`propunit`
@@ -126,10 +127,11 @@ Name and Value pairs:
 
 """
 
+from __future__ import annotations
+
 import re
 from codecs import iterencode
 from copy import deepcopy
-from typing import List
 
 from lxml import etree
 
@@ -153,7 +155,8 @@ eol = "\n"
 
 
 def is_line_continuation(line):
-    """Determine whether *line* has a line continuation marker.
+    r"""
+    Determine whether *line* has a line continuation marker.
 
     .properties files can be terminated with a backslash (\\) indicating
     that the 'value' continues on the next line.  Continuation is only
@@ -178,7 +181,8 @@ def is_line_continuation(line):
 
 
 def is_comment_one_line(line):
-    """Determine whether a *line* is a one-line comment.
+    """
+    Determine whether a *line* is a one-line comment.
 
     :param line: A properties line
     :type line: unicode
@@ -196,7 +200,8 @@ def is_comment_one_line(line):
 
 
 def is_comment_start(line):
-    """Determine whether a *line* starts a new multi-line comment.
+    """
+    Determine whether a *line* starts a new multi-line comment.
 
     :param line: A properties line
     :type line: unicode
@@ -208,7 +213,8 @@ def is_comment_start(line):
 
 
 def is_comment_end(line):
-    """Determine whether a *line* ends a new multi-line comment.
+    """
+    Determine whether a *line* ends a new multi-line comment.
 
     :param line: A properties line
     :type line: unicode
@@ -220,7 +226,8 @@ def is_comment_end(line):
 
 
 def _key_strip(key):
-    """Cleanup whitespace found around a key
+    """
+    Cleanup whitespace found around a key.
 
     :param key: A properties key
     :type key: str
@@ -253,7 +260,7 @@ class Dialect:
 
     name = None
     default_encoding = "iso-8859-1"
-    delimiters: List[str] = []
+    delimiters: list[str] = []
     pair_terminator = ""
     key_wrap_char = ""
     value_wrap_char = ""
@@ -262,7 +269,7 @@ class Dialect:
 
     @staticmethod
     def encode(string, encoding=None):
-        """Encode the string"""
+        """Encode the string."""
         # FIXME: dialects are a bad idea, not possible for subclasses
         # to override key methods
         if encoding not in ("utf-8", "utf-16"):
@@ -275,7 +282,8 @@ class Dialect:
 
     @classmethod
     def find_delimiter(cls, line):
-        """Find the type and position of the delimiter in a property line.
+        """
+        Find the type and position of the delimiter in a property line.
 
         Property files can be delimited by "=", ":" or whitespace (space for now).
         We find the position of each delimiter, then find the one that appears
@@ -333,12 +341,12 @@ class Dialect:
 
     @staticmethod
     def key_strip(key):
-        """Strip unneeded characters from the key"""
+        """Strip unneeded characters from the key."""
         return _key_strip(key)
 
     @staticmethod
     def value_strip(value):
-        """Strip unneeded characters from the value"""
+        """Strip unneeded characters from the value."""
         return value.lstrip()
 
     @staticmethod
@@ -422,10 +430,9 @@ class DialectMozilla(DialectJavaUtf8):
 
     @staticmethod
     def encode(string, encoding=None):
-        """Encode the string"""
+        """Encode the string."""
         string = quote.java_utf8_properties_encode(string or "")
-        string = quote.mozillaescapemarginspaces(string or "")
-        return string
+        return quote.mozillaescapemarginspaces(string or "")
 
 
 @register_dialect
@@ -477,7 +484,7 @@ class DialectGwt(DialectJavaUtf8):
 
         # Some sanity checks
         if not variant:
-            raise Exception(f'Key "{key}" variant "{variant}" is invalid')
+            raise ValueError(f'Key "{key}" variant "{variant}" is invalid')
         return f"{key}[{variant}]"
 
     @classmethod
@@ -519,7 +526,7 @@ class DialectStrings(Dialect):
 
     @staticmethod
     def key_strip(key):
-        """Strip unneeded characters from the key"""
+        """Strip unneeded characters from the key."""
         newkey = key.rstrip().rstrip('"')
         # If string now ends in \ we put back the char that was escaped
         if newkey[-1:] == "\\":
@@ -529,7 +536,7 @@ class DialectStrings(Dialect):
 
     @staticmethod
     def value_strip(value):
-        """Strip unneeded characters from the value"""
+        """Strip unneeded characters from the value."""
         newvalue = value.rstrip().rstrip(";").rstrip('"')
         # If string now ends in \ we put back the char that was escaped
         if newvalue[-1:] == "\\":
@@ -625,10 +632,9 @@ class proppluralunit(base.TranslationUnit):
     def _get_ordered_units(self):
         # Used for str (GWT order)
         mapping = self._get_target_mapping()
-        names = []
-        for name in self.personality.get_cldr_names_order():
-            if name in mapping:
-                names.append(name)
+        names = [
+            name for name in self.personality.get_cldr_names_order() if name in mapping
+        ]
         return self._get_units(names)
 
     def hasplural(self, key=None):
@@ -652,7 +658,9 @@ class proppluralunit(base.TranslationUnit):
         strings = self._get_strings(strings, mapping)
         units = self._get_units(mapping)
         if len(strings) != len(units):
-            raise Exception(f'Not same plural counts between "{strings}" and "{units}"')
+            raise ValueError(
+                f'Not same plural counts between "{strings}" and "{units}"'
+            )
 
         for a, b in zip(strings, units):
             b.target = a
@@ -687,7 +695,9 @@ class proppluralunit(base.TranslationUnit):
         strings = self._get_strings(strings, mapping)
         units = self._get_units(mapping)
         if len(strings) != len(units):
-            raise Exception(f'Not same plural counts between "{strings}" and "{units}"')
+            raise ValueError(
+                f'Not same plural counts between "{strings}" and "{units}"'
+            )
 
         for a, b in zip(strings, units):
             b.source = a
@@ -735,7 +745,8 @@ class proppluralunit(base.TranslationUnit):
         self.units[variant] = unit
 
     def isblank(self):
-        """returns whether this is a blank element, containing only
+        """
+        returns whether this is a blank element, containing only
         comments.
         """
         return not (self.name or self.value)
@@ -758,7 +769,8 @@ class proppluralunit(base.TranslationUnit):
         self._get_source_unit().missing = missing
 
     def __str__(self):
-        """Convert to a string. Double check that unicode is handled
+        """
+        Convert to a string. Double check that unicode is handled
         somehow here.
         """
         return self.getoutput()
@@ -782,7 +794,7 @@ class DialectJoomla(Dialect):
 
     @staticmethod
     def value_strip(value):
-        """Strip unneeded characters from the value"""
+        """Strip unneeded characters from the value."""
         return value.strip()
 
     @classmethod
@@ -794,7 +806,7 @@ class DialectJoomla(Dialect):
 
     @staticmethod
     def encode(string, encoding=None):
-        """Encode the string"""
+        """Encode the string."""
         if not string:
             return string
         return '"%s"' % string.replace("\n", r"\n").replace("\t", r"\t").replace(
@@ -803,7 +815,8 @@ class DialectJoomla(Dialect):
 
 
 class propunit(base.TranslationUnit):
-    """An element of a properties file i.e. a name and value, and any comments
+    """
+    An element of a properties file i.e. a name and value, and any comments
     associated.
     """
 
@@ -850,7 +863,7 @@ class propunit(base.TranslationUnit):
 
     @staticmethod
     def represents_missing(line):
-        """The line represents a missing translation"""
+        """The line represents a missing translation."""
         return False
 
     @property
@@ -883,7 +896,7 @@ class propunit(base.TranslationUnit):
         return self.getoutput()
 
     def getoutput(self):
-        """Convert the element back into formatted lines for a .properties file"""
+        """Convert the element back into formatted lines for a .properties file."""
         notes = self.getnotes()
         if self.isblank():
             return notes + "\n"
@@ -927,7 +940,7 @@ class propunit(base.TranslationUnit):
         self.comments = []
 
     def isblank(self):
-        """returns whether this is a blank element, containing only comments."""
+        """Returns whether this is a blank element, containing only comments."""
         return not (self.name or self.value)
 
     def istranslatable(self):
@@ -944,7 +957,7 @@ class xwikiunit(propunit):
     """
     Represents an XWiki translation unit. The difference with a propunit is twofold:
             1. the dialect used is xwiki for simple quote escape handling
-            2. missing translations are output with a dedicated "### Missing: " prefix
+            2. missing translations are output with a dedicated "### Missing: " prefix.
     """
 
     def __init__(self, source="", personality="xwiki"):
@@ -963,17 +976,17 @@ class xwikiunit(propunit):
 
     @classmethod
     def represents_missing(cls, line):
-        """Return true if the line represents a missing translation"""
+        """Return true if the line represents a missing translation."""
         return line.startswith(cls.get_missing_part())
 
 
 class propfile(base.TranslationStore):
-    """this class represents a .properties file, made up of propunits"""
+    """this class represents a .properties file, made up of propunits."""
 
     UnitClass = propunit
 
     def __init__(self, inputfile=None, personality="java", encoding=None):
-        """construct a propfile, optionally reading in from inputfile"""
+        """Construct a propfile, optionally reading in from inputfile."""
         super().__init__()
         self.personality = get_dialect(personality)
         self.encoding = encoding or self.personality.default_encoding
@@ -1199,7 +1212,7 @@ class joomlafile(propfile):
 class XWikiPageProperties(xwikifile):
     """
     Represents an XWiki Page containing translation properties as described in
-    https://dev.xwiki.org/xwiki/bin/view/Community/XWiki%20Translations%20Formats/#HXWikiPageProperties
+    https://dev.xwiki.org/xwiki/bin/view/Community/XWiki%20Translations%20Formats/#HXWikiPageProperties.
     """
 
     Name = "XWiki Page Properties"
@@ -1309,7 +1322,7 @@ class XWikiFullPage(XWikiPageProperties):
     Represents a full XWiki Page translation: this file does not contains properties
     but its whole content needs to be translated.
     More information on
-    https://dev.xwiki.org/xwiki/bin/view/Community/XWiki%20Translations%20Formats/#HXWikiFullContentTranslation
+    https://dev.xwiki.org/xwiki/bin/view/Community/XWiki%20Translations%20Formats/#HXWikiFullContentTranslation.
     """
 
     Name = "XWiki Full Page"

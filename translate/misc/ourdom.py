@@ -17,7 +17,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 #
 
-"""module that provides modified DOM functionality for our needs
+"""
+module that provides modified DOM functionality for our needs.
 
 Note that users of ourdom should ensure that no code might still use classes
 directly from minidom, like minidom.Element, minidom.Document or methods such
@@ -32,7 +33,8 @@ from xml.dom import expatbuilder, minidom
 
 
 def writexml_helper(self, writer, indent="", addindent="", newl=""):
-    """A replacement for writexml that formats it like typical XML files.
+    """
+    A replacement for writexml that formats it like typical XML files.
     Nodes are intendented but text nodes, where whitespace can be significant,
     are not indented.
     """
@@ -77,27 +79,24 @@ def writexml_helper(self, writer, indent="", addindent="", newl=""):
 
 
 def getElementsByTagName_helper(parent, name, dummy=None):
-    """A reimplementation of getElementsByTagName as an iterator.
+    """
+    A reimplementation of getElementsByTagName as an iterator.
 
     Note that this is not compatible with getElementsByTagName that returns a
     list, therefore, the class below exposes this through
     yieldElementsByTagName
     """
     for node in parent.childNodes:
-        if node.nodeType == minidom.Node.ELEMENT_NODE and (
-            name == "*" or node.tagName == name
-        ):
+        if node.nodeType == minidom.Node.ELEMENT_NODE and (name in ("*", node.tagName)):
             yield node
         if node.hasChildNodes():
             yield from node.getElementsByTagName(name)
 
 
 def searchElementsByTagName_helper(parent, name, onlysearch):
-    """limits the search to within tags occuring in onlysearch"""
+    """Limits the search to within tags occuring in onlysearch."""
     for node in parent.childNodes:
-        if node.nodeType == minidom.Node.ELEMENT_NODE and (
-            name == "*" or node.tagName == name
-        ):
+        if node.nodeType == minidom.Node.ELEMENT_NODE and (name in ("*", node.tagName)):
             yield node
         if node.nodeType == minidom.Node.ELEMENT_NODE and node.tagName in onlysearch:
             for node in node.searchElementsByTagName(name, onlysearch):
@@ -110,7 +109,7 @@ def getFirstElementByTagName(node, name):
 
 
 def getnodetext(node):
-    """returns the node's text by iterating through the child nodes"""
+    """Returns the node's text by iterating through the child nodes."""
     if node is None:
         return ""
     return "".join(t.data for t in node.childNodes if t.nodeType == t.TEXT_NODE)
@@ -249,9 +248,9 @@ class ExpatBuilderNS(expatbuilder.ExpatBuilderNS):
                 uri, localname, prefix, qname = expatbuilder._parse_ns_name(self, name)
                 assert (
                     curNode.namespaceURI == uri
-                    and curNode.localName == localname
-                    and curNode.prefix == prefix
                 ), "element stack messed up! (namespace)"
+                assert curNode.localName == localname
+                assert curNode.prefix == prefix
             else:
                 assert (
                     curNode.nodeName == name

@@ -15,7 +15,8 @@ def test_roundtrip_quoting():
         "five < six",
         "six > five",
         "Use &nbsp;",
-        "Use &amp;nbsp;" 'A "solution"',
+        "Use &amp;nbsp;",
+        'A "solution"',
         "skop 'n bal",
         '"""',
         "'''",
@@ -34,8 +35,7 @@ def test_roundtrip_quoting():
         quoted_special = pypo.quoteforpo(special)
         unquoted_special = pypo.unquotefrompo(quoted_special)
         print(
-            "special: %r\nquoted: %r\nunquoted: %r\n"
-            % (special, quoted_special, unquoted_special)
+            f"special: {special!r}\nquoted: {quoted_special!r}\nunquoted: {unquoted_special!r}\n"
         )
         assert special == unquoted_special
 
@@ -79,7 +79,7 @@ class TestPOUnit(test_base.TestTranslationUnit):
         locations_helper("unicoḓe key")
 
     def test_nongettext_location(self):
-        """test that we correctly handle a non-gettext (file:linenumber) location"""
+        """Test that we correctly handle a non-gettext (file:linenumber) location."""
         u = self.UnitClass("")
         u.addlocation("programming/C/programming.xml:44(para)")
         assert "programming/C/programming.xml:44(para)" in str(u)
@@ -133,7 +133,7 @@ class TestPOUnit(test_base.TestTranslationUnit):
         assert unit.geterrors()["test1"] == "New error 1."
 
     def test_no_plural_settarget(self):
-        """tests that target handling of file with no plural is correct"""
+        """Tests that target handling of file with no plural is correct."""
         # plain text, no plural test
         unit = self.UnitClass("Tree")
         unit.target = "ki"
@@ -168,7 +168,7 @@ class TestPOUnit(test_base.TestTranslationUnit):
         assert unit._extract_msgidcomments(kdetext) == "Simple comment"
 
     def test_isheader(self):
-        """checks that we deal correctly with headers."""
+        """Checks that we deal correctly with headers."""
         unit = self.UnitClass()
         unit.target = "PO-Revision-Date: 2006-02-09 23:33+0200\n"
         assert unit.isheader()
@@ -207,19 +207,18 @@ class TestPOFile(test_base.TestTranslationStore):
     StoreClass = po.pofile
 
     def poparse(self, posource):
-        """helper that parses po source without requiring files"""
+        """Helper that parses po source without requiring files."""
         dummyfile = BytesIO(
             posource.encode() if isinstance(posource, str) else posource
         )
-        pofile = self.StoreClass(dummyfile)
-        return pofile
+        return self.StoreClass(dummyfile)
 
     def poregen(self, posource):
-        """helper that converts po source to pofile object and back"""
+        """Helper that converts po source to pofile object and back."""
         return bytes(self.poparse(posource))
 
     def pomerge(self, oldmessage, newmessage, authoritative):
-        """helper that merges two messages"""
+        """Helper that merges two messages."""
         oldpofile = self.poparse(oldmessage)
         oldunit = oldpofile.units[0]
         if newmessage:
@@ -253,7 +252,7 @@ msgstr ""
         assert bytes(pofile)
 
     def test_simpleentry(self):
-        """checks that a simple po entry is parsed correctly"""
+        """Checks that a simple po entry is parsed correctly."""
         posource = '#: test.c:100 test.c:101\nmsgid "test"\nmsgstr "rest"\n'
         pofile = self.poparse(posource)
         assert len(pofile.units) == 1
@@ -263,7 +262,7 @@ msgstr ""
         assert thepo.target == "rest"
 
     def test_copy(self):
-        """checks that we can copy all the needed PO fields"""
+        """Checks that we can copy all the needed PO fields."""
         posource = '''# TRANSLATOR-COMMENTS
 #. AUTOMATIC-COMMENTS
 #: REFERENCE...
@@ -277,19 +276,19 @@ msgstr "TRANSLATED-STRING"'''
         assert newunit == oldunit
 
     def test_parse_source_string(self):
-        """parse a string"""
+        """Parse a string."""
         posource = '#: test.c\nmsgid "test"\nmsgstr "rest"\n'
         pofile = self.poparse(posource)
         assert len(pofile.units) == 1
 
     def test_parse_file(self):
-        """test parsing a real file"""
+        """Test parsing a real file."""
         posource = '#: test.c\nmsgid "test"\nmsgstr "rest"\n'
         pofile = self.poparse(posource)
         assert len(pofile.units) == 1
 
     def test_unicode(self):
-        """check that the po class can handle Unicode characters"""
+        """Check that the po class can handle Unicode characters."""
         posource = 'msgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n\n#: test.c\nmsgid "test"\nmsgstr "rest\xe2\x80\xa6"\n'
         pofile = self.poparse(posource)
         print(pofile)
@@ -322,7 +321,7 @@ msgstr[0] "Sheep"
         assert unit.target.strings == ["Sheep"]
 
     def test_plural_unicode(self):
-        """tests that all parts of the multistring are unicode."""
+        """Tests that all parts of the multistring are unicode."""
         posource = r"""msgid "Ców"
 msgid_plural "Cóws"
 msgstr[0] "Kóei"
@@ -334,7 +333,7 @@ msgstr[1] "Kóeie"
         assert isinstance(unit.source.strings[1], str)
 
     def test_nongettext_location(self):
-        """test that we correctly handle a non-gettext (file:linenumber) location"""
+        """Test that we correctly handle a non-gettext (file:linenumber) location."""
         posource = (
             '#: programming/C/programming.xml:44(para)\nmsgid "test"\nmsgstr "rest"\n'
         )
@@ -348,7 +347,7 @@ msgstr[1] "Kóeie"
         assert isinstance(locations[0], str)
 
     def test_percent_location(self):
-        """test that we correctly handle a location with percent chars"""
+        """Test that we correctly handle a location with percent chars."""
         posource = (
             '#: /foo/bar/%%var%%www%%about.html:44\nmsgid "test"\nmsgstr "rest"\n'
         )
@@ -362,7 +361,7 @@ msgstr[1] "Kóeie"
 
     @mark.xfail(reason="Not Implemented")
     def test_kde_plurals(self):
-        """Tests kde-style plurals. (Bug: 191)"""
+        """Tests kde-style plurals. (Bug: 191)."""
         posource = r"""msgid "_n Singular\n"
 "Plural"
 msgstr "Een\n"
@@ -383,7 +382,7 @@ msgstr "Een\n"
         assert unit.target.strings == ["Een", "Twee", "Drie"]
 
     def test_empty_lines_notes(self):
-        """Tests that empty comment lines are preserved"""
+        """Tests that empty comment lines are preserved."""
         posource = r"""# License name
 #
 # license line 1
@@ -396,7 +395,7 @@ msgstr "POT-Creation-Date: 2006-03-08 17:30+0200\n"
         assert bytes(pofile).decode("utf-8") == posource
 
     def test_fuzzy(self):
-        """checks that fuzzy functionality works as expected"""
+        """Checks that fuzzy functionality works as expected."""
         posource = '#, fuzzy\nmsgid "ball"\nmsgstr "bal"\n'
         expectednonfuzzy = 'msgid "ball"\nmsgstr "bal"\n'
         pofile = self.poparse(posource)
@@ -440,7 +439,7 @@ msgstr "POT-Creation-Date: 2006-03-08 17:30+0200\n"
 
     @mark.xfail(reason="Check differing behaviours between pypo and cpo")
     def test_makeobsolete_untranslated(self):
-        """Tests making an untranslated unit obsolete"""
+        """Tests making an untranslated unit obsolete."""
         posource = '#. The automatic one\n#: test.c\nmsgid "test"\nmsgstr ""\n'
         pofile = self.poparse(posource)
         unit = pofile.units[0]
@@ -451,7 +450,7 @@ msgstr "POT-Creation-Date: 2006-03-08 17:30+0200\n"
         # a better way might be for pomerge/pot2po to remove the unit
 
     def test_merging_automaticcomments(self):
-        """checks that new automatic comments override old ones"""
+        """Checks that new automatic comments override old ones."""
         oldsource = '#. old comment\n#: line:10\nmsgid "One"\nmsgstr "Een"\n'
         newsource = '#. new comment\n#: line:10\nmsgid "One"\nmsgstr ""\n'
         expected = '#. new comment\n#: line:10\nmsgid "One"\nmsgstr "Een"\n'
@@ -495,7 +494,7 @@ msgstr "tweede"
         # assert pofile.units[1].getlocations() == "File: anotherfile, line: 200"
 
     def test_obsolete(self):
-        """Tests that obsolete messages work"""
+        """Tests that obsolete messages work."""
         posource = '#~ msgid "Old thing"\n#~ msgstr "Ou ding"\n'
         pofile = self.poparse(posource)
         assert pofile.isempty()
@@ -525,7 +524,7 @@ msgstr "een"
         assert unit.hasplural()
 
     def test_obsolete_with_prev_msgid(self):
-        """Tests that obsolete messages work"""
+        """Tests that obsolete messages work."""
         # Bug 1429
         posource = r"""msgid ""
 msgstr ""
@@ -563,7 +562,7 @@ msgstr "een"
             add=True,
             **{
                 "Report-Msgid-Bugs-To": r"http://qa.openoffice.org/issues/enter_bug.cgi?subcomponent=ui&comment=&short_desc=Localization%20issue%20in%20file%3A%20dbaccess\source\core\resource.oo&component=l10n&form_name=enter_issue"
-            }
+            },
         )
         filecontents = bytes(pofile).decode("utf-8")
         print(filecontents)
@@ -573,7 +572,7 @@ msgstr "een"
         assert r"re\\resource" in filecontents
 
     def test_makeobsolete(self):
-        """Tests making a unit obsolete"""
+        """Tests making a unit obsolete."""
         posource = '#. The automatic one\n#: test.c\nmsgid "test"\nmsgstr "rest"\n'
         poexpected = '#~ msgid "test"\n#~ msgstr "rest"\n'
         pofile = self.poparse(posource)
@@ -586,7 +585,7 @@ msgstr "een"
         assert str(unit) == poexpected
 
     def test_makeobsolete_plural(self):
-        """Tests making a plural unit obsolete"""
+        """Tests making a plural unit obsolete."""
         posource = r"""msgid "Cow"
 msgid_plural "Cows"
 msgstr[0] "Koei"
@@ -607,7 +606,7 @@ msgstr[1] "Koeie"
         assert str(unit) == poexpected
 
     def test_makeobsolete_msgctxt(self):
-        """Tests making a unit with msgctxt obsolete"""
+        """Tests making a unit with msgctxt obsolete."""
         posource = '#: test.c\nmsgctxt "Context"\nmsgid "test"\nmsgstr "rest"\n'
         poexpected = '#~ msgctxt "Context"\n#~ msgid "test"\n#~ msgstr "rest"\n'
         pofile = self.poparse(posource)
@@ -622,7 +621,7 @@ msgstr[1] "Koeie"
         assert str(unit) == poexpected
 
     def test_makeobsolete_msgidcomments(self):
-        """Tests making a unit with msgidcomments obsolete"""
+        """Tests making a unit with msgidcomments obsolete."""
         posource = '#: first.c\nmsgid ""\n"_: first.c\\n"\n"test"\nmsgstr "rest"\n\n#: second.c\nmsgid ""\n"_: second.c\\n"\n"test"\nmsgstr "rest"'
         poexpected = '#~ msgid ""\n#~ "_: first.c\\n"\n#~ "test"\n#~ msgstr "rest"\n'
         print("Source:\n%s" % posource)
@@ -636,7 +635,7 @@ msgstr[1] "Koeie"
         assert str(unit) == poexpected
 
     def test_multiline_obsolete(self):
-        """Tests for correct output of mulitline obsolete messages"""
+        """Tests for correct output of mulitline obsolete messages."""
         posource = '#~ msgid ""\n#~ "Old thing\\n"\n#~ "Second old thing"\n#~ msgstr ""\n#~ "Ou ding\\n"\n#~ "Tweede ou ding"\n'
         pofile = self.poparse(posource)
         assert pofile.isempty()
@@ -648,7 +647,7 @@ msgstr[1] "Koeie"
         assert bytes(pofile).decode("utf-8") == posource
 
     def test_merge_duplicates(self):
-        """checks that merging duplicates works"""
+        """Checks that merging duplicates works."""
         posource = '#: source1\nmsgid "test me"\nmsgstr ""\n\n#: source2\nmsgid "test me"\nmsgstr ""\n'
         pofile = self.poparse(posource)
         pofile.removeduplicates("merge")
@@ -657,7 +656,7 @@ msgstr[1] "Koeie"
         print(pofile)
 
     def test_merge_mixed_sources(self):
-        """checks that merging works with different source location styles"""
+        """Checks that merging works with different source location styles."""
         posource = """
 #: source1
 #: source2
@@ -778,7 +777,7 @@ msgstr "Broken _: here"
         assert unit.target == "Broken _: here"
 
     def test_id(self):
-        """checks that ids work correctly"""
+        """Checks that ids work correctly."""
         posource = r"""
 msgid ""
 msgstr ""
@@ -868,9 +867,7 @@ msgstr ""
 
 msgid "a"
 msgstr "b"
-""".encode(
-            "ISO-8859-1"
-        )
+""".encode("ISO-8859-1")
 
         pofile = self.poparse(posource)
         assert "Tránslátór" in pofile.units[0].target
@@ -879,7 +876,7 @@ msgstr "b"
         assert header_dict["Last-Translator"] == "Tránslátór"
 
     def test_final_slash(self):
-        """Test that \\ as last character is correcly interpreted (bug 960)."""
+        r"""Test that \\ as last character is correcly interpreted (bug 960)."""
         posource = r"""
 msgid ""
 msgstr ""
@@ -932,7 +929,7 @@ msgstr "d"
         assert b"charset=UTF-8" in contents
 
     def test_istranslated(self):
-        """checks that istranslated works ok."""
+        """Checks that istranslated works ok."""
         posource = r"""
 msgid ""
 msgstr ""

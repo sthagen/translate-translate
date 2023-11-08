@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Classes for the support of Gettext .po and .pot files.
+"""
+Classes for the support of Gettext .po and .pot files.
 
 This implementation assumes that cpo is working. This should not be used
 directly, but can be used once cpo has been established to work.
@@ -72,7 +73,7 @@ class pounit(pocommon.pounit):
         self.target = ""
 
     def _initallcomments(self, blankall=False):
-        """Initialises allcomments"""
+        """Initialises allcomments."""
         if blankall:
             self.othercomments = []
             self.automaticcomments = []
@@ -88,21 +89,19 @@ class pounit(pocommon.pounit):
     def source(self, source):
         self._rich_source = None
         source = source or ""
-        if isinstance(source, multistring):
-            self._source = source
-        elif isinstance(source, str):
+        if isinstance(source, (multistring, str)):
             self._source = source
         else:  # If it is unicode, list or dict.
             self._source = multistring(source)
 
     @property
     def target(self):
-        """Returns the unescaped msgstr"""
+        """Returns the unescaped msgstr."""
         return self._target
 
     @target.setter
     def target(self, target):
-        """Sets the msgstr to the given (unescaped) value"""
+        """Sets the msgstr to the given (unescaped) value."""
         self._rich_target = None
         if self.hasplural():
             if isinstance(target, multistring):
@@ -121,7 +120,7 @@ class pounit(pocommon.pounit):
             self._target = target
 
     def getnotes(self, origin=None):
-        """Return comments based on origin value (programmer, developer, source code and translator)"""
+        """Return comments based on origin value (programmer, developer, source code and translator)."""
         if origin is None:
             comments = "\n".join(self.othercomments)
             comments += "\n".join(self.automaticcomments)
@@ -134,7 +133,7 @@ class pounit(pocommon.pounit):
         return comments
 
     def addnote(self, text, origin=None, position="append"):
-        """This is modeled on the XLIFF method. See xliff.py::xliffunit.addnote"""
+        """This is modeled on the XLIFF method. See xliff.py::xliffunit.addnote."""
         # ignore empty strings and strings without non-space characters
         if not (text and text.strip()):
             return
@@ -157,7 +156,7 @@ class pounit(pocommon.pounit):
             self.othercomments = newcomments
 
     def removenotes(self, origin=None):
-        """Remove all the translator's notes (other comments)"""
+        """Remove all the translator's notes (other comments)."""
         self.othercomments = []
 
     def __deepcopy__(self, memo={}):
@@ -184,18 +183,17 @@ class pounit(pocommon.pounit):
 
     def _msgidlen(self):
         if self.hasplural():
-            len("".join(string for string in self.source.strings))
-        else:
-            return len(self.source)
+            return len("".join(string for string in self.source.strings))
+        return len(self.source)
 
     def _msgstrlen(self):
         if self.hasplural():
-            len("".join(string for string in self.target.strings))
-        else:
-            return len(self.target)
+            return len("".join(string for string in self.target.strings))
+        return len(self.target)
 
     def merge(self, otherpo, overwrite=False, comments=True, authoritative=False):
-        """Merges the otherpo (with the same msgid) into this one.
+        """
+        Merges the otherpo (with the same msgid) into this one.
 
         Overwrite non-blank self.msgstr only if overwrite is True
         merge comments only if comments is True
@@ -220,14 +218,13 @@ class pounit(pocommon.pounit):
                 for item in list2:
                     splitlist2.extend(item.split())
                 list1.extend([item for item in splitlist2 if item not in splitlist1])
-            else:
+            elif list1 != list2:
                 # Normal merge, but conform to list1 newline style
-                if list1 != list2:
-                    for item in list2:
-                        item = item.rstrip(lineend)
-                        # avoid duplicate comment lines (this might cause some problems)
-                        if item not in list1 or len(item) < 5:
-                            list1.append(item)
+                for item in list2:
+                    item = item.rstrip(lineend)
+                    # avoid duplicate comment lines (this might cause some problems)
+                    if item not in list1 or len(item) < 5:
+                        list1.append(item)
 
         if not isinstance(otherpo, pounit):
             super().merge(otherpo, overwrite, comments)
@@ -258,9 +255,8 @@ class pounit(pocommon.pounit):
         elif not otherpo.istranslated():
             if self.source != otherpo.source:
                 self.markfuzzy()
-        else:
-            if self.target != otherpo.target:
-                self.markfuzzy()
+        elif self.target != otherpo.target:
+            self.markfuzzy()
 
     def isheader(self):
         # TODO: fix up nicely
@@ -278,14 +274,12 @@ class pounit(pocommon.pounit):
         return False
 
     def hastypecomment(self, typecomment):
-        """Check whether the given type comment is present"""
+        """Check whether the given type comment is present."""
         # check for word boundaries properly by using a regular expression...
         return (
             sum(
-                map(
-                    lambda tcline: len(re.findall("\\b%s\\b" % typecomment, tcline)),
-                    self.typecomments,
-                )
+                len(re.findall("\\b%s\\b" % typecomment, tcline))
+                for tcline in self.typecomments
             )
             != 0
         )
@@ -293,22 +287,19 @@ class pounit(pocommon.pounit):
     def hasmarkedcomment(self, commentmarker):
         """Check whether the given comment marker is present as # (commentmarker) ..."""
         commentmarker = "(%s)" % commentmarker
-        for comment in self.othercomments:
-            if comment.startswith(commentmarker):
-                return True
-        return False
+        return any(comment.startswith(commentmarker) for comment in self.othercomments)
 
     def settypecomment(self, typecomment, present=True):
-        """Alters whether a given typecomment is present"""
+        """Alters whether a given typecomment is present."""
         if self.hastypecomment(typecomment) != present:
             if present:
                 self.typecomments.append("#, %s\n" % typecomment)
             else:
                 # this should handle word boundaries properly ...
-                typecomments = map(
-                    lambda tcline: re.sub("\\b%s\\b[ \t,]*" % typecomment, "", tcline),
-                    self.typecomments,
-                )
+                typecomments = [
+                    re.sub("\\b%s\\b[ \t,]*" % typecomment, "", tcline)
+                    for tcline in self.typecomments
+                ]
                 self.typecomments = filter(
                     lambda tcline: tcline.strip() != "#,", typecomments
                 )
@@ -326,23 +317,24 @@ class pounit(pocommon.pounit):
         self.settypecomment("fuzzy", present)
 
     def makeobsolete(self):
-        """Makes this unit obsolete"""
+        """Makes this unit obsolete."""
         self.sourcecomments = []
         self.automaticcomments = []
         super().makeobsolete()
 
     def hasplural(self):
-        """returns whether this pounit contains plural strings..."""
+        """Returns whether this pounit contains plural strings..."""
         source = self.source
         return isinstance(source, multistring) and len(source.strings) > 1
 
     def __str__(self):
-        """convert to a string. double check that unicode is handled somehow here"""
+        """Convert to a string. double check that unicode is handled somehow here."""
         _cpo_unit = cpo.pounit.buildfromunit(self)
         return str(_cpo_unit)
 
     def getlocations(self):
-        """Get a list of locations from sourcecomments in the PO unit.
+        """
+        Get a list of locations from sourcecomments in the PO unit.
 
         rtype: List
         return: A list of the locations with '#: ' stripped
@@ -352,7 +344,8 @@ class pounit(pocommon.pounit):
         return self.sourcecomments
 
     def addlocation(self, location):
-        """Add a location to sourcecomments in the PO unit.
+        """
+        Add a location to sourcecomments in the PO unit.
 
         :param location: Text location e.g. 'file.c:23' does not include #:
         :type location: String
@@ -360,15 +353,15 @@ class pounit(pocommon.pounit):
         self.sourcecomments.append(location)
 
     def _extract_msgidcomments(self, text=None):
-        """Extract KDE style msgid comments from the unit.
+        """
+        Extract KDE style msgid comments from the unit.
 
         :rtype: String
         :return: Returns the extracted msgidcomments found in this unit's msgid.
         """
         if text:
             return pocommon.extract_msgid_comment(text)
-        else:
-            return self.msgidcomment
+        return self.msgidcomment
 
     def getcontext(self):
         """Get the message context."""
@@ -394,12 +387,13 @@ class pounit(pocommon.pounit):
 
     @classmethod
     def buildfromunit(cls, unit):
-        """Build a native unit from a foreign unit, preserving as much
+        """
+        Build a native unit from a foreign unit, preserving as much
         information as possible.
         """
         if type(unit) is cls and hasattr(unit, "copy") and callable(unit.copy):
             return unit.copy()
-        elif isinstance(unit, pocommon.pounit):
+        if isinstance(unit, pocommon.pounit):
             newunit = cls(unit.source)
             newunit.target = unit.target
             # context
@@ -424,17 +418,17 @@ class pounit(pocommon.pounit):
                     newunit.settypecomment(tc)
                     break
             return newunit
-        else:
-            return base.TranslationUnit.buildfromunit(unit)
+        return base.TranslationUnit.buildfromunit(unit)
 
 
 class pofile(pocommon.pofile):
-    """A .po file containing various units"""
+    """A .po file containing various units."""
 
     UnitClass = pounit
 
     def _build_self_from_cpo(self):
-        """Builds up this store from the internal cpo store.
+        """
+        Builds up this store from the internal cpo store.
 
         A user must ensure that self._cpo_store already exists, and that it is
         deleted afterwards.
@@ -444,7 +438,8 @@ class pofile(pocommon.pofile):
         self.encoding = self._cpo_store.encoding
 
     def _build_cpo_from_self(self):
-        """Builds the internal cpo store from the data in self.
+        """
+        Builds the internal cpo store from the data in self.
 
         A user must ensure that self._cpo_store does not exist, and should
         delete it after using it.
@@ -474,7 +469,7 @@ class pofile(pocommon.pofile):
             raise base.ParseError(e)
 
     def removeduplicates(self, duplicatestyle="merge"):
-        """Make sure each msgid is unique ; merge comments etc from duplicates into original"""
+        """Make sure each msgid is unique ; merge comments etc from duplicates into original."""
         # TODO: can we handle consecutive calls to removeduplicates()? What
         # about files already containing msgctxt? - test
         id_dict = {}
@@ -506,7 +501,7 @@ class pofile(pocommon.pofile):
                         origpo._msgctxt += " ".join(origpo.getlocations())
                         markedpos.append(thepo)
                     thepo._msgctxt += " ".join(thepo.getlocations())
-                    if not thepo._msgctxt == id_dict[id]._msgctxt:
+                    if thepo._msgctxt != id_dict[id]._msgctxt:
                         uniqueunits.append(thepo)
                     else:
                         logger.warning(
@@ -525,7 +520,7 @@ class pofile(pocommon.pofile):
         self.units = uniqueunits
 
     def serialize(self, out):
-        """Write content to file"""
+        """Write content to file."""
         self._cpo_store = cpo.pofile(encoding=self.encoding, noheader=True)
         try:
             self._build_cpo_from_self()

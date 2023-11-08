@@ -23,32 +23,31 @@ class TestFlatXMLFile(test_monolingual.TestMonolingualStore):
     @staticmethod
     def _encoded_file(string, encoding="utf-8"):
         xmldecl = '<?xml version="1.0" encoding="%s"?>' % encoding
-        stringfile = BytesIO((xmldecl + string).encode())
-        return stringfile
+        return BytesIO((xmldecl + string).encode())
 
     def test_root_config_detect(self):
-        """Test that parser fails on inconsistent root name configuration"""
+        """Test that parser fails on inconsistent root name configuration."""
         xmlsource = '<root><str key="test">Test</str></root>'
 
         with raises(AssertionError):
             self.StoreClass(xmlsource, root_name="different")
 
     def test_value_config_detect(self):
-        """Test that parser fails on inconsistent value name configuration"""
+        """Test that parser fails on inconsistent value name configuration."""
         xmlsource = '<root><str key="test">Test</str></root>'
 
         with raises(AssertionError):
             self.StoreClass(xmlsource, value_name="different")
 
     def test_key_config_detect(self):
-        """Test that parser fails on inconsistent key name configuration"""
+        """Test that parser fails on inconsistent key name configuration."""
         xmlsource = '<root><str key="test">Test</str></root>'
 
         with raises(AssertionError):
             self.StoreClass(xmlsource, key_name="different")
 
     def test_value_config_mixed_ok(self):
-        """Test that parser leaves non-value entries alone"""
+        """Test that parser leaves non-value entries alone."""
         xmlsource = """<root>
             <str key="test">Test</str>
             <not-a-value key="ignored">this entry does not matter</not-a-value>
@@ -60,7 +59,8 @@ class TestFlatXMLFile(test_monolingual.TestMonolingualStore):
         assert len(list(store.root.iterchildren("not-a-value"))) == 1
 
     def test_namespace_config_detect(self):
-        """Test that parser fails on inconsistent root namespace configuration.
+        """
+        Test that parser fails on inconsistent root namespace configuration.
 
         This test triggers at root level, and yields a similar message as
         the test against the root element name.

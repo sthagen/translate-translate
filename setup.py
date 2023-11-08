@@ -22,7 +22,8 @@ from setuptools import setup
 
 
 def parse_requirements(file_name):
-    """Parses a pip requirements file and returns a list of packages.
+    """
+    Parses a pip requirements file and returns a list of packages.
 
     Use the result of this function in the ``install_requires`` field.
     Copied from cburgmer/pdfserver.
@@ -49,7 +50,7 @@ def parse_extra_requires(filename):
         for line in requirements:
             line = line.strip()
             # Skip comments, inclusion or blank lines
-            if not line or line.startswith("-r") or line.startswith("#"):
+            if not line or line.startswith(("-r", "#")):
                 continue
             dependency, section = line.split("#")
             dependency = dependency.strip()

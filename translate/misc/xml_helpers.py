@@ -18,8 +18,9 @@
 
 """Helper functions for working with XML."""
 
+from __future__ import annotations
+
 import re
-from typing import List, Optional
 
 from lxml import etree
 
@@ -40,7 +41,8 @@ string_xpath_normalized = etree.XPath("normalize-space()")
 
 
 def getText(node, xml_space="preserve"):
-    """Extracts the plain text content out of the given node.
+    """
+    Extracts the plain text content out of the given node.
 
     This method checks the xml:space attribute of the given node, and takes an
     optional default to use in case nothing is specified in this node.
@@ -63,17 +65,17 @@ XML_NS = "http://www.w3.org/XML/1998/namespace"
 
 
 def getXMLlang(node):
-    """Gets the xml:lang attribute on node"""
+    """Gets the xml:lang attribute on node."""
     return node.get(f"{{{XML_NS}}}lang")
 
 
 def setXMLlang(node, lang):
-    """Sets the xml:lang attribute on node"""
+    """Sets the xml:lang attribute on node."""
     node.set(f"{{{XML_NS}}}lang", lang)
 
 
 def getXMLspace(node, default=None):
-    """Gets the xml:space attribute on node"""
+    """Gets the xml:space attribute on node."""
     value = node.get(f"{{{XML_NS}}}space")
     if value is None:
         return default
@@ -81,12 +83,13 @@ def getXMLspace(node, default=None):
 
 
 def setXMLspace(node, value):
-    """Sets the xml:space attribute on node"""
+    """Sets the xml:space attribute on node."""
     node.set(f"{{{XML_NS}}}space", value)
 
 
 def namespaced(namespace, name):
-    """Returns name in Clark notation within the given namespace.
+    """
+    Returns name in Clark notation within the given namespace.
 
     For example namespaced("source") in an XLIFF document might return::
 
@@ -109,7 +112,8 @@ def normalize_space(text: str):
 
 
 def normalize_xml_space(node, xml_space: str, remove_start: bool = False):
-    """normalize spaces following the nodes xml:space, or alternatively the
+    """
+    normalize spaces following the nodes xml:space, or alternatively the
     given xml_space parameter.
     """
     xml_space = getXMLspace(node) or xml_space
@@ -136,11 +140,12 @@ def reindent(
     level: int = 0,
     indent: str = "  ",
     max_level: int = 4,
-    skip: Optional[List[str]] = None,
+    skip: list[str] | None = None,
     toplevel=True,
-    leaves: Optional[List[str]] = None,
+    leaves: list[str] | None = None,
 ):
-    """Adjust indentation to match specification.
+    """
+    Adjust indentation to match specification.
 
     Each nested tag is identified by indent string, up to
     max_level depth, possibly skipping tags listed in skip.
@@ -178,9 +183,8 @@ def reindent(
     if toplevel:
         if not elem.tail or not elem.tail.strip():
             elem.tail = ""
-    else:
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
+    elif not elem.tail or not elem.tail.strip():
+        elem.tail = i
 
 
 def expand_closing_tags(elem):
@@ -203,16 +207,14 @@ def expand_closing_tags(elem):
 def validate_char(char: str) -> bool:
     """
     identify valid chars for XML, based on xmlIsChar_ch from
-    https://github.com/GNOME/libxml2/blob/master/include/libxml/chvalid.h
+    https://github.com/GNOME/libxml2/blob/master/include/libxml/chvalid.h.
     """
     ord_ch = ord(char)
-    return (0x9 <= ord_ch <= 0xA) or (ord_ch == 0xD) or (0x20 <= ord_ch)
+    return (0x9 <= ord_ch <= 0xA) or (ord_ch == 0xD) or (ord_ch >= 0x20)
 
 
 def valid_chars_only(text: str) -> str:
-    """
-    prevent to crash libxml with unexpected chars
-    """
+    """Prevent to crash libxml with unexpected chars."""
     return "".join(char for char in text if validate_char(char))
 
 

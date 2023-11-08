@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Perform quality checks on Gettext PO, XLIFF and TMX localization files.
+"""
+Perform quality checks on Gettext PO, XLIFF and TMX localization files.
 
 Snippet files are created whenever a test fails.  These can be examined,
 corrected and merged back into the originals using pomerge.
@@ -39,7 +40,7 @@ from translate.storage.poheader import poheader
 class pocheckfilter:
     def __init__(self, options, checkerclasses=None, checkerconfig=None):
         # excludefilters={}, limitfilters=None, includefuzzy=True, includereview=True, autocorrect=False):
-        """Builds a checkfilter using the given checker (a list is allowed too)"""
+        """Builds a checkfilter using the given checker (a list is allowed too)."""
         if checkerclasses is None:
             checkerclasses = [checks.StandardChecker, checks.StandardUnitChecker]
 
@@ -56,7 +57,7 @@ class pocheckfilter:
         """Lists the docs for filters available on checker."""
         filterdict = self.checker.getfilters()
         filterdocs = [
-            "{}\t{}".format(name, filterfunc.__doc__.split("\n\n")[0])
+            "{}\t{}".format(name, filterfunc.__doc__.strip().split("\n\n")[0])
             for (name, filterfunc) in filterdict.items()
         ]
         filterdocs.sort()
@@ -65,7 +66,6 @@ class pocheckfilter:
 
     def filterunit(self, unit):
         """Runs filters on an element."""
-
         if unit.isheader():
             return []
 
@@ -84,14 +84,14 @@ class pocheckfilter:
             if correction:
                 unit.target = correction
                 return autocorrect
-            else:
-                # ignore failures we can't correct when in autocorrect mode
-                return []
+            # ignore failures we can't correct when in autocorrect mode
+            return []
 
         return failures
 
     def filterfile(self, transfile):
-        """Runs filters on a translation store object.
+        """
+        Runs filters on a translation store object.
 
         :param transfile: A translation store object.
         :return: A new translation store object with the results of
@@ -143,14 +143,16 @@ class FilterOptionParser(optrecurse.RecursiveOptionParser):
 
     @staticmethod
     def parse_noinput(option, opt, value, parser, *args, **kwargs):
-        """This sets an option to *True*, but also sets input to *-* to prevent
+        """
+        This sets an option to *True*, but also sets input to *-* to prevent
         an error.
         """
         setattr(parser.values, option.dest, kwargs["dest_value"])
         parser.values.input = "-"
 
     def run(self):
-        """Parses the arguments, and runs recursiveprocess with the resulting
+        """
+        Parses the arguments, and runs recursiveprocess with the resulting
         options.
         """
         (options, args) = self.parse_args()
@@ -172,7 +174,8 @@ class FilterOptionParser(optrecurse.RecursiveOptionParser):
             self.recursiveprocess(options)
 
     def build_checkerconfig(self, options):
-        """Prepare the checker config from the given options.  This is mainly
+        """
+        Prepare the checker config from the given options.  This is mainly
         factored out for the sake of unit tests.
         """
         checkerconfig = checks.CheckerConfig(targetlanguage=options.targetlanguage)
@@ -412,7 +415,7 @@ def cmdlineparser():
     )
 
     parser.passthrough.append("checkfilter")
-    parser.description = __doc__
+    parser.description = f"{__doc__.strip()}\n"
 
     return parser
 

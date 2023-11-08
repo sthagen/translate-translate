@@ -26,7 +26,8 @@ msgid_comment_re = re.compile("_: (.*?)\n")
 
 
 def extract_msgid_comment(text):
-    """The one definitive way to extract a msgid comment out of an unescaped
+    """
+    The one definitive way to extract a msgid comment out of an unescaped
     unicode string that might contain it.
 
     :rtype: unicode
@@ -38,12 +39,12 @@ def extract_msgid_comment(text):
 
 
 def quote_plus(text):
-    """Quote the query fragment of a URL; replacing ' ' with '+'"""
+    """Quote the query fragment of a URL; replacing ' ' with '+'."""
     return parse.quote_plus(text.encode("utf-8"), safe="[]()/:,@")
 
 
 def unquote_plus(text):
-    """unquote('%7e/abc+def') -> '~/abc def'"""
+    """unquote('%7e/abc+def') -> '~/abc def'."""
     try:
         # Enforce utf-8 validation
         return parse.unquote_plus(text, errors="strict")
@@ -97,10 +98,7 @@ class pounit(base.TranslationUnit):
             # Strip (review) notes.
             notestring = self.getnotes(origin="translator")
             notes = notestring.split("\n")
-            newnotes = []
-            for note in notes:
-                if "(review)" not in note:
-                    newnotes.append(note)
+            newnotes = [note for note in notes if "(review)" not in note]
             newnotes = "\n".join(newnotes)
             self.removenotes()
             self.addnote(newnotes, origin="translator")
@@ -126,7 +124,7 @@ class pounit(base.TranslationUnit):
 
     def isfuzzy(self):
         # implementation specific fuzzy detection, must not use get_state_n()
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def markfuzzy(self, present=True):
         if present:
@@ -147,7 +145,7 @@ class pounit(base.TranslationUnit):
             self.set_state_n(self.STATE[self.S_UNTRANSLATED][0])
 
     def _domarkfuzzy(self, present=True):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_state_n(self):
         value = super().get_state_n()
@@ -156,10 +154,8 @@ class pounit(base.TranslationUnit):
         if self.target:
             if self.isfuzzy():
                 return self.S_FUZZY
-            else:
-                return self.S_TRANSLATED
-        else:
-            return self.S_UNTRANSLATED
+            return self.S_TRANSLATED
+        return self.S_UNTRANSLATED
 
     def set_state_n(self, value):
         super().set_state_n(value)

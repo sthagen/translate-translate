@@ -37,7 +37,6 @@ class RESXUnit(lisa.LISAunit):
 
     def createlanguageNode(self, lang, text, purpose):
         """Returns an xml Element setup with given parameters."""
-
         langset = etree.Element(self.namespaced(self.languageNode))
 
         langset.text = text
@@ -70,7 +69,7 @@ class RESXUnit(lisa.LISAunit):
         targetnode.text = target or ""
 
     def addnote(self, text, origin=None, position="append"):
-        """Add a note specifically in the appropriate "comment" tag"""
+        """Add a note specifically in the appropriate "comment" tag."""
         current_notes = self.getnotes(origin)
         self.removenotes(origin)
         note = etree.SubElement(self.xmlelement, self.namespaced("comment"))

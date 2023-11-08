@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Classes that hold units of .po files (pounit) or entire files (pofile).
+"""
+Classes that hold units of .po files (pounit) or entire files (pofile).
 
 Gettext-style .po (or .pot) files are used in translations for KDE, GNOME and
 many other projects.
@@ -331,7 +332,8 @@ def unquotefrompo(postr):
 
 
 def get_libgettextpo_version():
-    """Returns the libgettextpo version
+    """
+    Returns the libgettextpo version.
 
     :rtype: three-value tuple
     :return: libgettextpo version in the following format::
@@ -351,7 +353,7 @@ def gpo_encode(value):
 def gpo_decode(value):
     if isinstance(value, str):
         return value
-    elif isinstance(value, bytes):
+    if isinstance(value, bytes):
         return value.decode("utf-8")
     return value
 
@@ -425,10 +427,8 @@ class pounit(pocommon.pounit):
                 remainder = re.search(r"_: .*\n(.*)", text)
                 if remainder:
                     return remainder.group(1)
-                else:
-                    return ""
-            else:
-                return text
+                return ""
+            return text
 
         singular = remove_msgid_comments(
             gpo_decode(gpo.po_message_msgid(self._gpo_message)) or ""
@@ -441,10 +441,8 @@ class pounit(pocommon.pounit):
                 )
                 multi.strings.append(pluralform)
                 return multi
-            else:
-                return singular
-        else:
-            return ""
+            return singular
+        return ""
 
     @source.setter
     def source(self, source):
@@ -470,10 +468,7 @@ class pounit(pocommon.pounit):
                 plurals.append(plural.decode(self.CPO_ENC))
                 nplural += 1
                 plural = gpo.po_message_msgstr_plural(self._gpo_message, nplural)
-            if plurals:
-                multi = multistring(plurals)
-            else:
-                multi = multistring("")
+            multi = multistring(plurals) if plurals else multistring("")
         else:
             multi = gpo_decode(gpo.po_message_msgstr(self._gpo_message)) or ""
         return multi
@@ -520,14 +515,14 @@ class pounit(pocommon.pounit):
                     self._gpo_message, i, gpo_encode(targetstring)
                 )
         # add a single string
+        elif target is None:
+            gpo.po_message_set_msgstr(self._gpo_message, gpo_encode(""))
         else:
-            if target is None:
-                gpo.po_message_set_msgstr(self._gpo_message, gpo_encode(""))
-            else:
-                gpo.po_message_set_msgstr(self._gpo_message, gpo_encode(target))
+            gpo.po_message_set_msgstr(self._gpo_message, gpo_encode(target))
 
     def getid(self):
-        """The unique identifier for this unit according to the conventions in
+        """
+        The unique identifier for this unit according to the conventions in
         .mo files.
         """
         id = gpo_decode(gpo.po_message_msgid(self._gpo_message)) or ""
@@ -606,12 +601,12 @@ class pounit(pocommon.pounit):
         return newpo
 
     def merge(self, otherpo, overwrite=False, comments=True, authoritative=False):
-        """Merges the otherpo (with the same msgid) into this one.
+        """
+        Merges the otherpo (with the same msgid) into this one.
 
         Overwrite non-blank self.msgstr only if overwrite is True
         merge comments only if comments is True
         """
-
         if not isinstance(otherpo, pounit):
             super().merge(otherpo, overwrite, comments)
             return
@@ -645,9 +640,8 @@ class pounit(pocommon.pounit):
         elif not otherpo.istranslated():
             if self.source != otherpo.source:
                 self.markfuzzy()
-        else:
-            if self.target != otherpo.target:
-                self.markfuzzy()
+        elif self.target != otherpo.target:
+            self.markfuzzy()
 
     def isheader(self):
         # return self.source == "" and self.target != ""
@@ -690,7 +684,8 @@ class pounit(pocommon.pounit):
         return gpo.po_message_msgid_plural(self._gpo_message) is not None
 
     def _extract_msgidcomments(self, text=None):
-        """Extract KDE style msgid comments from the unit.
+        """
+        Extract KDE style msgid comments from the unit.
 
         :rtype: String
         :return: Returns the extracted msgidcomments found in this unit's msgid.
@@ -719,10 +714,7 @@ class pounit(pocommon.pounit):
         while location:
             locname = gpo_decode(gpo.po_filepos_file(location))
             locline = gpo.po_filepos_start_line(location)
-            if locline == -1:
-                locstring = locname
-            else:
-                locstring = ":".join([locname, str(locline)])
+            locstring = locname if locline == -1 else ":".join([locname, str(locline)])
             locations.append(pocommon.unquote_plus(locstring))
             i += 1
             location = gpo.po_message_filepos(self._gpo_message, i)
@@ -751,12 +743,13 @@ class pounit(pocommon.pounit):
 
     @classmethod
     def buildfromunit(cls, unit, encoding=None):
-        """Build a native unit from a foreign unit, preserving as much
+        """
+        Build a native unit from a foreign unit, preserving as much
         information as possible.
         """
         if type(unit) is cls and hasattr(unit, "copy") and callable(unit.copy):
             return unit.copy()
-        elif isinstance(unit, pocommon.pounit):
+        if isinstance(unit, pocommon.pounit):
             newunit = cls(unit.source, encoding)
             newunit.target = unit.target
             # context
@@ -783,8 +776,7 @@ class pounit(pocommon.pounit):
                     # We assume/guess/hope that there will only be one
                     break
             return newunit
-        else:
-            return base.TranslationUnit.buildfromunit(unit)
+        return base.TranslationUnit.buildfromunit(unit)
 
 
 class pofile(pocommon.pofile):
@@ -825,7 +817,7 @@ class pofile(pocommon.pofile):
             pass
 
     def removeduplicates(self, duplicatestyle="merge"):
-        """make sure each msgid is unique ; merge comments etc from duplicates into original"""
+        """Make sure each msgid is unique ; merge comments etc from duplicates into original."""
         # TODO: can we handle consecutive calls to removeduplicates()? What
         # about files already containing msgctxt? - test
         id_dict = {}
@@ -858,7 +850,7 @@ class pofile(pocommon.pofile):
                     thepo.setcontext(" ".join(thepo.getlocations()))
                     thepo_msgctxt = gpo.po_message_msgctxt(thepo._gpo_message)
                     idpo_msgctxt = gpo.po_message_msgctxt(id_dict[id]._gpo_message)
-                    if not thepo_msgctxt == idpo_msgctxt:
+                    if thepo_msgctxt != idpo_msgctxt:
                         uniqueunits.append(thepo)
                     else:
                         logger.warning(
@@ -937,15 +929,9 @@ class pofile(pocommon.pofile):
         if len(self.units) == 0:
             return True
         # Skip the first unit if it is a header.
-        if self.units[0].isheader():
-            units = self.units[1:]
-        else:
-            units = self.units
+        units = self.units[1:] if self.units[0].isheader() else self.units
 
-        for unit in units:
-            if not unit.isblank() and not unit.isobsolete():
-                return False
-        return True
+        return all(not (not unit.isblank() and not unit.isobsolete()) for unit in units)
 
     def parse(self, input):
         if hasattr(input, "name"):

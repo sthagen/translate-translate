@@ -16,12 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""XLIFF classes specifically suited for handling the PO representation in
+"""
+XLIFF classes specifically suited for handling the PO representation in
 XLIFF.
 
 This way the API supports plurals as if it was a PO file, for example.
 """
 
+import contextlib
 import re
 
 from lxml import etree
@@ -73,8 +75,7 @@ class PoXliffUnit(xliff.xliffunit):
         if len(self.units) <= 1:
             if isinstance(other, lisa.LISAunit):
                 return super().__eq__(other)
-            else:
-                return self.source == other.source and self.target == other.target
+            return self.source == other.source and self.target == other.target
         return False
 
     # XXX: We don't return language nodes correctly at the moment
@@ -102,10 +103,8 @@ class PoXliffUnit(xliff.xliffunit):
         else:
             target = self.target
             for unit in self.units:
-                try:
+                with contextlib.suppress(ValueError):
                     self.xmlelement.remove(unit.xmlelement)
-                except ValueError:
-                    pass
             self.units = []
             for s in source.strings:
                 newunit = xliff.xliffunit(s)
@@ -126,10 +125,8 @@ class PoXliffUnit(xliff.xliffunit):
             strings = [unit.target or "" for unit in self.units]
             if strings:
                 return multistring(strings)
-            else:
-                return None
-        else:
-            return super().gettarget(lang)
+            return None
+        return super().gettarget(lang)
 
     def settarget(self, target, lang="xx", append=False):
         self._rich_target = None
@@ -158,7 +155,7 @@ class PoXliffUnit(xliff.xliffunit):
             self.units[i].target = targets[i]
 
     def addnote(self, text, origin=None, position="append"):
-        """Add a note specifically in a "note" tag"""
+        """Add a note specifically in a "note" tag."""
         note = etree.SubElement(self.xmlelement, self.namespaced("note"))
         note.text = text
         if origin:
@@ -177,7 +174,7 @@ class PoXliffUnit(xliff.xliffunit):
                 trancomments = notes
                 notes = ""
             return trancomments + notes
-        elif origin in ["programmer", "developer", "source code"]:
+        if origin in ["programmer", "developer", "source code"]:
             devcomments = super().getnotes("developer")
             autocomments = self.getautomaticcomments()
             if devcomments == autocomments or autocomments.find(devcomments) >= 0:
@@ -186,8 +183,7 @@ class PoXliffUnit(xliff.xliffunit):
                 autocomments = devcomments
                 devcomments = ""
             return autocomments
-        else:
-            return super().getnotes(origin)
+        return super().getnotes(origin)
 
     def markfuzzy(self, value=True):
         super().markfuzzy(value)
@@ -206,7 +202,7 @@ class PoXliffUnit(xliff.xliffunit):
                 self.units[i].setid("%s[%d]" % (id, i))
 
     def getlocations(self):
-        """Returns all the references (source locations)"""
+        """Returns all the references (source locations)."""
         groups = self.getcontextgroups("po-reference")
         references = []
         for group in groups:
@@ -224,7 +220,8 @@ class PoXliffUnit(xliff.xliffunit):
         return references
 
     def getautomaticcomments(self):
-        """Returns the automatic comments (x-po-autocomment), which corresponds
+        """
+        Returns the automatic comments (x-po-autocomment), which corresponds
         to the #. style po comments.
         """
         groups = self.getcontextgroups("po-entry")
@@ -237,7 +234,8 @@ class PoXliffUnit(xliff.xliffunit):
         return "\n".join(comments)
 
     def gettranslatorcomments(self):
-        """Returns the translator comments (x-po-trancomment), which
+        """
+        Returns the translator comments (x-po-trancomment), which
         corresponds to the # style po comments.
         """
         groups = self.getcontextgroups("po-entry")
@@ -278,7 +276,7 @@ class PoXliffUnit(xliff.xliffunit):
 
 
 class PoXliffFile(xliff.xlifffile, poheader.poheader):
-    """a file for the po variant of Xliff files"""
+    """a file for the po variant of Xliff files."""
 
     UnitClass = PoXliffUnit
 
@@ -309,15 +307,16 @@ class PoXliffFile(xliff.xlifffile, poheader.poheader):
         return unit
 
     def parse(self, xml):
-        """Populates this object from the given xml string"""
+        """Populates this object from the given xml string."""
         # TODO: Make more robust
 
         def ispluralgroup(node):
-            """determines whether the xml node refers to a getttext plural"""
+            """Determines whether the xml node refers to a getttext plural."""
             return node.get("restype") == "x-gettext-plurals"
 
         def isnonpluralunit(node):
-            """determindes whether the xml node contains a plural like id.
+            """
+            determindes whether the xml node contains a plural like id.
 
             We want to filter out all the plural nodes, except the very first
             one in each group.

@@ -8,7 +8,7 @@ from . import test_base
 
 
 @pytest.mark.parametrize(
-    "orig, stripped",
+    ("orig", "stripped"),
     [
         ("", ""),
         ("String", "String"),  # No {ok}
@@ -22,7 +22,7 @@ from . import test_base
     ],
 )
 def test_strip_ok(orig, stripped):
-    """Test various permutations of {ok} stripping"""
+    """Test various permutations of {ok} stripping."""
     assert mozilla_lang.strip_ok(orig) == stripped
 
 
@@ -32,7 +32,7 @@ class TestMozLangUnit(test_base.TestTranslationUnit):
     def test_translate_but_same(self):
         """
         Mozilla allows {ok} to indicate a line that is the
-        same in source and target on purpose
+        same in source and target on purpose.
         """
         unit = self.UnitClass("Open")
         unit.target = "Open"
@@ -67,7 +67,8 @@ class TestMozLangUnit(test_base.TestTranslationUnit):
         assert "# TAG: goodbye" in unit.getnotes(origin="developer").split("\n")
 
     def test_copy_target(self):
-        """Validate that self.rawtarget does not break a valid translation.
+        """
+        Validate that self.rawtarget does not break a valid translation.
 
         self.rawtarget is used to preserve strange format anomalies related to
         {ok}.  But when units got translated it sometimes caused issues, in
@@ -76,7 +77,7 @@ class TestMozLangUnit(test_base.TestTranslationUnit):
         translation actually results in rawformat being ignored.
         """
         unit = self.UnitClass("Device")
-        unit.target == ""
+        assert unit.target is None
         unit.rawtarget = "Device"
         assert not unit.istranslated()
         assert str(unit) == ";Device\nDevice"
@@ -101,8 +102,8 @@ class TestMozLangFile(test_base.TestTranslationStore):
         pass
 
     def test_format_layout(self):
-        """General test of layout of the format"""
-        lang = "# Comment\n" ";Source\n" "Target\n" "\n\n"
+        """General test of layout of the format."""
+        lang = "# Comment\n;Source\nTarget\n\n\n"
         store = self.StoreClass.parsestring(lang)
         store.mark_active = False
         unit = store.units[0]
@@ -112,8 +113,8 @@ class TestMozLangFile(test_base.TestTranslationStore):
         assert bytes(store).decode("utf-8") == lang
 
     def test_crlf(self):
-        r"""While \n is preferred \r\n is allowed"""
-        lang = "# Comment\r\n" ";Source\r\n" "Target\r\n" "\r\n\r\n"
+        r"""While \n is preferred \r\n is allowed."""
+        lang = "# Comment\r\n;Source\r\nTarget\r\n\r\n\r\n"
         store = self.StoreClass.parsestring(lang)
         store.mark_active = False
         unit = store.units[0]
@@ -123,14 +124,14 @@ class TestMozLangFile(test_base.TestTranslationStore):
         assert bytes(store).decode("utf-8") == lang
 
     def test_active_flag(self):
-        """Test the ## active ## flag"""
-        lang = "## active ##\n" ";Source\n" "Target\n" "\n\n"
+        """Test the ## active ## flag."""
+        lang = "## active ##\n;Source\nTarget\n\n\n"
         store = self.StoreClass.parsestring(lang)
         assert store.is_active
         assert bytes(store).decode("utf-8") == lang
 
     def test_multiline_comments(self):
-        """Ensure we can handle and preserve miltiline comments"""
+        """Ensure we can handle and preserve miltiline comments."""
         lang = (
             "## active ##\n"
             "# First comment\n"
@@ -144,14 +145,14 @@ class TestMozLangFile(test_base.TestTranslationStore):
         assert bytes(store).decode("utf-8") == lang
 
     def test_template(self):
-        """A template should have source == target, though it could be blank"""
-        lang = ";Source\n" "Source\n" "\n\n"
+        """A template should have source == target, though it could be blank."""
+        lang = ";Source\nSource\n\n\n"
         store = self.StoreClass.parsestring(lang)
         unit = store.units[0]
         assert unit.source == "Source"
         assert unit.target == ""
         assert bytes(store).decode("utf-8") == lang
-        lang2 = ";Source\n" "\n\n" ";Source2\n" "\n\n"
+        lang2 = ";Source\n\n\n;Source2\n\n\n"
         store2 = self.StoreClass.parsestring(lang2)
         assert store2.units[0].source == "Source"
         assert store2.units[0].target == ""
@@ -159,7 +160,7 @@ class TestMozLangFile(test_base.TestTranslationStore):
         assert store2.units[1].target == ""
 
     @pytest.mark.parametrize(
-        "ok, target, istranslated",
+        ("ok", "target", "istranslated"),
         [
             ("", "", False),  # Untranslated, no {ok}
             (" ", "Source ", True),  # Excess whitespace, translated
@@ -169,8 +170,8 @@ class TestMozLangFile(test_base.TestTranslationStore):
         ],
     )
     def test_ok_translations(self, ok, target, istranslated):
-        """Various renderings of {ok} to ensure that we parse it correctly"""
-        lang = ";Source\n" "Source%s\n"
+        """Various renderings of {ok} to ensure that we parse it correctly."""
+        lang = ";Source\nSource%s\n"
         store = self.StoreClass.parsestring(lang % ok)
         unit = store.units[0]
         assert unit.source == "Source"
@@ -178,7 +179,7 @@ class TestMozLangFile(test_base.TestTranslationStore):
         assert unit.istranslated() == istranslated
 
     def test_headers(self):
-        """Ensure we can handle and preserve file headers"""
+        """Ensure we can handle and preserve file headers."""
         lang = (
             "## active ##\n"
             "## some_tag ##\n"
@@ -212,7 +213,7 @@ class TestMozLangFile(test_base.TestTranslationStore):
         ).encode("utf-8")
 
     def test_not_headers(self):
-        """Ensure we dont treat a tag immediately after headers as header"""
+        """Ensure we dont treat a tag immediately after headers as header."""
         lang = (
             "## active ##\n"
             "## some_tag ##\n"
@@ -228,15 +229,15 @@ class TestMozLangFile(test_base.TestTranslationStore):
 
     @pytest.mark.parametrize("nl", [0, 1, 2, 3])
     def test_header_blanklines(self, nl):
-        """Ensure that blank lines following a header are recorded"""
-        lang_header = "## active ##\n" "## some_tag ##\n"
-        lang_unit1 = "# Comment\n" ";Source\n" "Target\n" "\n\n"
+        """Ensure that blank lines following a header are recorded."""
+        lang_header = "## active ##\n## some_tag ##\n"
+        lang_unit1 = "# Comment\n;Source\nTarget\n\n\n"
         lang = lang_header + "\n" * nl + lang_unit1
         store = self.StoreClass.parsestring(lang)
         assert bytes(store).decode("utf-8") == lang
 
     def test_tag_comments(self):
-        """Ensure we can handle comments and distinguish from headers"""
+        """Ensure we can handle comments and distinguish from headers."""
         lang = (
             "## active ##\n"
             "# First comment\n"
@@ -282,8 +283,8 @@ class TestMozLangFile(test_base.TestTranslationStore):
         ).split("\n")
 
     def test_maxlength(self):
-        """Ensure we can handle MAX_LENGTH meta data"""
-        lang = "## MAX_LENGTH: 80\n" "# Comment\n" ";Source\n" "Target\n" "\n\n"
+        """Ensure we can handle MAX_LENGTH meta data."""
+        lang = "## MAX_LENGTH: 80\n# Comment\n;Source\nTarget\n\n\n"
         store = self.StoreClass.parsestring(lang)
         assert not store.getlangheaders()
         assert bytes(store).decode("utf-8") == lang

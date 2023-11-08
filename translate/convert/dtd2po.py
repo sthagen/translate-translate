@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Convert a Mozilla .dtd UTF-8 localization format to a
+"""
+Convert a Mozilla .dtd UTF-8 localization format to a
 Gettext PO localization file.
 
 Uses the po and dtd modules, and the
@@ -30,7 +31,8 @@ from translate.storage import dtd, po
 
 
 def is_css_entity(entity):
-    """Says if the given entity is likely to contain CSS that should not be
+    """
+    Says if the given entity is likely to contain CSS that should not be
     translated.
     """
     if "." in entity:
@@ -103,7 +105,8 @@ class dtd2po:
         po_unit.target = ""
 
     def convertunit(self, dtd_unit):
-        """Converts a simple (non-mixed) dtd unit into a po unit.
+        """
+        Converts a simple (non-mixed) dtd unit into a po unit.
 
         Returns None if empty or not for translation.
         """
@@ -138,17 +141,15 @@ class dtd2po:
                         del dtd_unit.comments[commentnum]
                         # finished this for loop
                         break
-                    else:
-                        # convert it into an automatic comment, to be
-                        # processed by convertcomments
-                        dtd_unit.comments[commentnum] = ("automaticcomment", actualnote)
+                    # convert it into an automatic comment, to be
+                    # processed by convertcomments
+                    dtd_unit.comments[commentnum] = ("automaticcomment", actualnote)
         # do a standard translation
         self.convertcomments(dtd_unit, po_unit)
         self.convertstrings(dtd_unit, po_unit)
         if po_unit.isblank() and not po_unit.getlocations():
             return None
-        else:
-            return po_unit
+        return po_unit
 
     def convertmixedunit(self, labeldtd, accesskeydtd):
         label_unit = self.convertunit(labeldtd)
@@ -161,7 +162,8 @@ class dtd2po:
         return self.mixer.mix_units(label_unit, accesskey_unit, target_unit)
 
     def convertdtdunit(self, store, unit, mixbucket="dtd"):
-        """Converts a unit from store to a po unit, keeping track of mixed
+        """
+        Converts a unit from store to a po unit, keeping track of mixed
         entities along the way.
 
         ``mixbucket`` can be specified to indicate if the given unit is part of
@@ -178,7 +180,7 @@ class dtd2po:
         if alreadymixed:
             # we are successfully throwing this away...
             return None
-        elif alreadymixed is False:
+        if alreadymixed is False:
             # The mix failed before
             return self.convertunit(unit)
 
@@ -195,13 +197,12 @@ class dtd2po:
             if labelentity is not None:
                 self.mixedentities[labelentity][mixbucket] = True
             return po_unit
-        else:
-            # otherwise the mix failed. add each one separately and
-            # remember they weren't mixed
-            if accesskeyentity is not None:
-                self.mixedentities[accesskeyentity][mixbucket] = False
-            if labelentity is not None:
-                self.mixedentities[labelentity][mixbucket] = False
+        # otherwise the mix failed. add each one separately and
+        # remember they weren't mixed
+        if accesskeyentity is not None:
+            self.mixedentities[accesskeyentity][mixbucket] = False
+        if labelentity is not None:
+            self.mixedentities[labelentity][mixbucket] = False
 
         return self.convertunit(unit)
 
@@ -232,8 +233,7 @@ class dtd2po:
             x_merge_on="location",
         )
         targetheader.addnote(
-            "extracted from %s, %s"
-            % (origdtdfile.filename, translateddtdfile.filename),
+            f"extracted from {origdtdfile.filename}, {translateddtdfile.filename}",
             "developer",
         )
 
@@ -285,8 +285,9 @@ class dtd2po:
 def convertdtd(
     inputfile, outputfile, templatefile, pot=False, duplicatestyle="msgctxt"
 ):
-    """reads in inputfile and templatefile using dtd, converts using dtd2po,
-    writes to outputfile
+    """
+    reads in inputfile and templatefile using dtd, converts using dtd2po,
+    writes to outputfile.
     """
     android_dtd = False
     if hasattr(inputfile, "name"):

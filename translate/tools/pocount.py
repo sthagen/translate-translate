@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Count strings and words for supported localization files.
+"""
+Count strings and words for supported localization files.
 
 These include: XLIFF, TMX, Gettex PO and MO, Qt .ts and .qm, Wordfast TM, etc
 
@@ -124,7 +125,8 @@ def wordcount(string):
 
 
 def wordsinunit(unit):
-    """Counts the words in the unit's source and target, taking plurals into
+    """
+    Counts the words in the unit's source and target, taking plurals into
     account. The target words are only counted if the unit is translated.
     """
     (sourcewords, targetwords) = (0, 0)
@@ -153,18 +155,19 @@ def calcstats(filename):
         logger.warning(e)
         return {}
 
-    units = [unit for unit in store.units if unit.istranslatable()]  # type: ignore
+    units = [unit for unit in store.units if unit.istranslatable()]
     translated = translatedmessages(units)
     fuzzy = fuzzymessages(units)
     review = [unit for unit in units if unit.isreview()]
     untranslated = untranslatedmessages(units)
     wordcounts = {id(unit): wordsinunit(unit) for unit in units}
-    sourcewords = lambda elementlist: sum(
-        wordcounts[id(unit)][0] for unit in elementlist
-    )
-    targetwords = lambda elementlist: sum(
-        wordcounts[id(unit)][1] for unit in elementlist
-    )
+
+    def sourcewords(elementlist):
+        return sum(wordcounts[id(unit)][0] for unit in elementlist)
+
+    def targetwords(elementlist):
+        return sum(wordcounts[id(unit)][1] for unit in elementlist)
+
     stats = {"filename": filename}
 
     # units
@@ -192,10 +195,7 @@ def calcstats(filename):
 
 
 def file_extended_totals(units, wordcounts):
-    """
-    Provide extended statuses (used by XLIFF)
-    """
-
+    """Provide extended statuses (used by XLIFF)."""
     stats = {}
 
     for unit in units:
@@ -205,7 +205,7 @@ def file_extended_totals(units, wordcounts):
         # search for the default one to use
         # each unit defines its own states
         if state not in extended_state_strings:
-            for k in unit.STATE.keys():
+            for k in unit.STATE:
                 val = unit.STATE[k]
                 if val[0] <= int(state.__str__()) <= val[1]:
                     state = k
@@ -349,9 +349,7 @@ class FullRenderer(Renderer):
 
 @dataclass
 class ShortStringsRenderer(Renderer):
-    """
-    :param indent: indentation of the 2nd column (length of longest filename)
-    """
+    """:param indent: indentation of the 2nd column (length of longest filename)"""
 
     indent: int = 8
 
@@ -384,9 +382,7 @@ class ShortStringsRenderer(Renderer):
 
 @dataclass
 class ShortWordsRenderer(Renderer):
-    """
-    :param indent: indentation of the 2nd column (length of longest filename)
-    """
+    """:param indent: indentation of the 2nd column (length of longest filename)"""
 
     indent: int = 8
 
@@ -430,8 +426,7 @@ class ShortWordsRenderer(Renderer):
 def percent(denominator, devisor):
     if devisor == 0:
         return 0
-    else:
-        return denominator * 100 / devisor
+    return denominator * 100 / devisor
 
 
 def fuzzymessages(units):
@@ -471,15 +466,14 @@ class StatCollector:
     def results(self):
         if self.incomplete_only:
             return [s for s in self._results if s["total"] != s["translated"]]
-        else:
-            return self._results
+        return self._results
 
     def _handle_items(self, items: list[str]):
         for item in items:
             if not os.path.exists(item):
                 logger.error("cannot process %s: does not exist", item)
                 continue
-            elif os.path.isdir(item):
+            if os.path.isdir(item):
                 self._handle_dir(item)
             else:
                 self._handle_single_file(item)
@@ -504,7 +498,7 @@ class StatCollector:
             stats = calcstats(filename)
             self._results.append(stats)
         except Exception:  # This happens if we have a broken file.
-            logger.error(sys.exc_info()[1])
+            logger.exception("Broken file")
 
     @property
     def longest_filename(self):
@@ -517,7 +511,7 @@ class StatCollector:
 
     @cached_property
     def totals(self) -> dict:
-        """Total stats"""
+        """Total stats."""
         totals = defaultdict(int)
         for stats in self._results:
             for key, value in stats.items():

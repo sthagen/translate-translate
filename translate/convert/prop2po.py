@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-"""Convert Java/Mozilla .properties files to Gettext PO localization files.
+"""
+Convert Java/Mozilla .properties files to Gettext PO localization files.
 
 See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/prop2po.html
 for examples and usage instructions.
@@ -45,7 +46,7 @@ class prop2po:
         self.mixer = UnitMixer(properties.labelsuffixes, properties.accesskeysuffixes)
 
     def convertstore(self, thepropfile):
-        """converts a .properties file to a .po file..."""
+        """Converts a .properties file to a .po file..."""
         thetargetfile = po.pofile()
         if self.personality in ("mozilla", "skype"):
             targetheader = thetargetfile.init_headers(
@@ -93,7 +94,7 @@ class prop2po:
         return thetargetfile
 
     def mergestore(self, origpropfile, translatedpropfile):
-        """converts two .properties files to a .po file..."""
+        """Converts two .properties files to a .po file..."""
         thetargetfile = po.pofile()
         if self.personality in ("mozilla", "skype"):
             targetheader = thetargetfile.init_headers(
@@ -103,8 +104,7 @@ class prop2po:
         else:
             targetheader = thetargetfile.header()
         targetheader.addnote(
-            "extracted from %s, %s"
-            % (origpropfile.filename, translatedpropfile.filename),
+            f"extracted from {origpropfile.filename}, {translatedpropfile.filename}",
             "developer",
         )
         origpropfile.makeindex()
@@ -209,7 +209,7 @@ class prop2po:
             string = unit.getlocations()[0]
             match = regex.match(string)
             if not match:
-                logger.warn("Invalid key: %s", string)
+                logger.warning("Invalid key: %s", string)
                 continue
             key = match.group(1)
             variant = match.group(2)
@@ -228,9 +228,9 @@ class prop2po:
 
             # Some sanity checks
             if not variant:
-                raise Exception("Variant invalid: %s" % (old_variant))
+                raise ValueError("Variant invalid: %s" % (old_variant))
             if variant in plurals[key].variants:
-                logger.warn(
+                logger.warning(
                     "Override %s[%s]: %s by %s",
                     key,
                     variant,
@@ -245,7 +245,7 @@ class prop2po:
         for key, plural in plurals.items():
             # We should have at least "other" (no variant in GWT)
             if "other" not in plural.variants:
-                raise Exception("Should have property %s without any variant" % (key))
+                raise ValueError("Should have property %s without any variant" % (key))
             units = []
             for name in names:
                 if name in plural.variants:
@@ -316,13 +316,14 @@ class prop2po:
         # if everything went well, there should be nothing left in plurals
         if len(plurals) != 0:
             logger.warning(
-                "Not all plural units converted correctly:" + "\n".join(plurals)
+                "Not all plural units converted correctly: %s", "\n".join(plurals)
             )
         return new_store
 
     @staticmethod
     def convertunit(propunit, commenttype):
-        """Converts a .properties unit to a .po unit. Returns None if empty or
+        """
+        Converts a .properties unit to a .po unit. Returns None if empty or
         not for translation.
         """
         if propunit is None:
@@ -353,7 +354,8 @@ class prop2po:
         return self.mixer.mix_units(label_unit, accesskey_unit, target_unit)
 
     def convertpropunit(self, store, unit, commenttype, mixbucket="properties"):
-        """Converts a unit from store to a po unit, keeping track of mixed
+        """
+        Converts a unit from store to a po unit, keeping track of mixed
         names along the way.
 
         ``mixbucket`` can be specified to indicate if the given unit is part of
@@ -374,7 +376,7 @@ class prop2po:
         if alreadymixed:
             # we are successfully throwing this away...
             return None
-        elif alreadymixed is False:
+        if alreadymixed is False:
             # The mix failed before
             return self.convertunit(unit, commenttype)
 
@@ -389,13 +391,12 @@ class prop2po:
             if labelkey is not None:
                 self.mixedkeys[labelkey][mixbucket] = True
             return po_unit
-        else:
-            # otherwise the mix failed. add each one separately and
-            # remember they weren't mixed
-            if accesskeykey is not None:
-                self.mixedkeys[accesskeykey][mixbucket] = False
-            if labelkey is not None:
-                self.mixedkeys[labelkey][mixbucket] = False
+        # otherwise the mix failed. add each one separately and
+        # remember they weren't mixed
+        if accesskeykey is not None:
+            self.mixedkeys[accesskeykey][mixbucket] = False
+        if labelkey is not None:
+            self.mixedkeys[labelkey][mixbucket] = False
 
         return self.convertunit(unit, commenttype)
 
@@ -409,7 +410,7 @@ def convertstrings(
     duplicatestyle="msgctxt",
     encoding=None,
 ):
-    """.strings specific convertor function"""
+    """.strings specific convertor function."""
     return convertprop(
         inputfile,
         outputfile,
@@ -424,7 +425,7 @@ def convertstrings(
 def convertmozillaprop(
     inputfile, outputfile, templatefile, pot=False, duplicatestyle="msgctxt"
 ):
-    """Mozilla specific convertor function"""
+    """Mozilla specific convertor function."""
     return convertprop(
         inputfile,
         outputfile,
@@ -444,8 +445,9 @@ def convertprop(
     duplicatestyle="msgctxt",
     encoding=None,
 ):
-    """reads in inputfile using properties, converts using prop2po, writes to
-    outputfile
+    """
+    reads in inputfile using properties, converts using prop2po, writes to
+    outputfile.
     """
     inputstore = properties.propfile(inputfile, personality, encoding)
     convertor = prop2po(
@@ -485,8 +487,9 @@ def main(argv=None):
         default=properties.default_dialect,
         type="choice",
         choices=list(properties.dialects.keys()),
-        help="override the input file format: %s (for .properties files, default: %s)"
-        % (", ".join(properties.dialects.keys()), properties.default_dialect),
+        help="override the input file format: {} (for .properties files, default: {})".format(
+            ", ".join(properties.dialects.keys()), properties.default_dialect
+        ),
         metavar="TYPE",
     )
     parser.add_option(

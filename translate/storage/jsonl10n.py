@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-r"""Class that manages JSON data files for translation
+r"""
+Class that manages JSON data files for translation.
 
 JSON is an acronym for JavaScript Object Notation, it is an open standard
 designed for human-readable data interchange.
@@ -33,7 +34,7 @@ JSON basic types:
 - null
 
 Example:
-
+--------
 .. code-block:: json
 
    {
@@ -59,8 +60,8 @@ Example:
    }
 
 
-TODO:
-
+Todo:
+-----
 - Handle ``\u`` and other escapes in Unicode
 - Manage data type storage and conversion. True --> "True" --> True
 
@@ -75,15 +76,12 @@ from translate.storage import base
 
 
 class BaseJsonUnit(base.DictUnit):
-    """A JSON entry"""
+    """A JSON entry."""
 
     ID_FORMAT = ".{}"
 
     def __init__(self, source=None, item=None, notes=None, placeholders=None, **kwargs):
-        if source:
-            identifier = hex(hash(source))
-        else:
-            identifier = str(uuid.uuid4())
+        identifier = hex(hash(source)) if source else str(uuid.uuid4())
         # Global identifier across file
         self._id = self.ID_FORMAT.format(identifier)
         # Identifier at this level
@@ -140,10 +138,7 @@ class BaseJsonUnit(base.DictUnit):
 class FlatUnitId(base.UnitId):
     @classmethod
     def from_string(cls, text):
-        if text.startswith("."):
-            key = text[1:]
-        else:
-            key = text
+        key = text[1:] if text.startswith(".") else text
         return cls([("key", key)])
 
 
@@ -152,12 +147,12 @@ class FlatJsonUnit(BaseJsonUnit):
 
 
 class JsonFile(base.DictStore):
-    """A JSON file"""
+    """A JSON file."""
 
     UnitClass = FlatJsonUnit
 
     def __init__(self, inputfile=None, filter=None, **kwargs):
-        """construct a JSON file, optionally reading in from inputfile."""
+        """Construct a JSON file, optionally reading in from inputfile."""
         super().__init__(**kwargs)
         self._filter = filter
         self.filename = ""
@@ -173,10 +168,7 @@ class JsonFile(base.DictStore):
     @property
     def plural_tags(self):
         locale = self.gettargetlanguage()
-        if locale:
-            locale = locale.replace("_", "-").split("-")[0]
-        else:
-            locale = "en"
+        locale = locale.replace("_", "-").split("-")[0] if locale else "en"
         return plural_tags.get(locale, plural_tags["en"])
 
     def serialize(self, out):
@@ -194,7 +186,8 @@ class JsonFile(base.DictStore):
         name_last_node=None,
         last_node=None,
     ):
-        """Recursive function to extract items from the data files
+        """
+        Recursive function to extract items from the data files.
 
         :param data: the current branch to walk down
         :param stop: a list of leaves to extract or None to extract everything
@@ -208,12 +201,12 @@ class JsonFile(base.DictStore):
         if isinstance(data, dict):
             for k, v in data.items():
                 yield from self._extract_units(
-                    v, stop, prev + [("key", k)], k, None, data
+                    v, stop, prev.extend("key", k), k, None, data
                 )
         elif isinstance(data, list):
             for i, item in enumerate(data):
                 yield from self._extract_units(
-                    item, stop, prev + [("index", i)], i, name_node, data
+                    item, stop, prev.extend("index", i), i, name_node, data
                 )
         # apply filter
         elif prev.parts and (
@@ -226,7 +219,7 @@ class JsonFile(base.DictStore):
             yield unit
 
     def parse(self, input):
-        """parse the given file or file source string"""
+        """Parse the given file or file source string."""
         if hasattr(input, "name"):
             self.filename = input.name
         elif not getattr(self, "filename", ""):
@@ -252,11 +245,11 @@ class JsonFile(base.DictStore):
 
 
 class JsonNestedUnit(BaseJsonUnit):
-    """A nested JSON entry"""
+    """A nested JSON entry."""
 
 
 class JsonNestedFile(JsonFile):
-    """A JSON file with nested keys"""
+    """A JSON file with nested keys."""
 
     UnitClass = JsonNestedUnit
 
@@ -272,7 +265,8 @@ class WebExtensionJsonUnit(BaseJsonUnit):
 
 
 class WebExtensionJsonFile(JsonFile):
-    """WebExtension JSON file
+    """
+    WebExtension JSON file.
 
     See following URLs for doc:
 
@@ -303,7 +297,8 @@ class WebExtensionJsonFile(JsonFile):
 
 
 class I18NextUnit(JsonNestedUnit):
-    """A i18next v3 format, JSON with plurals.
+    """
+    A i18next v3 format, JSON with plurals.
 
     See https://www.i18next.com/
     """
@@ -313,7 +308,7 @@ class I18NextUnit(JsonNestedUnit):
         return suffix == "0"
 
     def _get_base_name(self):
-        """Return base name for plurals"""
+        """Return base name for plurals."""
         item = self._item[0]
         if "_" in item:
             plural_base, _sep, suffix = item.rpartition("_")
@@ -363,7 +358,8 @@ class I18NextUnit(JsonNestedUnit):
 
 
 class I18NextFile(JsonNestedFile):
-    """A i18next v3 format, this is nested JSON with several additions.
+    """
+    A i18next v3 format, this is nested JSON with several additions.
 
     See https://www.i18next.com/
     """
@@ -397,10 +393,7 @@ class I18NextFile(JsonNestedFile):
                 plurals = []
                 plural_base = ""
                 if k in plurals_simple or k + "_plural" in plurals_simple:
-                    if k.endswith("_plural"):
-                        plural_base = k[:-7]
-                    else:
-                        plural_base = k
+                    plural_base = k[:-7] if k.endswith("_plural") else k
                     plurals_simple.remove(plural_base)
                     plurals = [k, k + "_plural"]
                 elif "_" in k:
@@ -418,13 +411,13 @@ class I18NextFile(JsonNestedFile):
                         sources.append(data[key])
                         items.append(key)
                     unit = self.UnitClass(multistring(sources), items)
-                    newid = prev + [("key", plural_base)]
+                    newid = prev.extend("key", plural_base)
                     unit.set_unitid(newid)
                     yield unit
                     continue
 
                 yield from self._extract_units(
-                    v, stop, prev + [("key", k)], k, None, data
+                    v, stop, prev.extend("key", k), k, None, data
                 )
         else:
             yield from super()._extract_units(
@@ -433,7 +426,8 @@ class I18NextFile(JsonNestedFile):
 
 
 class I18NextV4Unit(I18NextUnit):
-    """A i18next v4 format, JSON with plurals.
+    """
+    A i18next v4 format, JSON with plurals.
 
     See https://www.i18next.com/
     """
@@ -448,7 +442,8 @@ class I18NextV4Unit(I18NextUnit):
 
 
 class I18NextV4File(JsonNestedFile):
-    """A i18next v4 format, this is nested JSON with several additions.
+    """
+    A i18next v4 format, this is nested JSON with several additions.
 
     See https://www.i18next.com/
     """
@@ -493,13 +488,13 @@ class I18NextV4File(JsonNestedFile):
                         items.append(key)
 
                     unit = self.UnitClass(multistring(sources), items)
-                    newid = prev + [("key", plural_base)]
+                    newid = prev.extend("key", plural_base)
                     unit.set_unitid(newid)
                     yield unit
                     continue
 
                 yield from self._extract_units(
-                    v, stop, prev + [("key", k)], k, None, data
+                    v, stop, prev.extend("key", k), k, None, data
                 )
         else:
             yield from super()._extract_units(
@@ -569,7 +564,8 @@ class GoTextJsonUnit(BaseJsonUnit):
 
 
 class GoTextJsonFile(JsonFile):
-    """gotext JSON file
+    """
+    gotext JSON file.
 
     See following URLs for doc:
 
@@ -650,7 +646,8 @@ class GoI18NJsonUnit(BaseJsonUnit):
 
 
 class GoI18NJsonFile(JsonFile):
-    """go-i18n JSON file
+    """
+    go-i18n JSON file.
 
     See following URLs for doc:
 
@@ -702,8 +699,7 @@ class GoI18NV2JsonUnit(BaseJsonUnit):
         if not isinstance(self.target, multistring) or len(self.target.strings) == 1:
             if self.notes:
                 return {"description": self.notes, "other": self.target}
-            else:
-                return self.target
+            return self.target
 
         target = {}
         if self.notes:
@@ -719,7 +715,8 @@ class GoI18NV2JsonUnit(BaseJsonUnit):
 
 
 class GoI18NV2JsonFile(JsonFile):
-    """go-i18n v2 JSON file
+    """
+    go-i18n v2 JSON file.
 
     See following URLs for doc:
 
@@ -785,7 +782,8 @@ class ARBJsonUnit(BaseJsonUnit):
 
 
 class ARBJsonFile(JsonFile):
-    """ARB JSON file
+    """
+    ARB JSON file.
 
     See following URLs for doc:
 

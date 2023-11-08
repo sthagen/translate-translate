@@ -18,11 +18,12 @@
 
 """Base classes for storage interfaces."""
 
+from __future__ import annotations
+
 import codecs
 import logging
 import pickle
 from io import BytesIO
-from typing import List, Optional, Tuple
 
 from translate.misc.multistring import multistring
 from translate.storage.placeables import StringElem
@@ -50,7 +51,8 @@ class ParseError(Exception):
 
 
 class TranslationUnit:
-    """Base class for translation units.
+    """
+    Base class for translation units.
 
     Our concept of a *translation unit* is influenced heavily by `XLIFF
     <http://docs.oasis-open.org/xliff/xliff-core/xliff-core.html>`_.
@@ -124,7 +126,8 @@ class TranslationUnit:
             self.source = source
 
     def __eq__(self, other):
-        """Compares two TranslationUnits.
+        """
+        Compares two TranslationUnits.
 
         :type other: :class:`TranslationUnit`
         :param other: Another :class:`TranslationUnit`
@@ -155,23 +158,29 @@ class TranslationUnit:
 
     @classmethod
     def rich_to_multistring(cls, elem_list):
-        """Convert a "rich" string tree to a ``multistring``:
+        """
+        Convert a "rich" string tree to a ``multistring``.
 
-        >>> from translate.storage.placeables.interfaces import X
-        >>> rich = [StringElem(['foo', X(id='xxx', sub=[' ']), 'bar'])]
-        >>> TranslationUnit.rich_to_multistring(rich)
-        multistring('foo bar')
+        .. code-block:: pycon
+
+            >>> from translate.storage.placeables.interfaces import X
+            >>> rich = [StringElem(['foo', X(id='xxx', sub=[' ']), 'bar'])]
+            >>> TranslationUnit.rich_to_multistring(rich)
+            multistring('foo bar')
         """
         return multistring([str(elem) for elem in elem_list])
 
     def multistring_to_rich(self, mulstring):
-        """Convert a multistring to a list of "rich" string trees:
+        """
+        Convert a multistring to a list of "rich" string trees.
 
-        >>> target = multistring(['foo', 'bar', 'baz'])
-        >>> TranslationUnit.multistring_to_rich(target)
-        [<StringElem([<StringElem(['foo'])>])>,
-         <StringElem([<StringElem(['bar'])>])>,
-         <StringElem([<StringElem(['baz'])>])>]
+        .. code-block:: pycon
+
+            >>> target = multistring(['foo', 'bar', 'baz'])
+            >>> TranslationUnit.multistring_to_rich(target)
+            [<StringElem([<StringElem(['foo'])>])>,
+             <StringElem([<StringElem(['bar'])>])>,
+             <StringElem([<StringElem(['baz'])>])>]
         """
         if isinstance(mulstring, multistring):
             return [rich_parse(s, self.rich_parsers) for s in mulstring.strings]
@@ -199,9 +208,7 @@ class TranslationUnit:
 
     @property
     def rich_source(self):
-        """
-        .. seealso:: :meth:`.rich_to_multistring`, :meth:`multistring_to_rich`
-        """
+        """.. seealso:: :meth:`.rich_to_multistring`, :meth:`multistring_to_rich`."""
         if self._rich_source is None:
             self._rich_source = self.multistring_to_rich(self.source)
         return self._rich_source
@@ -213,7 +220,7 @@ class TranslationUnit:
         if len(value) < 1:
             raise ValueError("value must have at least one element.")
         if not isinstance(value[0], StringElem):
-            raise ValueError("value[0] must be of type StringElem.")
+            raise TypeError("value[0] must be of type StringElem.")
         self._rich_source = list(value)
         multi = self.rich_to_multistring(value)
         if self.source != multi:
@@ -221,9 +228,7 @@ class TranslationUnit:
 
     @property
     def rich_target(self):
-        """
-        .. seealso:: :meth:`.rich_to_multistring`, :meth:`.multistring_to_rich`
-        """
+        """.. seealso:: :meth:`.rich_to_multistring`, :meth:`.multistring_to_rich`."""
         if self._rich_target is None:
             self._rich_target = self.multistring_to_rich(self.target)
         return self._rich_target
@@ -235,12 +240,13 @@ class TranslationUnit:
         if len(value) < 1:
             raise ValueError("value must have at least one element.")
         if not isinstance(value[0], StringElem):
-            raise ValueError("value[0] must be of type StringElem.")
+            raise TypeError("value[0] must be of type StringElem.")
         self._rich_target = list(value)
         self.target = self.rich_to_multistring(value)
 
     def gettargetlen(self):
-        """Returns the length of the target string.
+        """
+        Returns the length of the target string.
 
         :rtype: Integer
 
@@ -255,7 +261,8 @@ class TranslationUnit:
         return length
 
     def getid(self):
-        """A unique identifier for this unit.
+        """
+        A unique identifier for this unit.
 
         :rtype: string
         :return: an identifier for this unit that is unique in the store
@@ -266,16 +273,17 @@ class TranslationUnit:
         return self.source
 
     def setid(self, value):
-        """Sets the unique identified for this unit.
+        """
+        Sets the unique identified for this unit.
 
         only implemented if format allows ids independant from other unit
         properties like source or context
         """
-        pass
 
     @staticmethod
     def getlocations():
-        """A list of source code locations.
+        """
+        A list of source code locations.
 
         :rtype: List
 
@@ -286,16 +294,17 @@ class TranslationUnit:
         return []
 
     def addlocation(self, location):
-        """Add one location to the list of locations.
+        """
+        Add one location to the list of locations.
 
         .. note::
 
            Shouldn't be implemented if the format doesn't support it.
         """
-        pass
 
     def addlocations(self, location):
-        """Add a location or a list of locations.
+        """
+        Add a location or a list of locations.
 
         .. note::
 
@@ -318,11 +327,11 @@ class TranslationUnit:
         return ""
 
     def setcontext(self, context):
-        """Set the message context"""
-        pass
+        """Set the message context."""
 
     def getnotes(self, origin=None):
-        """Returns all notes about this unit.
+        """
+        Returns all notes about this unit.
 
         It will probably be freeform text or something reasonable that can be
         synthesised by the format.
@@ -332,7 +341,8 @@ class TranslationUnit:
         return getattr(self, "notes", "")
 
     def addnote(self, text, origin=None, position="append"):
-        """Adds a note (comment).
+        """
+        Adds a note (comment).
 
         :type text: string
         :param text: Usually just a sentence or two.
@@ -352,33 +362,35 @@ class TranslationUnit:
         self.notes = ""
 
     def adderror(self, errorname, errortext):
-        """Adds an error message to this unit.
+        """
+        Adds an error message to this unit.
 
         :type errorname: string
         :param errorname: A single word to id the error.
         :type errortext: string
         :param errortext: The text describing the error.
         """
-        pass
 
     @staticmethod
     def geterrors():
-        """Get all error messages.
+        """
+        Get all error messages.
 
         :rtype: Dictionary
         """
         return {}
 
     def markreviewneeded(self, needsreview=True, explanation=None):
-        """Marks the unit to indicate whether it needs review.
+        """
+        Marks the unit to indicate whether it needs review.
 
         :keyword needsreview: Defaults to True.
         :keyword explanation: Adds an optional explanation as a note.
         """
-        pass
 
     def istranslated(self):
-        """Indicates whether this unit is translated.
+        """
+        Indicates whether this unit is translated.
 
         This should be used rather than deducing it from .target,
         to ensure that other classes can implement more functionality
@@ -387,7 +399,8 @@ class TranslationUnit:
         return bool(self.target) and not self.isfuzzy()
 
     def istranslatable(self):
-        """Indicates whether this unit can be translated.
+        """
+        Indicates whether this unit can be translated.
 
         This should be used to distinguish real units for translation from
         header, obsolete, binary or other blank units.
@@ -401,16 +414,14 @@ class TranslationUnit:
 
     def markfuzzy(self, value=True):
         """Marks the unit as fuzzy or not."""
-        pass
 
     @staticmethod
     def isobsolete():
-        """indicate whether a unit is obsolete"""
+        """Indicate whether a unit is obsolete."""
         return False
 
     def makeobsolete(self):
-        """Make a unit obsolete"""
-        pass
+        """Make a unit obsolete."""
 
     @staticmethod
     def isheader():
@@ -423,7 +434,8 @@ class TranslationUnit:
         return False
 
     def isblank(self):
-        """Used to see if this unit has no source or target string.
+        """
+        Used to see if this unit has no source or target string.
 
         .. note::
 
@@ -460,8 +472,10 @@ class TranslationUnit:
 
     @classmethod
     def buildfromunit(cls, unit):
-        """Build a native unit from a foreign unit, preserving as much
-        information as possible.
+        """
+        Build a native unit from a foreign unit.
+
+        Preserving as much information as possible.
         """
         if type(unit) is cls and hasattr(unit, "copy") and callable(unit.copy):
             return unit.copy()
@@ -488,23 +502,21 @@ class TranslationUnit:
                 return state_id
         if self.STATE:
             raise ValueError("No state containing value %s" % (n))
-        else:
-            return n
+        return n
 
     def get_state_n(self):
         if self.STATE:
             return self._state_n
-        else:
-            return self.S_UNREVIEWED if self.istranslated() else self.S_EMPTY
+        return self.S_UNREVIEWED if self.istranslated() else self.S_EMPTY
 
     def set_state_n(self, value):
         self._state_n = value
 
     def infer_state(self):
-        """Empty method that should be overridden in sub-classes to infer the
+        """
+        Empty method that should be overridden in sub-classes to infer the
         current state(_n) of the unit from its current state.
         """
-        pass
 
 
 class TranslationStore:
@@ -586,7 +598,8 @@ class TranslationStore:
         return list(self.unit_iter())
 
     def addunit(self, unit):
-        """Append the given unit to the object's list of units.
+        """
+        Append the given unit to the object's list of units.
 
         This method should always be used rather than trying to modify the
         list manually.
@@ -598,7 +611,8 @@ class TranslationStore:
         self.units.append(unit)
 
     def removeunit(self, unit):
-        """Remove the given unit to the object's list of units.
+        """
+        Remove the given unit to the object's list of units.
 
         This method should always be used rather than trying to modify the
         list manually.
@@ -610,7 +624,8 @@ class TranslationStore:
         self.remove_unit_from_index(unit)
 
     def addsourceunit(self, source):
-        """Add and returns a new unit with the given source string.
+        """
+        Add and returns a new unit with the given source string.
 
         :rtype: :class:`TranslationUnit`
         """
@@ -619,12 +634,13 @@ class TranslationStore:
         return unit
 
     def findid(self, id):
-        """find unit with matching id by checking id_index"""
+        """Find unit with matching id by checking id_index."""
         self.require_index()
         return self.id_index.get(id)
 
     def findunit(self, source):
-        """Find the unit with the given source string.
+        """
+        Find the unit with the given source string.
 
         :rtype: :class:`TranslationUnit` or None
         """
@@ -634,7 +650,8 @@ class TranslationStore:
         return None
 
     def findunits(self, source):
-        """Find the units with the given source string.
+        """
+        Find the units with the given source string.
 
         :rtype: :class:`TranslationUnit` or None
         """
@@ -644,18 +661,18 @@ class TranslationStore:
         return None
 
     def translate(self, source):
-        """Return the translated string for a given source string.
+        """
+        Return the translated string for a given source string.
 
         :rtype: String or None
         """
         unit = self.findunit(source)
         if unit and unit.target:
             return unit.target
-        else:
-            return None
+        return None
 
     def remove_unit_from_index(self, unit):
-        """Remove a unit from source and locaton indexes"""
+        """Remove a unit from source and locaton indexes."""
 
         def remove_source(source):
             if source in self.sourceindex:
@@ -678,7 +695,7 @@ class TranslationStore:
                 del self.locationindex[location]
 
     def add_unit_to_index(self, unit):
-        """Add a unit to source and location idexes"""
+        """Add a unit to source and location idexes."""
         self.id_index[unit.getid()] = unit
 
         def insert_unit(source):
@@ -701,7 +718,8 @@ class TranslationStore:
                 self.locationindex[location] = unit
 
     def makeindex(self):
-        """Indexes the items in this store. At least .sourceindex should be
+        """
+        Indexes the items in this store. At least .sourceindex should be
         useful.
         """
         self.locationindex = {}
@@ -713,12 +731,12 @@ class TranslationStore:
                 self.add_unit_to_index(unit)
 
     def require_index(self):
-        """make sure source index exists"""
+        """Make sure source index exists."""
         if not self.id_index:
             self.makeindex()
 
     def getids(self):
-        """return a list of unit ids"""
+        """Return a list of unit ids."""
         self.require_index()
         return self.id_index.keys()
 
@@ -734,7 +752,8 @@ class TranslationStore:
         return out.getvalue()
 
     def serialize(self, out):
-        """Converts to a bytes representation that can be parsed back using
+        """
+        Converts to a bytes representation that can be parsed back using
         :meth:`~.TranslationStore.parsestring`.
         `out` should be an open file-like objects to write to.
         """
@@ -744,13 +763,11 @@ class TranslationStore:
         """Return True if the object doesn't contain any translation units."""
         if len(self.units) == 0:
             return True
-        for unit in self.units:
-            if unit.istranslatable():
-                return False
-        return True
+        return all(not unit.istranslatable() for unit in self.units)
 
     def _assignname(self):
-        """Tries to work out what the name of the filesystem file is and
+        """
+        Tries to work out what the name of the filesystem file is and
         assigns it to .filename.
         """
         fileobj = getattr(self, "fileobj", None)
@@ -773,17 +790,15 @@ class TranslationStore:
 
     @staticmethod
     def fallback_detection(text):
-        """
-        Simple detection based on BOM in case chardet is not available.
-        """
+        """Simple detection based on BOM in case chardet is not available."""
         for bom, encoding in ENCODING_BOMS:
             if text.startswith(bom):
                 return {"encoding": encoding, "confidence": 1.0}
         return None
 
     def detect_encoding(
-        self, text: bytes, default_encodings: Optional[List[str]] = None
-    ) -> Tuple[str, str]:
+        self, text: bytes, default_encodings: list[str] | None = None
+    ) -> tuple[str, str]:
         """
         Try to detect a file encoding from `text`, using either the chardet lib
         or by trying to decode the file.
@@ -850,7 +865,7 @@ class TranslationStore:
         return r_text, r_encoding
 
     def parse(self, data):
-        """parser to process the given source string"""
+        """Parser to process the given source string."""
         self.units = pickle.loads(data).units
 
     def savefile(self, storefile):
@@ -878,7 +893,8 @@ class TranslationStore:
 
     @classmethod
     def parsefile(cls, storefile):
-        """Reads the given file (or opens the given filename) and parses back
+        """
+        Reads the given file (or opens the given filename) and parses back
         to an object.
         """
         if isinstance(storefile, str):
@@ -898,7 +914,8 @@ class TranslationStore:
 
     @property
     def merge_on(self):
-        """The matching criterion to use when merging on.
+        """
+        The matching criterion to use when merging on.
 
         :return: The default matching criterion for all the subclasses.
         :rtype: string
@@ -917,17 +934,14 @@ class UnitId:
         def fmt(element, key):
             if element == "key":
                 return f"{self.KEY_SEPARATOR}{key}"
-            elif element == "index":
+            if element == "index":
                 return f"{self.INDEX_SEPARATOR}[{key}]"
-            else:
-                raise ValueError(f"Unsupported element: {element}")
+            raise ValueError(f"Unsupported element: {element}")
 
         return "".join(fmt(*part) for part in self.parts)
 
-    def __add__(self, other):
-        if not isinstance(other, list):
-            raise ValueError(f"Not supported type for add: {type(other)}")
-        return self.__class__(self.parts + other)
+    def extend(self, key, value):
+        return self.__class__([*self.parts, (key, value)])
 
     @classmethod
     def from_string(cls, text):
@@ -1006,11 +1020,10 @@ class DictUnit(TranslationUnit):
                     while len(target) < child_key:
                         target.append(None)
                     target.append(value)
+            elif unset:
+                del target[child_key]
             else:
-                if unset:
-                    del target[child_key]
-                else:
-                    target[child_key] = value
+                target[child_key] = value
         else:
             raise ValueError(f"Unsupported element: {child_element}")
 

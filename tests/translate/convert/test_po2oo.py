@@ -12,7 +12,7 @@ from . import test_convert
 class TestPO2OO:
     @staticmethod
     def convertoo(posource, ootemplate, language="en-US"):
-        """helper to exercise the command line function"""
+        """Helper to exercise the command line function."""
         inputfile = BytesIO(posource.encode())
         outputfile = BytesIO()
         templatefile = BytesIO(ootemplate.encode())
@@ -48,19 +48,20 @@ class TestPO2OO:
             "output oo:\n",
             ooresult,
         )
-        assert ooresult.startswith(oointro) and ooresult.endswith(oooutro)
+        assert ooresult.startswith(oointro)
+        assert ooresult.endswith(oooutro)
         return ooresult[len(oointro) : -len(oooutro)]
 
     def check_roundtrip(self, oosource):
-        """Checks that the round-tripped string is the same as the original"""
+        """Checks that the round-tripped string is the same as the original."""
         assert self.roundtripstring(oosource) == oosource
 
     @mark.skipif(os.name == "nt", reason="test or storage broken on Windows")
     def test_convertoo(self):
-        """checks that the convertoo function is working"""
+        """Checks that the convertoo function is working."""
         oobase = (
             r"svx	source\dialog\numpages.src	0	string	RID_SVXPAGE_NUM_OPTIONS	STR_BULLET			0	%s	%s				20050924 09:13:58"
-            + "\r\n"
+            "\r\n"
         )
         posource = """#: numpages.src#RID_SVXPAGE_NUM_OPTIONS.STR_BULLET.string.text\nmsgid "Simple String"\nmsgstr "Dimpled Ring"\n"""
         ootemplate = oobase % ("en-US", "Simple String")
@@ -70,7 +71,7 @@ class TestPO2OO:
 
     @staticmethod
     def test_pofilter():
-        """Tests integration with pofilter"""
+        """Tests integration with pofilter."""
         # Some bad po with a few errors:
         posource = b'#: sourcefile.bla#ID_NUMBER.txet.gnirts\nmsgid "<tag cow=\\"3\\">Mistake."\nmsgstr "  <etiket koei=\\"3\\">(fout) "'
         filter = po2oo.filter
@@ -79,13 +80,13 @@ class TestPO2OO:
         assert not filter.validelement(pofile.units[0], "dummyname.po", "exclude-all")
 
     def test_roundtrip_simple(self):
-        """checks that simple strings make it through a oo->po->oo roundtrip"""
+        """Checks that simple strings make it through a oo->po->oo roundtrip."""
         self.check_roundtrip("Hello")
         self.check_roundtrip('"Hello"')
         self.check_roundtrip('"Hello Everybody"')
 
     def test_roundtrip_escape(self):
-        """checks that escapes in strings make it through a oo->po->oo roundtrip"""
+        """Checks that escapes in strings make it through a oo->po->oo roundtrip."""
         self.check_roundtrip(r'"Simple Escape \ \n \\ \: \t \r "')
         self.check_roundtrip(r'"More escapes \\n \\t \\r \\: "')
         self.check_roundtrip(r'"More escapes \\\n \\\t \\\r \\\: "')
@@ -98,7 +99,7 @@ class TestPO2OO:
         self.check_roundtrip(r"\<")
 
     def test_roundtrip_quotes(self):
-        """checks that (escaped) quotes in strings make it through a oo->po->oo roundtrip"""
+        """Checks that (escaped) quotes in strings make it through a oo->po->oo roundtrip."""
         self.check_roundtrip(r"""'Quote Escape "" '""")
         self.check_roundtrip(r'''"Single-Quote ' "''')
         self.check_roundtrip(r'''"Single-Quote Escape \' "''')
@@ -109,13 +110,13 @@ class TestPO2OO:
         # which is caused by isblankmsgtr returning True.  Its a complete mess which would mean unravelling lots
         # of yuch in pypo.  Until we have time to do that unravelling we're diabling this test.  You can reenable
         # once we've fixed that.
-        """checks that (escaped) quotes in strings make it through a oo->po->oo roundtrip"""
+        """Checks that (escaped) quotes in strings make it through a oo->po->oo roundtrip."""
         self.check_roundtrip(" ")
         self.check_roundtrip("\u00a0")
 
     @staticmethod
     def test_default_timestamp():
-        """test to ensure that we revert to the default timestamp"""
+        """Test to ensure that we revert to the default timestamp."""
         oointro, oooutro = (
             r"svx	source\dialog\numpages.src	0	string	RID_SVXPAGE_NUM_OPTIONS	STR_BULLET			0	en-US	Text				",
             "\r\n",
@@ -134,10 +135,10 @@ class TestPO2OO:
 
     @staticmethod
     def test_escape_conversion():
-        """test to ensure that we convert escapes correctly"""
+        """Test to ensure that we convert escapes correctly."""
         oosource = (
             r"svx	source\dialog\numpages.src	0	string	RID_SVXPAGE_NUM_OPTIONS	STR_BULLET			0	en-US	Column1\tColumn2\r\n				2002-02-02 02:02:02"
-            + "\r\n"
+            "\r\n"
         )
         posource = """#: numpages.src#RID_SVXPAGE_NUM_OPTIONS.STR_BULLET.string.text\nmsgid "Column1\\tColumn2\\r\\n"\nmsgstr "Kolom1\\tKolom2\\r\\n"\n"""
         inputfile = BytesIO(posource.encode())
@@ -150,13 +151,13 @@ class TestPO2OO:
 
     @staticmethod
     def test_helpcontent_escapes():
-        """test to ensure that we convert helpcontent escapes correctly"""
+        """Test to ensure that we convert helpcontent escapes correctly."""
         # Note how this test specifically uses incorrect spacing in the
         # translation. The extra space before 'hid' and an extra space before
         # the closing tag should not confuse us.
         oosource = (
             r"helpcontent2	source\text\shared\3dsettings_toolbar.xhp	0	help	par_idN1056A				0	en-US	\<ahelp hid=\".\"\>The 3D-Settings toolbar controls properties of selected 3D objects.\</ahelp\>				2002-02-02 02:02:02"
-            + "\r\n"
+            "\r\n"
         )
         posource = r"""#: 3dsettings_toolbar.xhp#par_idN1056A.help.text
 msgid ""
@@ -179,10 +180,10 @@ msgstr ""
 
     @staticmethod
     def test_helpcontent_escapes2():
-        """test to ensure that we convert helpcontent escapes correctly"""
+        """Test to ensure that we convert helpcontent escapes correctly."""
         oosource = (
             r"helpcontent2	source\text\scalc\05\empty_cells.xhp	0	help	par_id2629474				0	en-US	A1: <empty>				2002-02-02 02:02:02"
-            + "\r\n"
+            "\r\n"
         )
         posource = r"""#: empty_cells.xhp#par_id2629474.help.text
 msgid "A1: <empty>"
@@ -198,7 +199,7 @@ msgstr "Aa1: <empty>"
 
 
 class TestPO2OOCommand(test_convert.TestConvertCommand, TestPO2OO):
-    """Tests running actual po2oo commands on files"""
+    """Tests running actual po2oo commands on files."""
 
     convertmodule = po2oo
     expected_options = [
@@ -217,7 +218,7 @@ class TestPO2OOCommand(test_convert.TestConvertCommand, TestPO2OO):
     ]
 
     def convertoo(self, posource, ootemplate, language="en-US"):
-        """helper to exercise the command line function"""
+        """Helper to exercise the command line function."""
         self.create_testfile(
             os.path.join("input", "svx", "source", "dialog.po"), posource
         )
