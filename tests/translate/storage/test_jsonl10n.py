@@ -928,6 +928,97 @@ class TestGoTextJsonFile(test_monolingual.TestMonolingualStore):
             '"other": {\n                            "msg": ""' in bytes(store).decode()
         )
 
+    def test_case_no_msg(self):
+        store = self.StoreClass()
+        store.parse(
+            """{
+    "language": "en-US",
+    "messages": [
+        {
+            "id": "{N} more files remaining!",
+            "key": "%d more files remaining!",
+            "message": "{N} more files remaining!",
+            "translation": {
+                "select": {
+                    "feature": "plural",
+                    "cases": {
+                        "one": "One file remaining!",
+                        "other": "There are {N} more files remaining!"
+                    }
+                }
+            }
+        }
+    ]
+}
+"""
+        )
+
+        assert len(store.units) == 1
+        assert store.units[0].target == multistring(
+            ["One file remaining!", "There are {N} more files remaining!"]
+        )
+
+        assert (
+            bytes(store).decode()
+            == """{
+    "language": "en-US",
+    "messages": [
+        {
+            "id": "{N} more files remaining!",
+            "message": "{N} more files remaining!",
+            "key": "%d more files remaining!",
+            "translation": {
+                "select": {
+                    "feature": "plural",
+                    "cases": {
+                        "one": {
+                            "msg": "One file remaining!"
+                        },
+                        "other": {
+                            "msg": "There are {N} more files remaining!"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
+"""
+        )
+
+    def test_complex_id(self):
+        text = """{
+    "language": "en-US",
+    "messages": [
+        {
+            "id": [
+                "msgOutOfOrder",
+                "{Device} is out of order!"
+            ],
+            "message": "{Device} is out of order!",
+            "key": "%s is out of order!",
+            "translation": ""
+        },
+        {
+            "id": "[DEBUG] msg",
+            "message": "[DEBUG] msg",
+            "key": "[DEBUG] msg",
+            "translation": ""
+        }
+    ]
+}
+"""
+        store = self.StoreClass()
+        store.parse(text)
+
+        assert len(store.units) == 2
+        assert (
+            store.units[0].getid() == "['msgOutOfOrder', '{Device} is out of order!']"
+        )
+        assert store.units[1].getid() == "[DEBUG] msg"
+
+        assert bytes(store).decode() == text
+
 
 class TestI18NextV4Store(test_monolingual.TestMonolingualStore):
     StoreClass = jsonl10n.I18NextV4File
@@ -1164,3 +1255,39 @@ class TestARBJsonFile(test_monolingual.TestMonolingualStore):
         assert store.units[3].target == "Done"
 
         assert bytes(store).decode() == JSON_ARB.decode()
+
+
+JSON_FORMATJS = """{
+    "hak27d": {
+        "defaultMessage": "Control Panel",
+        "description": "title of control panel section"
+    },
+    "haqsd": {
+        "defaultMessage": "Delete user {name}",
+        "description": "delete button"
+    },
+    "19hjs": {
+        "defaultMessage": "New Password",
+        "description": "placeholder text"
+    },
+    "explicit-id": {
+        "defaultMessage": "Confirm Password",
+        "description": "placeholder text"
+    }
+}
+"""
+
+
+class TestFormatJSJsonFile(test_monolingual.TestMonolingualStore):
+    StoreClass = jsonl10n.FormatJSJsonFile
+
+    def test_roundtrip(self):
+        store = self.StoreClass()
+        store.parse(JSON_FORMATJS)
+
+        assert len(store.units) == 4
+        assert store.units[3].getid() == "explicit-id"
+        assert store.units[3].target == "Confirm Password"
+        assert store.units[3].getnotes() == "placeholder text"
+
+        assert bytes(store).decode() == JSON_FORMATJS

@@ -327,41 +327,38 @@ class LISAfile(base.TranslationStore):
         super().removeunit(unit)
         unit.xmlelement.getparent().remove(unit.xmlelement)
 
-    @staticmethod
-    def serialize_hook(treestring):
-        return treestring
+    def serialize_hook(self, treestring: str) -> bytes:
+        return treestring.encode(self.encoding)
 
-    def serialize(self, out=None):
+    def serialize(self, out):
         """Converts to a string containing the file's XML."""
         root = self.document.getroot()
-        xml_quote_format = "'"
-        xml_encoding = self.encoding.lower()
-
-        if self.XMLdoublequotes:
-            xml_quote_format = '"'
-
-        if self.XMLuppercaseEncoding:
-            xml_encoding = self.encoding.upper()
+        xml_quote_format = '"' if self.XMLdoublequotes else "'"
+        xml_encoding = (
+            self.encoding.upper()
+            if self.XMLuppercaseEncoding
+            else self.encoding.lower()
+        )
 
         xml_declaration = f"<?xml version={xml_quote_format}1.0{xml_quote_format} encoding={xml_quote_format}{xml_encoding}{xml_quote_format}?>\n"
 
-        out.write(self.serialize_hook(xml_declaration.encode(self.encoding)))
+        out.write(self.serialize_hook(xml_declaration))
 
         if self.XMLindent:
             reindent(root, **self.XMLindent)
 
         if not self.XMLSelfClosingTags:
             expand_closing_tags(root)
+
         treestring = etree.tostring(
             self.document,
             pretty_print=not self.XMLindent,
             xml_declaration=False,
-            encoding=self.encoding,
+            encoding="unicode",
             doctype=self.XMLdoctype,
         )
 
-        treestring = self.serialize_hook(treestring)
-        out.write(treestring)
+        out.write(self.serialize_hook(treestring))
 
     def parse(self, xml):
         """Populates this object from the given xml string."""

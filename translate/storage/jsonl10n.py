@@ -502,8 +502,23 @@ class I18NextV4File(JsonNestedFile):
             )
 
 
+class GoTextUnitId(base.UnitId):
+    """Preserves id as stored in the JSON file."""
+
+    def __str__(self):
+        return str(self.parts)
+
+    def extend(self, key, value):
+        raise ValueError("Extend is not supported")
+
+    @classmethod
+    def from_string(cls, text):
+        return cls(text)
+
+
 class GoTextJsonUnit(BaseJsonUnit):
     ID_FORMAT = "{}"
+    IdClass = GoTextUnitId
 
     def __init__(
         self,
@@ -544,7 +559,7 @@ class GoTextJsonUnit(BaseJsonUnit):
                 plural: {"msg": strings[offset]}
                 for offset, plural in enumerate(self._store.plural_tags)
             }
-        value = {"id": self.getid()}
+        value = {"id": self._unitid.parts if self._unitid else self.getid()}
         if self.message:
             value["message"] = self.message
         if self.notes:
@@ -561,6 +576,12 @@ class GoTextJsonUnit(BaseJsonUnit):
         if self.placeholders:
             value["placeholders"] = self.placeholders
         return value
+
+    def setid(self, value, unitid=None):
+        if unitid is None:
+            unitid = self.IdClass(value)
+        # Skip BaseJsonUnit.setid override
+        super(BaseJsonUnit, self).setid(str(unitid), unitid)
 
 
 class GoTextJsonFile(JsonFile):
@@ -584,6 +605,13 @@ class GoTextJsonFile(JsonFile):
         name_last_node=None,
         last_node=None,
     ):
+        def _get_msg(cases, key):
+            value = cases.get(key, None)
+            if isinstance(value, dict):
+                return value["msg"]
+            # Direct string value and None as fallback
+            return value
+
         if prev is None:
             lang = data.get("language")
             if lang is not None:
@@ -595,7 +623,7 @@ class GoTextJsonFile(JsonFile):
                 # Ordered list of plurals
                 translation = multistring(
                     [
-                        cases.get(key, {}).get("msg")
+                        _get_msg(cases, key)
                         for key in cldr_plural_categories
                         if key in cases
                     ]
@@ -827,6 +855,44 @@ class ARBJsonFile(JsonFile):
                 metadata.get("description", ""),
                 metadata.get("placeholders", None),
                 metadata=metadata,
+            )
+            unit.setid(item)
+            yield unit
+
+
+class FormatJSJsonUnit(BaseJsonUnit):
+    def storevalues(self, output):
+        value = {"defaultMessage": self.target}
+        if self.notes:
+            value["description"] = self.notes
+        self.storevalue(output, value)
+
+
+class FormatJSJsonFile(JsonFile):
+    """
+    FormatJS JSON file.
+
+    See following URLs for doc:
+
+    https://formatjs.io/docs/getting-started/message-extraction/
+    """
+
+    UnitClass = FormatJSJsonUnit
+
+    def _extract_units(
+        self,
+        data,
+        stop=None,
+        prev=None,
+        name_node=None,
+        name_last_node=None,
+        last_node=None,
+    ):
+        for item, value in data.items():
+            unit = self.UnitClass(
+                value.get("defaultMessage", ""),
+                item,
+                value.get("description", ""),
             )
             unit.setid(item)
             yield unit
