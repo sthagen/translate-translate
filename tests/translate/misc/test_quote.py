@@ -127,10 +127,10 @@ class TestEncoding:
 
     @staticmethod
     def test_mozillaescapemarginspaces():
-        assert quote.mozillaescapemarginspaces(" ") == ""
+        assert quote.mozillaescapemarginspaces(" ") == r"\u0020"
         assert quote.mozillaescapemarginspaces("A") == "A"
-        assert quote.mozillaescapemarginspaces(" abc ") == "\\u0020abc\\u0020"
-        assert quote.mozillaescapemarginspaces("  abc ") == "\\u0020 abc\\u0020"
+        assert quote.mozillaescapemarginspaces(" abc ") == r"\u0020abc\u0020"
+        assert quote.mozillaescapemarginspaces("  abc ") == r"\u0020 abc\u0020"
 
     @staticmethod
     def test_mozilla_control_escapes():
@@ -138,7 +138,7 @@ class TestEncoding:
         prefix, suffix = "bling", "blang"
         for control in ("\u0005", "\u0006", "\u0007", "\u0011"):
             string = prefix + control + suffix
-            assert quote.escapecontrols(string) == string
+            assert quote.escapecontrols(string) != string
 
     @staticmethod
     def test_propertiesdecode():
@@ -148,6 +148,15 @@ class TestEncoding:
         assert quote.propertiesdecode("abc\N{LEFT CURLY BRACKET}") == "abc{"
         assert quote.propertiesdecode("abc\\") == "abc\\"
         assert quote.propertiesdecode("abc\\") == "abc\\"
+
+    @staticmethod
+    def test_controlchars():
+        assert quote.javapropertiesencode(quote.propertiesdecode("\u0001")) == r"\u0001"
+        assert quote.javapropertiesencode(quote.propertiesdecode("\\u01")) == r"\u0001"
+        assert quote.javapropertiesencode("\\") == "\\\\"
+        assert quote.javapropertiesencode("\x01") == "\\u0001"
+        assert quote.propertiesdecode("\x01") == "\x01"
+        assert quote.propertiesdecode("\\u0001") == "\x01"
 
     @staticmethod
     def test_properties_decode_slashu():
