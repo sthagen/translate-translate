@@ -126,7 +126,7 @@ class pounit(pocommon.pounit):
             comments += "\n".join(self.automaticcomments)
         elif origin == "translator":
             comments = "\n".join(self.othercomments)
-        elif origin in ["programmer", "developer", "source code"]:
+        elif origin in {"programmer", "developer", "source code"}:
             comments = "\n".join(self.automaticcomments)
         else:
             raise ValueError("Comment type not valid")
@@ -139,7 +139,7 @@ class pounit(pocommon.pounit):
             return
         commentlist = self.othercomments
         autocomments = False
-        if origin in ["programmer", "developer", "source code"]:
+        if origin in {"programmer", "developer", "source code"}:
             autocomments = True
             commentlist = self.automaticcomments
         if text.endswith("\n"):
@@ -148,7 +148,7 @@ class pounit(pocommon.pounit):
         if position == "append":
             newcomments = commentlist + newcomments
         elif position == "prepend":
-            newcomments = newcomments + commentlist
+            newcomments += commentlist
 
         if autocomments:
             self.automaticcomments = newcomments
@@ -263,15 +263,13 @@ class pounit(pocommon.pounit):
         return not self.getid() and len(self.target) > 0
 
     def isblank(self):
-        if self.isheader() or self.msgidcomment:
-            return False
-        if (
-            (self._msgidlen() == 0)
+        return (
+            not self.isheader()
+            and not self.msgidcomment
+            and (self._msgidlen() == 0)
             and (self._msgstrlen() == 0)
             and len(self._msgctxt) == 0
-        ):
-            return True
-        return False
+        )
 
     def hastypecomment(self, typecomment):
         """Check whether the given type comment is present."""

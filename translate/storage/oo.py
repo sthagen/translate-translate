@@ -157,7 +157,7 @@ def escape_help_text(text):
         ]:
             if tag.startswith(f"<{escape_tag}") or tag == f"</{escape_tag}>":
                 escapethistag = True
-        if tag in ["<br/>", "<help-id-missing/>"]:
+        if tag in {"<br/>", "<help-id-missing/>"}:
             escapethistag = True
         if escapethistag:
             escaped_tag = ("\\<" + tag[1:-1] + "\\>").replace('"', '\\"')
@@ -210,7 +210,7 @@ class ooline:
             )
             newparts = list(parts)
             if len(newparts) < 15:
-                newparts = newparts + [""] * (15 - len(newparts))
+                newparts += [""] * (15 - len(newparts))
             else:
                 newparts = newparts[:15]
             parts = tuple(newparts)

@@ -29,8 +29,9 @@ import copy
 import logging
 import re
 import textwrap
-import unicodedata
 from itertools import chain
+
+from wcwidth import wcswidth, wcwidth
 
 from translate.misc import quote
 from translate.misc.multistring import multistring
@@ -44,8 +45,16 @@ lsep = "\n#: "
 
 # general functions for quoting / unquoting po strings
 
-po_unescape_map = {"\\r": "\r", "\\t": "\t", '\\"': '"', "\\n": "\n", "\\\\": "\\"}
+po_unescape_map = {
+    r"\r": "\r",
+    r"\t": "\t",
+    r"\"": '"',
+    r"\n": "\n",
+    r"\\": "\\",
+}
+po_unescape_re = re.compile(r"\\.")
 po_escape_map = {value: key for (key, value) in po_unescape_map.items()}
+po_escape_re = re.compile("|".join(re.escape(key) for key in po_escape_map))
 
 
 def splitlines(text):
@@ -78,52 +87,27 @@ def splitlines(text):
     return [x + newline for x in text.split(newline)], newline.decode()
 
 
-def escapeforpo(line):
+def escapehandler(match: re.Match) -> str:
+    return po_escape_map[match.group(0)]
+
+
+def escapeforpo(line: str) -> str:
     r"""
     Escapes a line for po format. assumes no \n occurs in the line.
 
     :param line: unescaped text
     """
-    special_locations = []
-    for special_key in po_escape_map:
-        special_locations.extend(quote.find_all(line, special_key))
-    special_locations = sorted(dict.fromkeys(special_locations).keys())
-    escaped_line = []
-    last_location = 0
-    for location in special_locations:
-        escaped_line.append(line[last_location:location])
-        escaped_line.append(po_escape_map[line[location : location + 1]])
-        last_location = location + 1
-    escaped_line.append(line[last_location:])
-    return "".join(escaped_line)
-
-
-def unescapehandler(escape):
-    return po_unescape_map.get(escape, escape)
-
-
-WIDE_CHARS = {"F", "W"}
-
-
-def cjklen(text: str) -> int:
-    """
-    Return the real width of an unicode text, the len of any other type.
-
-    Fullwidth and Wide CJK chars are double-width.
-    """
-    return sum(
-        2 if unicodedata.east_asian_width(char) in WIDE_CHARS else 1 for char in text
-    )
+    return po_escape_re.sub(escapehandler, line)
 
 
 def cjkslices(text: str, index: int) -> tuple[str, str]:
     """Return the two slices of a text cut to the index."""
-    if cjklen(text) <= index:
+    if wcswidth(text) <= index:
         return text, ""
     length = 0
     i = 0
     for i in range(len(text)):
-        length += cjklen(text[i])
+        length += wcwidth(text[i])
         if length > index:
             break
     return text[:i], text[i:]
@@ -206,7 +190,7 @@ class PoWrapper(textwrap.TextWrapper):
             width = self.width - len(indent)
 
             while chunks:
-                l = cjklen(chunks[-1])
+                l = wcswidth(chunks[-1])
 
                 # Can at least squeeze this chunk onto the current line.
                 if cur_len + l <= width:
@@ -219,7 +203,7 @@ class PoWrapper(textwrap.TextWrapper):
 
             # The current line is full, and the next chunk is too big to
             # fit on *any* line (not just this one).
-            if chunks and cjklen(chunks[-1]) > width:
+            if chunks and wcswidth(chunks[-1]) > width:
                 self._handle_long_word(chunks, cur_line, cur_len, width)
 
             if cur_line:
@@ -256,46 +240,33 @@ def quoteforpo(text, wrapper_obj=None):
     return polines
 
 
-def unescape(line):
+def unescapehandler(match: re.Match) -> str:
+    value = match.group(0)
+    try:
+        return po_unescape_map[value]
+    except KeyError:
+        return value[1]
+
+
+def unescape(line: str) -> str:
     """
     Unescape the given line.
 
     Quotes on either side should already have been removed.
     """
-    escape_places = quote.find_all(line, "\\")
-    if not escape_places:
-        return line
-
-    # filter escaped escapes
-    true_escape = False
-    true_escape_places = []
-    for escape_pos in escape_places:
-        true_escape = not true_escape if escape_pos - 1 in escape_places else True
-        if true_escape:
-            true_escape_places.append(escape_pos)
-
-    extracted = []
-    lastpos = 0
-    for pos in true_escape_places:
-        # everything leading up to the escape
-        extracted.append(line[lastpos:pos])
-        # the escaped sequence (consuming 2 characters)
-        extracted.append(unescapehandler(line[pos : pos + 2]))
-        lastpos = pos + 2
-
-    extracted.append(line[lastpos:])
-    return "".join(extracted)
+    return po_unescape_re.sub(unescapehandler, line)
 
 
-def unquotefrompo(postr):
+def unquotefrompo(postr: str) -> str:
     return "".join(unescape(line[1:-1]) for line in postr)
 
 
-def is_null(lst):
-    return lst == [] or len(lst) == 1 and lst[0] == '""'
+def is_null(lst: list[str]) -> bool:
+    lst_len = len(lst)
+    return lst_len == 0 or (lst_len == 1 and lst[0] == '""')
 
 
-def extractstr(string):
+def extractstr(string: str) -> str:
     left = string.find('"')
     right = string.rfind('"')
     if right > -1:
@@ -476,7 +447,7 @@ class pounit(pocommon.pounit):
         newline = self.newline
         if origin == "translator" or origin is None:
             parts.append(comment[2:] or newline for comment in self.othercomments)
-        if origin in ["programmer", "developer", "source code", None]:
+        if origin in {"programmer", "developer", "source code", None}:
             parts.append(comment[3:] or newline for comment in self.automaticcomments)
         if not parts:
             raise ValueError("Comment type not valid")
@@ -496,7 +467,7 @@ class pounit(pocommon.pounit):
         commentlist = self.othercomments
         linestart = "#"
         autocomments = False
-        if origin in ["programmer", "developer", "source code"]:
+        if origin in {"programmer", "developer", "source code"}:
             autocomments = True
             commentlist = self.automaticcomments
             linestart = "#."
@@ -507,7 +478,7 @@ class pounit(pocommon.pounit):
         if position == "append":
             newcomments = commentlist + newcomments
         elif position == "prepend":
-            newcomments = newcomments + commentlist
+            newcomments += commentlist
 
         if autocomments:
             self.automaticcomments = newcomments
@@ -638,20 +609,18 @@ class pounit(pocommon.pounit):
         return (
             is_null(self.msgid)
             and not is_null(self.msgstr)
-            and self.msgidcomments == []
+            and len(self.msgidcomments) == 0
             and is_null(self.msgctxt)
         )
 
     def isblank(self):
-        if self.isheader() or self.msgidcomments:
-            return False
-        if (
-            (self._msgidlen() == 0)
+        return (
+            not self.isheader()
+            and not self.msgidcomments
+            and (self._msgidlen() == 0)
             and (self._msgstrlen() == 0)
             and (is_null(self.msgctxt))
-        ):
-            return True
-        return False
+        )
         # TODO: remove:
         # Before, the equivalent of the following was the final return statement:
         # return len(self.source.strip()) == 0

@@ -30,7 +30,7 @@ from translate.storage.placeables.interfaces import (
 )
 from translate.storage.placeables.strelem import StringElem
 
-__all__ = ("Bpt", "Ept", "Ph", "It", "G", "Bx", "Ex", "X", "Sub", "to_base_placeables")
+__all__ = ("Bpt", "Bx", "Ept", "Ex", "G", "It", "Ph", "Sub", "X", "to_base_placeables")
 
 
 # Basic placeable types.
@@ -94,7 +94,7 @@ def to_base_placeables(tree):
     base_class = [
         klass
         for klass in tree.__class__.__bases__
-        if klass in [Bpt, Ept, Ph, It, G, Bx, Ex, X, Sub]
+        if klass in {Bpt, Ept, Ph, It, G, Bx, Ex, X, Sub}
     ]
 
     base_class = tree.__class__ if not base_class else base_class[0]

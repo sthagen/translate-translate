@@ -290,7 +290,7 @@ class podebug:
         for location in locations:
             if dtd2po.is_css_entity(location):
                 return True
-            if location in ["brandShortName", "brandFullName", "vendorShortName"]:
+            if location in {"brandShortName", "brandFullName", "vendorShortName"}:
                 return True
             if location.lower().endswith(".commandkey") or location.endswith(".key"):
                 return True
@@ -298,15 +298,11 @@ class podebug:
 
     @staticmethod
     def ignore_gtk(unit):
-        if unit.source == "default:LTR":
-            return True
-        return False
+        return unit.source == "default:LTR"
 
     @staticmethod
     def ignore_kde(unit):
-        if unit.source == "LTR":
-            return True
-        return False
+        return unit.source == "LTR"
 
     def convertunit(self, unit, prefix):
         if self.ignorefunc:
