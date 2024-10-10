@@ -1301,38 +1301,36 @@ class StandardChecker(TranslationChecker):
         mismatch1, mismatch2 = [], []
         varnames1, varnames2 = [], []
 
-        for startmarker, endmarker in self.config.varmatches:
-            varchecker = decoration.getvariables(startmarker, endmarker)
-
+        def redecorate(startmaker, endmaker, var):
             if startmarker and endmarker:
                 if isinstance(endmarker, int):
-                    redecorate = lambda var: startmarker + var  # noqa: E731
-                else:
-                    redecorate = lambda var: startmarker + var + endmarker  # noqa: E731
-            elif startmarker:
-                redecorate = lambda var: startmarker + var  # noqa: E731
-            else:
-                redecorate = lambda var: var  # noqa: E731
+                    return startmarker + var
+                return startmarker + var + endmarker
+            if startmarker:
+                return startmarker + var
+            return var
+
+        for startmarker, endmarker in self.config.varmatches:
+            varchecker = decoration.getvariables(startmarker, endmarker)
 
             vars1 = varchecker(str1)
             vars2 = varchecker(str2)
 
             if vars1 != vars2:
                 # we use counts to compare so we can handle multiple variables
-                vars1, vars2 = (
-                    [var for var in vars1 if vars1.count(var) > vars2.count(var)],
-                    [var for var in vars2 if vars1.count(var) < vars2.count(var)],
-                )
+                vars1 = [var for var in vars1 if vars1.count(var) > vars2.count(var)]
+                vars2 = [var for var in vars2 if vars1.count(var) < vars2.count(var)]
                 # filter variable names we've already seen, so they aren't
                 # matched by more than one filter...
-                vars1, vars2 = (
-                    [var for var in vars1 if var not in varnames1],
-                    [var for var in vars2 if var not in varnames2],
-                )
+                vars1 = [var for var in vars1 if var not in varnames1]
+                vars2 = [var for var in vars2 if var not in varnames2]
+
                 varnames1.extend(vars1)
                 varnames2.extend(vars2)
-                vars1 = map(redecorate, vars1)
-                vars2 = map(redecorate, vars2)
+
+                vars1 = [redecorate(startmarker, endmarker, var) for var in vars1]
+                vars2 = [redecorate(startmarker, endmarker, var) for var in vars2]
+
                 mismatch1.extend(vars1)
                 mismatch2.extend(vars2)
 
@@ -2863,6 +2861,7 @@ class StandardUnitChecker(UnitChecker):
         return not bool(suggestions)
 
 
+# TODO: convert these to proper unit tests
 def runtests(str1, str2, ignorelist=()):
     """Verifies that the tests pass for a pair of strings."""
     from translate.storage import base
@@ -2875,7 +2874,7 @@ def runtests(str1, str2, ignorelist=()):
     failures = checker.run_filters(unit)
 
     for test in failures:
-        print(
+        print(  # noqa: T201
             "failure: {}: {}\n  {!r}\n  {!r}".format(
                 test, failures[test]["message"], str1, str2
             )
@@ -2892,7 +2891,7 @@ def batchruntests(pairs):
         if runtests(str1, str2):
             passed += 1
 
-    print("\ntotal: %d/%d pairs passed" % (passed, numpairs))
+    print("\ntotal: %d/%d pairs passed" % (passed, numpairs))  # noqa: T201
 
 
 if __name__ == "__main__":
