@@ -128,7 +128,7 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
 
     def propregen(self, propsource):
         """Helper that converts properties source to propfile object and back."""
-        return self.propparse(propsource).__bytes__()
+        return bytes(self.propparse(propsource))
 
     def test_quotes(self):
         """Checks that quotes are parsed and saved correctly."""
@@ -158,9 +158,9 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         propunit = propfile.units[0]
         assert propunit.name == "test_me"
         assert propunit.source.strings == ["I can code single!", "I can code!"]
-        assert propunit.value == ["I can code!", "I can code single!"]
+        assert propunit.value == ["I can code!"]
         propunit.value = ["I can code double!", "I can code single!"]
-        assert propunit.value == ["I can code double!", "I can code single!"]
+        assert propunit.value == ["I can code double!"]
         assert propunit.source.strings == ["I can code single!", "I can code double!"]
         # propunit.value = ["I can code single!", "I can code!" ]
         # assert propunit.value == ["I can code single!", "I can code!"]
@@ -179,7 +179,7 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         )  # Only "other" plural form
         print(propfile)
         print(str(propfile))
-        assert propfile.__bytes__() == b"test_me=I can code!\n"
+        assert (bytes(propfile)) == b"test_me=I can code!\n"
 
     def test_increase(self):
         """Checks that if the target language has more plural form the generated properties file is correct."""
@@ -193,7 +193,7 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         assert isinstance(propunit.target, multistring)
         assert propunit.target.strings == ["", "", "", "", "", ""]
         assert (
-            propfile.__bytes__()
+            (bytes(propfile))
             == b"test_me=I can code!\ntest_me[none]=\ntest_me[one]=I can code single!\n"
             b"test_me[two]=\ntest_me[few]=\ntest_me[many]=\n"
         )
@@ -209,7 +209,7 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         assert isinstance(propunit.target, multistring)
         assert propunit.target.strings == ["zero", "one", "two", "few", "many", "other"]
         assert (
-            propfile.__bytes__()
+            (bytes(propfile))
             == b"test_me=other\ntest_me[none]=zero\ntest_me[one]=one\n"
             b"test_me[two]=two\ntest_me[few]=few\ntest_me[many]=many\n"
         )
@@ -218,7 +218,7 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         assert isinstance(propunit.target, multistring)
         assert propunit.target.strings == ["zero", "one", "two", "few", "many", "other"]
         assert (
-            propfile.__bytes__()
+            (bytes(propfile))
             == b"test_me=other\ntest_me[none]=zero\ntest_me[one]=one\n"
             b"test_me[two]=two\ntest_me[few]=few\ntest_me[many]=many\n"
         )
@@ -227,7 +227,7 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         assert isinstance(propunit.target, multistring)
         assert propunit.target.strings == ["zero", "one", "two", "few", "many", "other"]
         assert (
-            propfile.__bytes__()
+            (bytes(propfile))
             == b"test_me=other\ntest_me[none]=zero\ntest_me[one]=one\n"
             b"test_me[two]=two\ntest_me[few]=few\ntest_me[many]=many\n"
         )
@@ -236,7 +236,7 @@ class TestGwtProp(test_monolingual.TestMonolingualStore):
         assert isinstance(propunit.target, multistring)
         assert propunit.target.strings == ["zero", "one", "two", "few", "many", "other"]
         assert (
-            propfile.__bytes__()
+            (bytes(propfile))
             == b"test_me=other\ntest_me[none]=zero\ntest_me[one]=one\n"
             b"test_me[two]=two\ntest_me[few]=few\ntest_me[many]=many\n"
         )

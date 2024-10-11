@@ -25,6 +25,10 @@ profile = "black"
 target-version = "py38"
 
 [tool.ruff.lint]
+extend-safe-fixes = [
+  "FURB113",
+  "PLC2801"
+]
 # CONFIG - intentional configuration
 # TODO - needs decision whether intention, add noqa tags or fix
 # WONTFIX - not fixable in current codebase, might be better to go for noqa
@@ -69,6 +73,10 @@ ignore = [
   "ARG005",  # TODO: Unused lambda argument:
   "TD002",  # CONFIG: no detailed TODO documentation is required
   "TD003",  # CONFIG: no detailed TODO documentation is required
+  "S404",  # TODO: `subprocess` module is possibly insecure
+  "S403",  # TODO: `pickle`, `cPickle`, `dill`, and `shelve` modules are possibly insecure
+  "S408",  # TODO: `xml.dom.minidom` is vulnerable to XML attacks
+  "S407",  # TODO: `xml.dom.expatbuilder` is vulnerable to XML attacks
   "S603",  # CONFIG: `subprocess` call: check for execution of untrusted input
   "S607",  # CONFIG: executing system installed tools
   "PD011",  # WONTFIX: Use `.to_numpy()` instead of `.values
@@ -116,8 +124,30 @@ ignore = [
   'Q002',  # CONFIG: formatter
   'Q003',  # CONFIG: formatter
   'W191',  # CONFIG: formatter
+  "E265",  # TODO: Block comment should start with `# `
+  "E262",  # TODO: Inline comment should start with `# `
+  "E266",  # TODO: Too many leading `#` before block comment
+  "A005",  # TODO: Module `statistics` is shadowing a Python builtin module
+  "PLC0415",  # TODO: `import` should be at the top-level of a file
+  "PLW1514",  # TODO: `open` in text mode without explicit `encoding` argument
+  "PLW1641",  # TODO: Object does not implement `__hash__` method
+  "PLR0914",  # TODO: Too many local variables (16/15)
+  "PLR1702",  # TODO: Too many nested blocks (8 > 5)
+  "PLR0917",  # TODO: Too many positional arguments (7/5)
+  "PLR0904",  # TODO: Too many public methods (21 > 20)
+  "PLR6301",  # TODO: Method `entry` could be a function, class method, or static method
+  "FURB103",  # TODO: `open` and `write` should be replaced by `Path(outputfile.name).write_bytes(outputmo)`
+  "FURB101",  # TODO: `open` and `read` should be replaced by `Path(file_).read_bytes()`
+  "PLR0916",  # TODO: Too many Boolean expressions (6 > 5)
+  "CPY001",  # TODO: Missing copyright notice at top of file
+  "F841",  # TODO: Local variable `args` is assigned to but never used
+  "B909",  # X-TODO: Mutation to loop iterable `inputpo.units` during iteration
+  "UP031",  # X-TODO: Use format specifiers instead of percent format
+  "PLC1901",  # X-TODO: `target != ""` can be simplified to `target` as an empty string is falsey
+  "DOC",  # TODO: is not documented in docstring
   "PTH"  # TODO: Not using pathlib for now
 ]
+preview = true
 select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]

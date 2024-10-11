@@ -121,10 +121,6 @@ class StringElem:
         """Emulate the ``unicode`` class."""
         return str(self)[i]
 
-    def __getslice__(self, i, j):
-        """Emulate the ``unicode`` class."""
-        return str(self)[i:j]
-
     def __gt__(self, rhs):
         """Emulate the ``unicode`` class."""
         return str(self) > rhs
@@ -164,9 +160,9 @@ class StringElem:
         elemstr = ", ".join(repr(elem) for elem in self.sub)
         return "<%(class)s(%(id)s%(rid)s%(xid)s[%(subs)s])>" % {
             "class": self.__class__.__name__,
-            "id": self.id is not None and f'id="{self.id}" ' or "",
-            "rid": self.rid is not None and f'rid="{self.rid}" ' or "",
-            "xid": self.xid is not None and f'xid="{self.xid}" ' or "",
+            "id": (self.id is not None and f'id="{self.id}" ') or "",
+            "rid": (self.rid is not None and f'rid="{self.rid}" ') or "",
+            "xid": (self.xid is not None and f'xid="{self.xid}" ') or "",
             "subs": elemstr,
         }
 
@@ -281,8 +277,7 @@ class StringElem:
             start["elem"] is end["elem"]
             and start["offset"] == 0
             and end["offset"] == len(start["elem"])
-            or (not start["elem"].iseditable and start["elem"].isfragile)
-        ):
+        ) or (not start["elem"].iseditable and start["elem"].isfragile):
             ##### FOR DEBUGGING #####
             # s = ''
             # for e in self.flatten():

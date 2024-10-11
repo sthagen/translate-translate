@@ -23,7 +23,7 @@ import os
 # from translate.convert import prop2po, po2prop, odf2xliff, xliff2odf
 
 
-__all__ = ("converters", "UnknownExtensionError", "UnsupportedConversionError")
+__all__ = ("UnknownExtensionError", "UnsupportedConversionError", "converters")
 
 # Turn into property to support lazy loading of things?
 converters = {}
@@ -69,13 +69,13 @@ def get_converter(in_ext, out_ext=None, templ_ext=None):
     convert_candidates = None
     if templ_ext:
         if (in_ext, templ_ext) in converters:
-            convert_candidates = converters[(in_ext, templ_ext)]
+            convert_candidates = converters[in_ext, templ_ext]
         else:
             raise UnsupportedConversionError(in_ext, out_ext, templ_ext)
     elif in_ext in converters:
         convert_candidates = converters[in_ext]
     elif (in_ext,) in converters:
-        convert_candidates = converters[(in_ext,)]
+        convert_candidates = converters[in_ext,]
     else:
         raise UnsupportedConversionError(in_ext, out_ext)
 
@@ -96,12 +96,12 @@ def get_converter(in_ext, out_ext=None, templ_ext=None):
 def get_output_extensions(ext):
     """Compiles a list of possible output extensions for the given input extension."""
     out_exts = []
-    for key in converters:
+    for key, converter in converters.items():
         in_ext = key
         if isinstance(key, tuple):
             in_ext = key[0]
         if in_ext == ext:
-            for out_ext, convert_fn in converters[key]:
+            for out_ext, convert_fn in converter:
                 out_exts.append(out_ext)
     return out_exts
 

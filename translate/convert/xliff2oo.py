@@ -173,7 +173,7 @@ class oocheckfilter(pofilter.pocheckfilter):
                     logger.warning(
                         "Warning at %s::%s: %s", filename, location, filtermessage
                     )
-                    return filteraction not in {"exclude-all"}
+                    return filteraction != "exclude-all"
         return True
 
 
@@ -231,7 +231,9 @@ def convertoo(
     )
     outputstore = convertor.convertstore(inputstore)
     # TODO: check if we need to manually delete missing items
-    outputfile.write(outputstore.__str__(skip_source, targetlanguage))
+    outputstore.serialize(
+        outputfile, skip_source=skip_source, fallback_lang=targetlanguage
+    )
     return True
 
 
