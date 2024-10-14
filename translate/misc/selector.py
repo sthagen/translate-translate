@@ -160,8 +160,7 @@ class Selector:
         )
         unnamed, named = [], {}
         for k, v in svars.items():
-            if k.startswith("__pos"):
-                k = k[5:]
+            k = k.removeprefix("__pos")
             named[k] = v
         environ["selector.vars"] = dict(named)
         for k in named:
@@ -354,7 +353,7 @@ class SimpleParser:
             pattern = self.patterns[pattern]
         else:
             pattern = self.patterns[self.default_pattern]
-        if name == "":
+        if not name:
             name = f"__pos{self._pos}"
             self._pos += 1
         return f"(?P<{name}>{pattern})"

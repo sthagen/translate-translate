@@ -22,11 +22,12 @@ known_third_party = [
 profile = "black"
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 extend-safe-fixes = [
   "FURB113",
+  "TCH003",
   "PLC2801"
 ]
 # CONFIG - intentional configuration
@@ -61,7 +62,6 @@ ignore = [
   "PT011",  # TODO: `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
   "D205",  # TODO: 1 blank line required between summary line and description
   "D401",  # TODO: First line of docstring should be in imperative mood
-  "D402",  # TODO: First line should not be the function's signature
   "D404",  # TODO: First word of the docstring should not be "This"
   "D203",  # CONFIG: incompatible with D211
   "D212",  # CONFIG: incompatible with D213
@@ -143,7 +143,6 @@ ignore = [
   "F841",  # TODO: Local variable `args` is assigned to but never used
   "B909",  # X-TODO: Mutation to loop iterable `inputpo.units` during iteration
   "UP031",  # X-TODO: Use format specifiers instead of percent format
-  "PLC1901",  # X-TODO: `target != ""` can be simplified to `target` as an empty string is falsey
   "DOC",  # TODO: is not documented in docstring
   "PTH"  # TODO: Not using pathlib for now
 ]
@@ -151,7 +150,7 @@ preview = true
 select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**.py" = ["T201"]
+"tests/**.py" = ["T201", "PLC1901"]
 "translate/misc/progressbar.py" = ["T201"]
 "translate/storage/benchmark.py" = ["T201"]
 "translate/storage/placeables/strelem.py" = ["T201"]

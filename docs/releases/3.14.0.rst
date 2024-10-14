@@ -1,0 +1,31 @@
+Translate Toolkit 3.14.0
+************************
+
+*Released on 14 October 2024*
+
+This release contains improvements and bug fixes.
+
+Changes
+=======
+
+Formats and Converters
+----------------------
+
+- Android
+
+  - Improved handling of CDATA
+  - Improved whitespace handling
+
+Other changes
+-------------
+
+- Dropped support for Python 3.8
+- Improved multisting implementation
+- Various code cleanups
+
+Contributors
+============
+
+This release was made possible by the following people:
+
+Michal Čihař
