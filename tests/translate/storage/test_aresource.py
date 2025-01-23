@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import copy, deepcopy
 
 from lxml import etree
 
@@ -514,6 +514,18 @@ class TestAndroidResourceUnit(test_monolingual.TestMonolingualUnit):
             """<string name="cmd_camera_response_success">You can view it here soon: %s"</string>""",
         )
 
+    def test_parse_escape_slash(self):
+        self.__check_parse(
+            """Přechod na novější verzi databáze účtu \\<g id="account">%s</g>\\""",
+            r"""<string name="upgrade_database_format">Přechod na novější verzi databáze účtu \\<g id="account">%s</g>\\</string>""",
+        )
+
+    def test_parse_escape_ignored(self):
+        self.__check_parse(
+            """Přechod na novější verzi databáze účtu \\<g id="account">%s</g>""",
+            r"""<string name="upgrade_database_format">Přechod na novější verzi databáze účtu \\<g id="account">%s</g>\x</string>""",
+        )
+
 
 class TestAndroidResourceFile(test_monolingual.TestMonolingualStore):
     StoreClass = aresource.AndroidResourceFile
@@ -951,6 +963,8 @@ files</strong> on the storage.</p>
     <string name="service_terms_agreement_notice">{body}</string>
 </resources>
 """
+
+        # Verify round trip
         store = self.StoreClass()
         store.parse(content.encode())
         assert len(store.units) == 1
@@ -958,6 +972,25 @@ files</strong> on the storage.</p>
         assert bytes(store).decode() == content
         store.units[0].target = body
         assert bytes(store).decode() == content
+
+        # Verify copying unit to new store
+        newstore = self.StoreClass()
+        newstore.addunit(copy(store.units[0]), new=True)
+        assert bytes(newstore).decode() == content
+        newstore.units[0].target = body
+        assert bytes(newstore).decode() == content
+
+        # Verify creating unit from scratch
+        addstore = self.StoreClass()
+        unit = addstore.UnitClass(body)
+        unit.setid("service_terms_agreement_notice")
+        unit.target = body
+        addstore.addunit(unit, new=True)
+        assert len(addstore.units) == 1
+        assert addstore.units[0].target == body
+        assert bytes(addstore).decode() == content
+        addstore.units[0].target = body
+        assert bytes(addstore).decode() == content
 
     def test_prefix(self):
         body = "&lt; <b>body</b>"
