@@ -15,9 +15,9 @@ dev = [
 docs = [
   # Do not attempt to build doc on older Python
   "furo==2024.8.6; python_version >= '3.11'",
-  "matplotlib==3.10.0; python_version >= '3.11'",
+  "matplotlib==3.10.1; python_version >= '3.11'",
   "sphinx-copybutton==0.5.2; python_version >= '3.11'",
-  "Sphinx==8.2.0; python_version >= '3.11'",
+  "Sphinx==8.2.3; python_version >= '3.11'",
   "sphinxext-opengraph==0.9.1; python_version >= '3.11'"
 ]
 lint = [
@@ -29,12 +29,12 @@ pre-commit = [
 test = [
   "pytest-cov==6.0.0",
   "pytest-xdist==3.6.1",
-  "pytest==8.3.4",
-  "syrupy==4.8.1"
+  "pytest==8.3.5",
+  "syrupy==4.9.0"
 ]
 types = [
   "setuptools>=61.2",
-  "types-lxml==2024.12.13"
+  "types-lxml==2025.3.4"
 ]
 
 [project]
@@ -117,7 +117,7 @@ tmserver = [
   "cheroot==10.0.1"
 ]
 trados = [
-  "BeautifulSoup4>=4.10.0"
+  "BeautifulSoup4>=4.13.0"
 ]
 yaml = [
   "ruamel.yaml>=0.18.0,<0.19.0"
@@ -298,7 +298,6 @@ ignore = [
   "N816",  # TODO: Variable `theDOMImplementation` in global scope should not be mixedCase
   "N818",  # TODO: Exception name `FilterFailure` should be named with an Error suffix
   "PD011",  # WONTFIX: Use `.to_numpy()` instead of `.values
-  "PERF203",  # TODO: `try`-`except` within a loop incurs performance overhead
   "PLC0415",  # TODO: `import` should be at the top-level of a file
   "PLE2502",  # TODO: Contains control characters that can permit obfuscated code
   "PLR0904",  # TODO: Too many public methods (21 > 20)
@@ -325,9 +324,7 @@ ignore = [
   "RUF003",  # WONTFIX: Comment contains ambiguous
   "RUF012",  # TODO: Mutable class attributes should be annotated with `typing.ClassVar`
   "S101",  # CONFIG: Use of `assert` detected
-  "S105",  # TODO: Possible hardcoded password assigned
   "S301",  # TODO: `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
-  "S307",  # TODO: Use of possibly insecure function; consider using `ast.literal_eval`
   "S311",  # TODO: Standard pseudo-random generators are not suitable for cryptographic purposes
   "S320",  # TODO: Using `lxml` to parse untrusted data is known to be vulnerable to XML attacks
   "S324",  # TODO: Probable use of insecure hash functions in `hashlib`: `md5`
