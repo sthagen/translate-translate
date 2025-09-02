@@ -528,8 +528,8 @@ placeholders enclosed in braces. The placeholders can be named,
 numbered, or anonymous; the former two are filled in from positional
 args, the latter from keyword arguments. Example::
 
-    'the {} {0} hungry {insect}'.format('very', insect='caterpiller')
-    # --> 'the very very hungry caterpiller'
+    'the {} {0} hungry {insect}'.format('very', insect='caterpillar')
+    # --> 'the very very hungry caterpillar'
 
 The ``pythonbraceformat`` filter checks for the following problems:
 
@@ -629,7 +629,7 @@ those to an exclusion list. The advantage of this exclusion is that many words
 that are specific to the application will not raise errors e.g. program names,
 brand names, function names.
 
-The checker works with `PyEnchant <http://pythonhosted.org/pyenchant/>`_. You
+The checker works with `PyEnchant <https://pyenchant.github.io/pyenchant/>`_. You
 need to have PyEnchant installed as well as a dictionary for your language (for
 example, one of the `Hunspell <https://wiki.openoffice.org/wiki/Dictionaries>`_
 or `aspell <http://ftp.gnu.org/gnu/aspell/dict/>`_ dictionaries).  This test
