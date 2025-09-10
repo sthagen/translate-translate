@@ -13,7 +13,7 @@ repos:
   - id: check-hooks-apply
   - id: check-useless-excludes
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.12.12
+  rev: v0.13.0
   hooks:
   - id: ruff-check
     args: [--fix, --exit-non-zero-on-fix]
@@ -28,7 +28,7 @@ repos:
   - id: pretty-format-yaml
     args: [--autofix, --indent, '2']
 - repo: https://github.com/pappasam/toml-sort
-  rev: v0.24.2
+  rev: v0.24.3
   hooks:
   - id: toml-sort-fix
 - repo: https://github.com/abravalheri/validate-pyproject
