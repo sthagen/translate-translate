@@ -8,6 +8,9 @@ from translate.tools import pocompile
 
 from . import test_base
 
+MO_BIG_ENDIAN = b"\x95\x04\x12\xde\x00\x00\x00\x2a\x00\x00\x00\x02\x00\x00\x00\x1c\x00\x00\x00,\x00\x00\x00\x05\x00\x00\x00<\x00\x00\x00\x06\x00\x00\x00P\x00\x00\x00\x07\x00\x00\x00W\x00\x00\x00\x03\x00\x00\x00_\x00\x00\x00\x06\x00\x00\x00c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02simple\x00unicode\x00Een\x00\xe2\x80\xa0wee\x00"
+MO_LITTLE_ENDIAN = b"\xde\x12\x04\x95\x2a\x00\x00\x00\x02\x00\x00\x00\x1c\x00\x00\x00,\x00\x00\x00\x05\x00\x00\x00<\x00\x00\x00\x06\x00\x00\x00P\x00\x00\x00\x07\x00\x00\x00W\x00\x00\x00\x03\x00\x00\x00_\x00\x00\x00\x06\x00\x00\x00c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00simple\x00unicode\x00Een\x00\xe2\x80\xa0wee\x00"
+
 
 class TestMOUnit(test_base.TestTranslationUnit):
     UnitClass = mo.mounit
@@ -550,8 +553,10 @@ class TestMOFile(test_base.TestTranslationStore):
             print("pocompile output:")
             print(repr(mo_pocompile))
 
-            # Compare to known values
-            assert mo_pocompile == mosources[i]
+            # Compare to known values on little endian system as that is the
+            # endianness used in the test data.
+            if sys.byteorder == "little":
+                assert mo_pocompile == mosources[i]
 
             # Do not compare whole content because Gettext has changed the
             # hashing table content in 0.25
@@ -573,3 +578,8 @@ class TestMOFile(test_base.TestTranslationStore):
             # Verify parsing of generated files
             self.StoreClass.parsefile(MO_POCOMPILE)
             self.StoreClass.parsefile(MO_MSGFMT)
+
+    def test_endian_version_parsing(self) -> None:
+        store_big = self.StoreClass(MO_BIG_ENDIAN)
+        store_little = self.StoreClass(MO_LITTLE_ENDIAN)
+        assert store_big.units == store_little.units
