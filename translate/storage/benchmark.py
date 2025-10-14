@@ -75,14 +75,14 @@ class TranslateBenchmarker:
                 dirname = self.file_dir
             for filenum in range(files_per_dir):
                 sample_file = self.StoreClass()
-                for stringnum in range(strings_per_file):
+                for _stringnum in range(strings_per_file):
                     source_string = " ".join(
-                        "word%d" % (random.randint(0, strings_per_file) * i)
+                        "word%d" % (random.randint(0, strings_per_file) * i)  # noqa: S311
                         for i in range(source_words_per_string)
                     )
                     sample_unit = sample_file.addsourceunit(source_string)
                     sample_unit.target = " ".join(
-                        "drow%d" % (random.randint(0, strings_per_file) * i)
+                        "drow%d" % (random.randint(0, strings_per_file) * i)  # noqa: S311
                         for i in range(target_words_per_string)
                     )
                 sample_file.savefile(
@@ -95,7 +95,7 @@ class TranslateBenchmarker:
         self.parsedfiles = []
         if file_dir is None:
             file_dir = self.file_dir
-        for dirpath, subdirs, filenames in os.walk(file_dir, topdown=False):
+        for dirpath, _subdirs, filenames in os.walk(file_dir, topdown=False):
             for name in filenames:
                 pofilename = os.path.join(dirpath, name)
                 parsedfile = self.StoreClass(open(pofilename))
