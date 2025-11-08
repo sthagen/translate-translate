@@ -113,7 +113,7 @@ subtitles = [
   "aeidon>=1.14.1,<1.16"
 ]
 tmserver = [
-  "cheroot==10.0.1"
+  "cheroot==11.1.2"
 ]
 toml = [
   "tomlkit>=0.13.0,<0.14.0"
@@ -433,8 +433,14 @@ extend-ignore-re = [
 plasTeX = "plasTeX"
 
 [tool.typos.default.extend-words]
+# Belarusian/Polish translations in test files
+dni = "dni"
+"dźeń" = "dźeń"
+"dźon" = "dźon"
+elementy = "elementy"
 # Open Document Format acronym
 ODF = "ODF"
+tamu = "tamu"
 Uniforum = "Uniforum"
 # Author name
 Wil = "Wil"
