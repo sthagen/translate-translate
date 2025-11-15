@@ -95,13 +95,7 @@ class GrepMatch:
         start = max(start, 3)
         end = min(end, len(self.get_getter()()) - 3)
         matchpart = self.get_getter()()[start - 2 : end + 2]
-        return '<GrepMatch "%s" part=%s[%d] start=%d end=%d>' % (
-            matchpart,
-            self.part,
-            self.part_n,
-            self.start,
-            self.end,
-        )
+        return f'<GrepMatch "{matchpart}" part={self.part}[{self.part_n}] start={self.start} end={self.end}>'
 
     def __repr__(self):
         return str(self)
@@ -221,13 +215,11 @@ class GrepFilter:
                 if self.matches(string):
                     return True
 
-        if self.search_notes:
-            if self.matches(unit.getnotes()):
-                return True
-        if self.search_locations:
-            if self.matches(" ".join(unit.getlocations())):
-                return True
-        return False
+        if self.search_notes and self.matches(unit.getnotes()):
+            return True
+        return bool(
+            self.search_locations and self.matches(" ".join(unit.getlocations()))
+        )
 
     def filterfile(self, thefile):
         """Runs filters on a translation file object."""

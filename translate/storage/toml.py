@@ -164,19 +164,18 @@ class TOMLFile(base.DictStore):
                 continue
 
             # Collect comments that appear before our key
-            if item_key is None:
-                # Check if this is a Comment (not Whitespace)
-                if isinstance(item_value, TOMLComment):
-                    # Get the comment text directly
-                    comment_text = str(item_value)
-                    if comment_text.startswith("#"):
-                        comments.append(comment_text[1:].strip())
+            # Check if this is a Comment (not Whitespace)
+            if item_key is None and isinstance(item_value, TOMLComment):
+                # Get the comment text directly
+                comment_text = str(item_value)
+                if comment_text.startswith("#"):
+                    comments.append(comment_text[1:].strip())
 
         return None
 
     def _parse_dict(
         self, data: dict[str, Any], prev: base.UnitId
-    ) -> Generator[tuple[base.UnitId, str, str | None], None, None]:
+    ) -> Generator[tuple[base.UnitId, str, str | None]]:
         """Parse a TOML table/dictionary recursively, yielding units."""
         for k, v in data.items():
             yield from self._flatten(v, prev.extend("key", k), parent_map=data, key=k)
@@ -187,7 +186,7 @@ class TOMLFile(base.DictStore):
         prev: base.UnitId | None = None,
         parent_map: dict[str, Any] | list[Any] | None = None,
         key: str | int | None = None,
-    ) -> Generator[tuple[base.UnitId, str, str | None], None, None]:
+    ) -> Generator[tuple[base.UnitId, str, str | None]]:
         """
         Flatten TOML structure recursively into translatable units.
 
@@ -286,7 +285,7 @@ class GoI18nTOMLUnit(TOMLUnit):
             strings = [string or None for string in strings]
 
         # Return a dict with plural tags as keys
-        return dict(zip(tags, strings))
+        return dict(zip(tags, strings, strict=True))
 
 
 class GoI18nTOMLFile(TOMLFile):
@@ -314,7 +313,7 @@ class GoI18nTOMLFile(TOMLFile):
 
     def _parse_dict(
         self, data: dict[str, Any], prev: base.UnitId
-    ) -> Generator[tuple[base.UnitId, str | multistring, str | None], None, None]:
+    ) -> Generator[tuple[base.UnitId, str | multistring, str | None]]:
         """
         Parse a TOML table, checking for plural forms.
 

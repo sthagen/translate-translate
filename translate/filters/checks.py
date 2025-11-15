@@ -1266,8 +1266,7 @@ class StandardChecker(TranslationChecker):
                 )
             else:
                 messages.append(
-                    "Accelerator '%s' occurs %d time(s) in original "
-                    "and %d time(s) in translation" % (accelmarker, count1, count2)
+                    f"Accelerator '{accelmarker}' occurs {count1} time(s) in original and {count2} time(s) in translation"
                 )
 
         if messages:
@@ -1582,7 +1581,7 @@ class StandardChecker(TranslationChecker):
 
         if not sentences1 == sentences2:
             raise FilterFailure(
-                "Different number of sentences: %d ≠ %d" % (sentences1, sentences2)
+                f"Different number of sentences: {sentences1} ≠ {sentences2}"
             )
 
         return True
@@ -1709,7 +1708,6 @@ class StandardChecker(TranslationChecker):
         useful for tracking down translations of the acronym and correcting
         them.
         """
-        acronyms = []
         allowed = []
 
         for startmatch, endmatch in self.config.varmatches:
@@ -1724,10 +1722,14 @@ class StandardChecker(TranslationChecker):
         # see mail/chrome/messanger/smime.properties.po
         # TODO: consider limiting the word length for recognising acronyms to
         # something like 5/6 characters
-        for word in iter:
-            if word.isupper() and len(word) > 1 and word not in allowed:
-                if str2.find(word) == -1:
-                    acronyms.append(word)
+        acronyms = [
+            word
+            for word in iter
+            if word.isupper()
+            and len(word) > 1
+            and word not in allowed
+            and str2.find(word) == -1
+        ]
 
         if acronyms:
             raise FilterFailure(
@@ -1885,9 +1887,8 @@ class StandardChecker(TranslationChecker):
         an example, e.g. ``your_user_name/path/to/filename.conf``.
         """
         for word1 in self.filteraccelerators(self.filterxml(str1)).split():
-            if word1.startswith("/"):
-                if not helpers.countsmatch(str1, str2, (word1,)):
-                    raise FilterFailure("Different file paths")
+            if word1.startswith("/") and not helpers.countsmatch(str1, str2, (word1,)):
+                raise FilterFailure("Different file paths")
 
         return True
 
@@ -2897,7 +2898,7 @@ def batchruntests(pairs):
         if runtests(str1, str2):
             passed += 1
 
-    print("\ntotal: %d/%d pairs passed" % (passed, numpairs))  # noqa: T201
+    print(f"\ntotal: {passed}/{numpairs} pairs passed")  # noqa: T201
 
 
 if __name__ == "__main__":

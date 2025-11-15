@@ -185,7 +185,8 @@ class RecursiveOptionParser(optparse.OptionParser):
                 (
                     ".SH DESCRIPTION\n",
                     "\n\n".join(
-                        re.sub(r"\.\. note::", "Note:", l) for l in description_lines
+                        re.sub(r"\.\. note::", "Note:", line)
+                        for line in description_lines
                     ),
                 )
             )
@@ -812,11 +813,10 @@ class RecursiveOptionParser(optparse.OptionParser):
         inputbase, inputext = self.splitinputext(inputname)
         if options.template:
             for inputext1, templateext1 in self.outputoptions:
-                if inputext == inputext1:
-                    if templateext1:
-                        templatepath = inputbase + os.extsep + templateext1
-                        if self.templateexists(options, templatepath):
-                            return templatepath
+                if inputext == inputext1 and templateext1:
+                    templatepath = inputbase + os.extsep + templateext1
+                    if self.templateexists(options, templatepath):
+                        return templatepath
             if "*" in self.inputformats:
                 for inputext1, templateext1 in self.outputoptions:
                     if inputext1 in {inputext, "*"}:
