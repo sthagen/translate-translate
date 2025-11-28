@@ -28,20 +28,18 @@ from __future__ import annotations
 import copy
 import logging
 import re
-from functools import lru_cache
 from itertools import chain
+from string import punctuation
 from typing import TYPE_CHECKING
-from warnings import warn
 
-from uniseg.linebreak import line_break_units
-from wcwidth import wcswidth
+from unicode_segmentation_rs import gettext_wrap, text_width
 
 from translate.misc import quote
 from translate.misc.multistring import multistring
 from translate.storage import pocommon, poparser
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable
+    from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +59,11 @@ po_unescape_map = {
 po_unescape_re = re.compile(r"\\.")
 po_escape_map = {value: key for (key, value) in po_unescape_map.items()}
 po_escape_re = re.compile("|".join(re.escape(key) for key in po_escape_map))
+
+po_line_break_chars = {"/", "}", ")", ">", "-"}
+po_mergeable_chars = po_line_break_chars | {" ", "\t"}
+po_open_parenthesis_chars = {"{", "("}
+po_punctuation = set(punctuation)
 
 
 def splitlines(text):
@@ -106,17 +109,6 @@ def escapeforpo(line: str) -> str:
     return po_escape_re.sub(escapehandler, line)
 
 
-@lru_cache(maxsize=128)
-def unicode_width(text: str) -> int:
-    result = wcswidth(text)
-    if result == -1:
-        warn(
-            f"String contains control characters or non-displayable characters: {text!r}"
-        )
-        return len(text)
-    return result
-
-
 class PoWrapper:
     r"""
     Gettext-compatible text wrapper for PO files.
@@ -145,118 +137,20 @@ class PoWrapper:
         """
         if not text or self.width <= 0:
             return [text] if text else []
+        return gettext_wrap(text, self.width)
 
-        # Get display width of text
-        text_width = unicode_width(text)
-
-        # If text fits on one line, return it as-is
-        if text_width <= self.width:
-            return [text]
-
-        # Split text into chunks using word separator pattern
-        chunks = self._split_chunks(text)
-
-        # Now wrap the chunks into lines
-        return self._wrap_chunks(chunks)
-
-    def _split_chunks(self, text: str) -> Generator[str]:
-        """
-        Split text into chunks at word boundaries using Unicode line breaking (UAX#14).
-
-        Uses the uniseg library's line_break_units() which implements the
-        Unicode Line Breaking Algorithm. Post-processes to handle:
-        - Escape sequences as atomic units
-        - Slash-separated paths for URLs
-        """
-        # Get line break units using UAX#14
-        chunks: list[str] = []
-        last_chunk = ""
-
-        # Merge split escaped sequences
-        for chunk in line_break_units(text):
-            if last_chunk.endswith("\\"):
-                chunks[-1] += chunk
-            else:
-                chunks.append(chunk)
-            last_chunk = chunk
-
-        # Post-process chunks to handle escape sequences and slashes better
-        for chunk in chunks:
-            # If chunk contains escape sequences or slashes, further split it
-            if "\\" in chunk or ("/" in chunk and "[" not in chunk):
-                # Use manual chunking for this chunk
-                yield from self._manual_chunk(chunk)
-            elif chunk:  # Skip empty chunks
-                yield chunk
-
-    def _manual_chunk(self, text: str) -> list[str]:
-        """Manual text chunking to gracefully handle escape sequences."""
-        chunks: list[str] = []
-        current_chunk: list[str] = []
-        i = 0
-
-        while i < len(text):
-            char = text[i]
-
-            # Check for escape sequence - keep it with the current chunk
-            if i < len(text) - 1 and char == "\\":
-                if (
-                    (current_chunk and current_chunk[-1].endswith((" ", "\t")))
-                    or i == 0
-                    or (chunks and len(chunks[-1]) == 2 and chunks[-1][0] == "\\")
-                ) and (i == len(text) - 2 or text[i + 2] in {" ", "\t", "\\"}):
-                    chunks.extend(("".join(current_chunk), text[i : i + 2]))
-                    current_chunk = []
-                else:
-                    current_chunk.append(text[i : i + 2])
-                i += 2
-                continue
-
-            # Check for whitespace - end current chunk and add whitespace to next
-            if char in " \t":
-                # Save current chunk with trailing space
-                j = i
-                while j < len(text) and text[j] in " \t":
-                    current_chunk.append(text[j])
-                    j += 1
-
-                if current_chunk:
-                    chunks.append("".join(current_chunk))
-                    current_chunk = []
-                i = j
-                continue
-
-            # Check for URL-friendly break after slash
-            if char == "/":
-                current_chunk.append(char)
-                # Add slash and create a break point
-                chunks.append("".join(current_chunk))
-                current_chunk = []
-                i += 1
-                continue
-
-            # Regular character
-            current_chunk.append(char)
-            i += 1
-
-        # Add any remaining chunk
-        if current_chunk:
-            chunks.append("".join(current_chunk))
-
-        return chunks
-
-    def _wrap_chunks(self, chunks: Iterable[str]) -> list[str]:
+    def _wrap_chunks(self, chunks: Iterable[list[str]]) -> list[str]:
         """Wrap chunks into lines."""
         lines = []
         current_line = []
         current_width = 0
 
         for chunk in chunks:
-            chunk_width = unicode_width(chunk)
+            chunk_width = sum(text_width(part) for part in chunk)
 
             # Try to add chunk to current line
             if current_width + chunk_width <= self.width:
-                current_line.append(chunk)
+                current_line.extend(chunk)
                 current_width += chunk_width
             # Chunk doesn't fit
             else:
@@ -267,14 +161,14 @@ class PoWrapper:
                     current_width = 0
 
                 # Add the whole chunk as one line
-                current_line.append(chunk)
+                current_line.extend(chunk)
                 current_width += chunk_width
 
         # Add remaining line
         if current_line:
             lines.append("".join(current_line))
 
-        return lines or [""]
+        return lines
 
 
 def quoteforpo(text: str | None, wrapper_obj: PoWrapper | None = None) -> list[str]:
@@ -286,21 +180,13 @@ def quoteforpo(text: str | None, wrapper_obj: PoWrapper | None = None) -> list[s
     text = escapeforpo(text)
     if wrapper_obj.width == -1:
         return [f'"{text}"']
-    lines = text.split("\\n")
-    for i, line in enumerate(lines[:-1]):
-        lines[i] = f"{line}\\n"
+
+    lines = wrapper_obj.wrap(text)
 
     polines = []
-    len_lines = len(lines)
-    if (
-        len_lines > 2
-        or (len_lines == 2 and lines[1])
-        or len(lines[0]) > wrapper_obj.width - 6
-    ):
+    if len(lines) >= 2 or (lines and len(lines[0]) > wrapper_obj.width - 6):
         polines.append('""')
-    for line in lines:
-        lns = wrapper_obj.wrap(line)
-        polines.extend(f'"{ln}"' for ln in lns)
+    polines.extend(f'"{line}"' for line in lines)
     return polines
 
 
@@ -321,7 +207,7 @@ def unescape(line: str) -> str:
     return po_unescape_re.sub(unescapehandler, line)
 
 
-def unquotefrompo(postr: str) -> str:
+def unquotefrompo(postr: list[str]) -> str:
     return "".join(unescape(line[1:-1]) for line in postr)
 
 
@@ -355,18 +241,18 @@ class pounit(pocommon.pounit):
     # fashion
     __shallow__ = ["_store", "wrapper"]
 
-    def __init__(self, source=None, wrapper=None, **kwargs):
-        self.wrapper = wrapper
-        self.obsolete = False
+    def __init__(self, source=None, wrapper: PoWrapper | None = None, **kwargs):
+        self.wrapper: PoWrapper | None = wrapper
+        self.obsolete: bool = False
         self._initallcomments(blankall=True)
-        self.prev_msgctxt = []
-        self.prev_msgid = []
-        self.prev_msgid_plural = []
-        self.msgctxt = []
-        self.msgid = []
-        self.msgid_pluralcomments = []
-        self.msgid_plural = []
-        self.msgstr = []
+        self.prev_msgctxt: list[str] = []
+        self.prev_msgid: list[str] = []
+        self.prev_msgid_plural: list[str] = []
+        self.msgctxt: list[str] = []
+        self.msgid: list[str] = []
+        self.msgid_pluralcomments: list[str] = []
+        self.msgid_plural: list[str] = []
+        self.msgstr: list[str] | dict[int, list[str]] = []
         super().__init__(source)
 
     @property
@@ -402,21 +288,19 @@ class pounit(pocommon.pounit):
             return multistring([singular, pluralform])
         return singular
 
-    def quote(self, text):
+    def quote(self, text: str) -> list[str]:
         return quoteforpo(text, self.wrapper)
 
-    def _set_source_vars(self, source):
-        msgid = None
-        msgid_plural = None
+    def _set_source_vars(
+        self, source: str | list[str] | multistring
+    ) -> tuple[list[str], list[str]]:
         if isinstance(source, multistring):
             source = source.strings
         if isinstance(source, list):
-            msgid = self.quote(source[0])
-            msgid_plural = self.quote(source[1]) if len(source) > 1 else []
-        else:
-            msgid = self.quote(source)
-            msgid_plural = []
-        return msgid, msgid_plural
+            return self.quote(source[0]), self.quote(source[1]) if len(
+                source
+            ) > 1 else []
+        return self.quote(source), []
 
     @property
     def source(self):
@@ -424,7 +308,7 @@ class pounit(pocommon.pounit):
         return self._get_source_vars(self.msgid, self.msgid_plural)
 
     @source.setter
-    def source(self, source):
+    def source(self, source: str | list[str] | multistring) -> None:
         """
         Sets the msgid to the given (unescaped) value.
 
@@ -493,10 +377,6 @@ class pounit(pocommon.pounit):
         if prev_source and self.isfuzzy():
             unit = type(self)(prev_source)
             unit.target = self.target
-            # Already released versions of Virtaal (0.6.x) only supported XLIFF
-            # alternatives, and expect .xmlelement.get().
-            # This can be removed soon:
-            unit.xmlelement = {}
             return [unit]
         return []
 
@@ -586,9 +466,9 @@ class pounit(pocommon.pounit):
             return sum(len(unquotefrompo(msgstr)) for msgstr in self.msgstr.values())
         return len(unquotefrompo(self.msgstr))
 
-    def merge(self, otherpo, overwrite=False, comments=True, authoritative=False):
+    def merge(self, otherunit, overwrite=False, comments=True, authoritative=False):
         """
-        Merges the otherpo (with the same msgid) into this one.
+        Merges the otherunit (with the same msgid) into this one.
 
         Overwrite non-blank self.msgstr only if overwrite is True
         merge comments only if comments is True
@@ -633,37 +513,37 @@ class pounit(pocommon.pounit):
                     if item not in list1 or len(item) < 5:
                         list1.append(item)
 
-        if not isinstance(otherpo, pounit):
-            super().merge(otherpo, overwrite, comments)
+        if not isinstance(otherunit, pounit):
+            super().merge(otherunit, overwrite, comments)
             return
         if comments:
-            mergelists(self.othercomments, otherpo.othercomments)
-            mergelists(self.typecomments, otherpo.typecomments)
+            mergelists(self.othercomments, otherunit.othercomments)
+            mergelists(self.typecomments, otherunit.typecomments)
             if not authoritative:
-                # We don't bring across otherpo.automaticcomments as we
+                # We don't bring across otherunit.automaticcomments as we
                 # consider ourself to be the the authority.  Same applies
-                # to otherpo.msgidcomments
-                mergelists(self.automaticcomments, otherpo.automaticcomments)
-                mergelists(self.msgidcomments, otherpo.msgidcomments)
-                mergelists(self.sourcecomments, otherpo.sourcecomments, split=True)
+                # to otherunit.msgidcomments
+                mergelists(self.automaticcomments, otherunit.automaticcomments)
+                mergelists(self.msgidcomments, otherunit.msgidcomments)
+                mergelists(self.sourcecomments, otherunit.sourcecomments, split=True)
         if not self.istranslated() or overwrite:
             # Remove kde-style comments from the translation (if any).
-            if self._extract_msgidcomments(otherpo.target):
-                otherpo.target = otherpo.target.replace(
-                    f"_: {otherpo._extract_msgidcomments()}{self.newline}", ""
+            if self._extract_msgidcomments(otherunit.target):
+                otherunit.target = otherunit.target.replace(
+                    f"_: {otherunit._extract_msgidcomments()}{self.newline}", ""
                 )
-            self.target = otherpo.target
+            self.target = otherunit.target
             if (
-                self.source != otherpo.source
-                or self.getcontext() != otherpo.getcontext()
+                self.source != otherunit.source
+                or self.getcontext() != otherunit.getcontext()
             ):
                 self.markfuzzy()
             else:
-                self.markfuzzy(otherpo.isfuzzy())
-        elif not otherpo.istranslated():
-            if self.source != otherpo.source:
+                self.markfuzzy(otherunit.isfuzzy())
+        elif not otherunit.istranslated():
+            if self.source != otherunit.source:
                 self.markfuzzy()
-        elif self.target != otherpo.target:
+        elif self.target != otherunit.target:
             self.markfuzzy()
 
     def isheader(self):
