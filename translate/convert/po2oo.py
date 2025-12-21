@@ -25,6 +25,7 @@ for examples and usage instructions.
 
 import logging
 import os
+import stat
 import time
 
 from translate.convert import convert
@@ -129,6 +130,7 @@ class reoo:
             return
         # finally set the new definition in the oo, but not if its empty
         if len(unquotedstr) > 0:
+            # pylint: disable-next=possibly-used-before-assignment
             setattr(part2, subkey, unquotedstr)
         # set the modified time
         if self.timestamp_str:
@@ -149,8 +151,6 @@ class reoo:
 
 
 def getmtime(filename):
-    import stat
-
     return time.localtime(os.stat(filename)[stat.ST_MTIME])
 
 

@@ -23,6 +23,7 @@ See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/command
 for examples and usage instructions.
 """
 
+from translate.convert import convert
 from translate.storage import factory
 from translate.storage.pypo import unescape
 from translate.storage.symbian import (
@@ -50,7 +51,7 @@ def read_header_items(ps):
         results[match_chunks["key"]] = match_chunks["value"]
         match = header_item_re.match(ps.current_line)
 
-    match = read_while(ps, identity, lambda line: not line.startswith("*/"))
+    read_while(ps, identity, lambda line: not line.startswith("*/"))
     ps.read_line()
     return results
 
@@ -120,8 +121,6 @@ def convert_symbian(
 
 
 def main(argv=None):
-    from translate.convert import convert
-
     formats = {"r01": ("po", convert_symbian)}
     parser = convert.ConvertOptionParser(
         formats, usetemplates=True, usepots=True, description=__doc__

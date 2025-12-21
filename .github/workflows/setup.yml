@@ -3,8 +3,7 @@ name: Distribution
 on:
   push:
     branches-ignore:
-    - dependabot/**
-    - deepsource**
+    - renovate/**
     tags:
     - '*'
   pull_request:
@@ -25,7 +24,7 @@ jobs:
       uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: 3.14
-    - uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+    - uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
       with:
         enable-cache: false
     - name: Install apt dependencies
@@ -58,10 +57,10 @@ jobs:
         uv pip install dist/translate_toolkit*.whl
         moz2po --help
         python ./test-ttk-release-whl/lib/python*/site-packages/translate/lang/identify.py README.rst
-    - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+    - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
       with:
         name: setup
-    - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         path: ./dist/*
 
@@ -74,7 +73,7 @@ jobs:
       # this permission is mandatory for trusted publishing
       id-token: write
     steps:
-    - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         # unpacks default artifact into dist/
         # if `name: artifact` is omitted, the action will create extra parent dir
@@ -93,7 +92,7 @@ jobs:
       # this permission is mandatory for creating a release
       contents: write
     steps:
-    - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         # unpacks default artifact into dist/
         # if `name: artifact` is omitted, the action will create extra parent dir

@@ -100,8 +100,7 @@ class YAMLUnit(base.DictUnit):
                     target = target[key]
         except (KeyError, IndexError, TypeError):
             return None
-        else:
-            return target
+        return target
 
     def storevalue(
         self,
@@ -297,7 +296,7 @@ class YAMLFile(base.DictStore):
             message = getattr(e, "problem", getattr(e, "message", str(e)))
             if hasattr(e, "problem_mark"):
                 message += f" {e.problem_mark}"
-            raise base.ParseError(message)
+            raise base.ParseError(message) from e
 
         content = self.preprocess(self._original)
 

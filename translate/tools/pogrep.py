@@ -66,7 +66,7 @@ class GrepMatch:
             return getter
         if self.part == "locations":
 
-            def getter():
+            def getter():  # pylint: disable=function-redefined
                 return self.unit.getlocations()[self.part_n]
 
             return getter
@@ -317,9 +317,7 @@ class GrepOptionParser(optrecurse.RecursiveOptionParser):
     def set_usage(self, usage=None):
         """Sets the usage string - if usage not given, uses getusagestring for each option."""
         if usage is None:
-            self.usage = "%prog searchstring " + " ".join(
-                self.getusagestring(option) for option in self.option_list
-            )
+            self.usage = f"%prog searchstring {' '.join(self.getusagestring(option) for option in self.option_list)}"
         else:
             super().set_usage(usage)
 

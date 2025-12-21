@@ -19,6 +19,7 @@
 """Factory methods to convert supported input files to supported translatable files."""
 
 import os
+import tempfile
 
 # from translate.convert import prop2po, po2prop, odf2xliff, xliff2odf
 
@@ -135,9 +136,7 @@ def convert(inputfile, template=None, options=None, convert_options=None):
     in_ext, out_ext, templ_ext = None, None, None
 
     # Get extensions from options
-    if options is None:
-        options = {}
-    else:
+    if options is not None:
         if "in_ext" in options:
             in_ext = options["in_ext"]
         if "out_ext" in options:
@@ -185,7 +184,6 @@ def convert(inputfile, template=None, options=None, convert_options=None):
     #      issues when being closed (and deleted) by the rest of the toolkit
     #      (eg. TranslationStore.savefile()). Therefore none of mkstemp()'s
     #      security features are being utilised.
-    import tempfile
 
     tempfd, tempfname = tempfile.mkstemp(
         prefix="ttk_convert", suffix=os.extsep + out_ext

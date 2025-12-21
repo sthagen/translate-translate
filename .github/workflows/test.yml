@@ -3,8 +3,7 @@ name: Tests
 on:
   push:
     branches-ignore:
-    - dependabot/**
-    - deepsource**
+    - renovate/**
   pull_request:
 
 permissions:
@@ -42,7 +41,7 @@ jobs:
       with:
         allow-prereleases: true
         python-version: ${{ matrix.python-version }}
-    - uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+    - uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
       with:
         cache-suffix: ${{ matrix.python-version }}
     - name: Install apt dependencies
@@ -72,6 +71,6 @@ jobs:
         make test-functional
     - name: Coverage
       run: uv run coverage xml
-    - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+    - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
       with:
         name: ${{ runner.os }}, Python ${{ matrix.python-version }}, ${{ matrix.requirements }}

@@ -25,6 +25,7 @@ and :class:`FluentUnit` providing file and unit level access.
 
 from __future__ import annotations
 
+import hashlib
 import re
 import textwrap
 from typing import TYPE_CHECKING, BinaryIO
@@ -837,9 +838,8 @@ class FluentUnit(base.TranslationUnit):
         # string with a collision-resistant hash function.
         # By default, we choose an id that indicates that this represents a
         # fluent Message.
-        import hashlib
 
-        return "gen-" + hashlib.sha256(source.encode()).hexdigest()
+        return f"gen-{hashlib.sha256(source.encode()).hexdigest()}"
 
     def getid(self) -> str | None:
         return self._id
@@ -848,7 +848,7 @@ class FluentUnit(base.TranslationUnit):
     _FLUENT_ID_PATTERN = r"[a-zA-Z][a-zA-Z0-9_-]*"
     _FLUENT_ID_REGEXES = {
         "Message": _FLUENT_ID_PATTERN,
-        "Term": r"-" + _FLUENT_ID_PATTERN,
+        "Term": rf"-{_FLUENT_ID_PATTERN}",
     }
 
     def setid(self, value: str | None) -> None:
@@ -983,10 +983,6 @@ class FluentUnit(base.TranslationUnit):
         :rtype: Entry or None
         :raises ValueError: if the unit source contains an error.
         """
-        fluent_id = self.getid()
-        if fluent_id:
-            # Remove the leading "-" for Terms.
-            fluent_id = re.sub(r"^-", "", fluent_id, count=1)
         if self.fluent_type == "ResourceComment":
             # Create a comment, even if empty. Especially since empty
             # GroupComments are meant to end a previous GroupComment's

@@ -23,6 +23,7 @@ See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/command
 for examples and usage instructions
 """
 
+from translate.convert import convert
 from translate.storage import po, tbx
 
 
@@ -43,9 +44,7 @@ class tbx2po:
             term.source = tbxunit.source
             term.target = tbxunit.target
             term.setcontext(tbxunit.getnotes("definition"))
-            term.addnote(
-                "Part of speech: {}".format(tbxunit.getnotes("pos")), "developer"
-            )
+            term.addnote(f"Part of speech: {tbxunit.getnotes('pos')}", "developer")
             self.pofile.addunit(term)
         self.pofile.removeduplicates()
         return self.pofile
@@ -66,8 +65,6 @@ def converttbx(inputfile, outputfile, templatefile, charset=None, columnorder=No
 
 
 def main():
-    from translate.convert import convert
-
     formats = {
         ("tbx", None): ("po", converttbx),
     }

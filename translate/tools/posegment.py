@@ -23,6 +23,7 @@ See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/command
 for examples and usage instructions.
 """
 
+from translate.convert import convert
 from translate.lang import factory as lang_factory
 from translate.storage import factory, poheader
 
@@ -47,9 +48,9 @@ class segment:
         # certain quality checks are passed, etc.  But for now this is a good
         # start.
         units = []
-        for i in range(len(sourcesegments)):
+        for i, source in enumerate(sourcesegments):
             newunit = unit.copy()
-            newunit.source = sourcesegments[i]
+            newunit.source = source
             if not unit.istranslated():
                 newunit.target = ""
             else:
@@ -96,8 +97,6 @@ def segmentfile(
 
 
 def main():
-    from translate.convert import convert
-
     formats = {
         "po": ("po", segmentfile),
         "xlf": ("xlf", segmentfile),

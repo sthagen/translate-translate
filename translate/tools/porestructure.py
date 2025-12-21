@@ -45,12 +45,7 @@ class SplitOptionParser(optrecurse.RecursiveOptionParser):
     def set_usage(self, usage=None):
         """Sets the usage string - if usage not given, uses getusagestring for each option."""
         if usage is None:
-            self.usage = (
-                "%prog "
-                + " ".join(self.getusagestring(option) for option in self.option_list)
-                + "\n  "
-                + "input directory is searched for PO files with (poconflicts) comments, all entries are written to files in a directory structure for pomerge"
-            )
+            self.usage = f"%prog {' '.join(self.getusagestring(option) for option in self.option_list)}\n  input directory is searched for PO files with (poconflicts) comments, all entries are written to files in a directory structure for pomerge"
         else:
             super().set_usage(usage)
 
@@ -108,6 +103,7 @@ class SplitOptionParser(optrecurse.RecursiveOptionParser):
                         pounit.othercomments.remove(comment)
                         break
                 # TODO: refactor writing out
+                # pylint: disable-next=undefined-loop-variable
                 outputpath = comment[comment.find(")") + 2 :].strip()
                 self.checkoutputsubdir(options, os.path.dirname(outputpath))
                 fulloutputpath = os.path.join(options.output, outputpath)
@@ -121,6 +117,7 @@ class SplitOptionParser(optrecurse.RecursiveOptionParser):
                 )  # TODO:perhaps check to see if it's already there...
                 with open(fulloutputpath, "wb") as fh:
                     outputpofile.serialize(fh)
+        return True
 
 
 def main():

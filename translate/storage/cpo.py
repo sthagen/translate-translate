@@ -306,8 +306,8 @@ else:
         # might be in LD_LIBRARY_PATH or loaded with LD_PRELOAD
         try:
             gpo = cdll.LoadLibrary("libgettextpo.so")
-        except OSError:
-            raise ImportError("gettext PO library not found")
+        except OSError as error:
+            raise ImportError("gettext PO library not found") from error
 
 if gpo:
     setup_call_types(gpo)
@@ -712,7 +712,7 @@ class pounit(pocommon.pounit):
         while location:
             locname = gpo_decode(gpo.po_filepos_file(location))
             locline = gpo.po_filepos_start_line(location)
-            locstring = locname if locline == -1 else ":".join([locname, str(locline)])
+            locstring = locname if locline == -1 else f"{locname}:{locline!s}"
             locations.append(pocommon.unquote_plus(locstring))
             i += 1
             location = gpo.po_message_filepos(self._gpo_message, i)
@@ -991,6 +991,8 @@ class pofile(pocommon.pofile):
 
     def _free_memory_file(self):
         return
+        # TODO: should actually free the memory
+        # pylint: disable-next=unreachable
         if self._gpo_memory_file is not None:
             gpo.po_file_free(self._gpo_memory_file)
             self._gpo_memory_file = None

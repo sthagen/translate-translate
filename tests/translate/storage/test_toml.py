@@ -1,5 +1,6 @@
 import pytest
 
+from translate.misc.multistring import multistring
 from translate.storage import base, toml
 
 from . import test_monolingual
@@ -75,10 +76,13 @@ eggs = "spam"
         store.parse(data)
         assert len(store.units) == 3
         assert store.units[0].getid() == "foo.bar"
+        assert store.units[0].getcontext() == "foo.bar"
         assert store.units[0].source == "bar"
         assert store.units[1].getid() == "foo.baz.boo"
+        assert store.units[1].getcontext() == "foo.baz.boo"
         assert store.units[1].source == "booo"
         assert store.units[2].getid() == "root.eggs"
+        assert store.units[2].getcontext() == "root.eggs"
         assert store.units[2].source == "spam"
         assert bytes(store).decode("ascii") == data
 
@@ -501,7 +505,6 @@ other = "You have {{ .Count }} messages"
         assert len(store.units) == 1
 
         # Modify the plural
-        from translate.misc.multistring import multistring
 
         store.units[0].target = multistring(["Un mensaje", "{{ .Count }} mensajes"])
 

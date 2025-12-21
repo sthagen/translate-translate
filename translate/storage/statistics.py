@@ -18,6 +18,7 @@
 
 """Module to provide statistics and related functionality."""
 
+from translate.filters import checks, pofilter
 from translate.lang import factory
 
 # calling classifyunits() in the constructor is probably not ideal.
@@ -44,8 +45,6 @@ class Statistics:
         self.classification = {}
 
     def init_checker(self, checkerstyle=None):
-        from translate.filters import checks, pofilter
-
         checkerclasses = [
             checkerstyle or checks.StandardChecker,
             pofilter.StandardPOChecker,
@@ -196,10 +195,10 @@ class Statistics:
         for classname, matchingitems in self.classification.items():
             if (classname in classes) != (item in matchingitems):
                 if classname in classes:
-                    self.classification[classname].append(item)
+                    matchingitems.append(item)
                 else:
-                    self.classification[classname].remove(item)
-                self.classification[classname].sort()
+                    matchingitems.remove(item)
+                matchingitems.sort()
 
 
 #        self.savestats()

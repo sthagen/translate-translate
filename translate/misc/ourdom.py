@@ -35,7 +35,7 @@ from xml.dom import expatbuilder, minidom
 def writexml_helper(self, writer, indent="", addindent="", newl=""):
     """
     A replacement for writexml that formats it like typical XML files.
-    Nodes are intendented but text nodes, where whitespace can be significant,
+    Nodes are indented but text nodes, where whitespace can be significant,
     are not indented.
     """
     # indent = current indentation
@@ -78,7 +78,7 @@ def writexml_helper(self, writer, indent="", addindent="", newl=""):
         writer.write(f"/>{newl}")
 
 
-def getElementsByTagName_helper(parent, name, dummy=None):
+def getElementsByTagName_helper(parent, name):
     """
     A reimplementation of getElementsByTagName as an iterator.
 
@@ -99,8 +99,7 @@ def searchElementsByTagName_helper(parent, name, onlysearch):
         if node.nodeType == minidom.Node.ELEMENT_NODE and (name in {"*", node.tagName}):
             yield node
         if node.nodeType == minidom.Node.ELEMENT_NODE and node.tagName in onlysearch:
-            for node in node.searchElementsByTagName(name, onlysearch):
-                yield node
+            yield from node.searchElementsByTagName(name, onlysearch)
 
 
 def getFirstElementByTagName(node, name):
@@ -264,7 +263,7 @@ class ExpatBuilderNS(expatbuilder.ExpatBuilderNS):
 # parser methods that use our modified xml classes
 
 
-def parse(file, parser=None, bufsize=None):
+def parse(file):
     """Parse a file into a DOM by filename or file object."""
     builder = ExpatBuilderNS()
     if isinstance(file, str):
@@ -275,7 +274,7 @@ def parse(file, parser=None, bufsize=None):
     return result
 
 
-def parseString(string, parser=None):
+def parseString(string):
     """Parse a file into a DOM from a string."""
     builder = ExpatBuilderNS()
     return builder.parseString(string)

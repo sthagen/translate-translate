@@ -23,6 +23,7 @@ See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/command
 for examples and usage instructions.
 """
 
+from translate.convert import convert
 from translate.misc.multistring import multistring
 from translate.storage import po, ts2
 
@@ -57,10 +58,10 @@ class po2ts:
         # If they're identical up to the end of the shorter string
         if first_diff == min_len:
             # Check if plural is just singular + 's'
-            if len(plural) == len(singular) + 1 and plural == singular + "s":
+            if len(plural) == len(singular) + 1 and plural == f"{singular}s":
                 return f"{singular}(s)"
             # Check if plural is just singular + 'es'
-            if len(plural) == len(singular) + 2 and plural == singular + "es":
+            if len(plural) == len(singular) + 2 and plural == f"{singular}es":
                 return f"{singular}(es)"
         # They differ somewhere in the middle
         # Check if the difference is just an 's' insertion
@@ -124,8 +125,6 @@ def convertpo(inputfile, outputfile, templatefile, context):
 
 
 def main(argv=None):
-    from translate.convert import convert
-
     formats = {"po": ("ts", convertpo), ("po", "ts"): ("ts", convertpo)}
     parser = convert.ConvertOptionParser(
         formats, usepots=False, usetemplates=True, description=__doc__

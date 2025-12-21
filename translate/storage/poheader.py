@@ -294,15 +294,15 @@ class poheader:
           3. Analysing the 'Language-Team' entry.
         """
         header = self.parseheader()
-        lang = header.get("Language")
-        if lang is not None:
-            from translate.lang.data import langcode_ire
+        if lang := header.get("Language"):
+            # pylint: disable-next=import-outside-toplevel
+            from translate.lang.data import langcode_ire  # noqa: PLC0415
 
             if langcode_ire.match(lang):
                 return lang
-            lang = None
         if "X-Poedit-Language" in header:
-            from translate.lang import poedit
+            # pylint: disable-next=import-outside-toplevel
+            from translate.lang import poedit  # noqa: PLC0415
 
             language = header.get("X-Poedit-Language")
             country = header.get("X-Poedit-Country")
@@ -310,7 +310,8 @@ class poheader:
         if "Language-Code" in header:  # Used in Plone files
             return header.get("Language-Code")
         if "Language-Team" in header:
-            from translate.lang.team import guess_language
+            # pylint: disable-next=import-outside-toplevel
+            from translate.lang.team import guess_language  # noqa: PLC0415
 
             return guess_language(header.get("Language-Team"))
         return None
@@ -426,8 +427,7 @@ class poheader:
 
         year = time.strftime("%Y")
         contribexists = False
-        for i in range(len(contriblines)):
-            line = contriblines[i]
+        for i, line in enumerate(contriblines):
             if name in line and (email is None or email in line):
                 contribexists = True
                 if year in line:

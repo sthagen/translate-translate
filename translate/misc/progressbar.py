@@ -21,6 +21,9 @@ Progress bar utilities for reporting feedback on the progress of an
 application.
 """
 
+import sys
+import time
+
 
 class DotsProgressBar:
     """
@@ -29,8 +32,6 @@ class DotsProgressBar:
     """
 
     def __init__(self):
-        import sys
-
         self.stderr = sys.stderr
         self.amount = 0
 
@@ -89,10 +90,8 @@ class ProgressBar:
         numHashes = round(numHashes)
 
         # build a progress bar with hashes and spaces
-        self.progBar = "[{}{}] {:3d}%".format(
-            "#" * numHashes,
-            " " * (allFull - numHashes),
-            percentDone,
+        self.progBar = (
+            f"[{'#' * numHashes}{' ' * (allFull - numHashes)}] {percentDone:3d}%"
         )
         return str(self.progBar)
 
@@ -109,8 +108,6 @@ class MessageProgressBar(ProgressBar):
     """
 
     def __init__(self, *args, **kwargs):
-        import sys
-
         self.sys = sys
         super().__init__(*args, **kwargs)
 
@@ -123,8 +120,6 @@ class HashProgressBar(ProgressBar):
     """A ProgressBar which knows how to go back to the beginning of the line."""
 
     def __init__(self, *args, **kwargs):
-        import sys
-
         self.sys = sys
         super().__init__(*args, **kwargs)
 
@@ -147,7 +142,7 @@ class VerboseProgressBar(HashProgressBar):
 
     def show(self, verbosemessage):
         output = str(self)
-        self.sys.stderr.write("\r" + " " * self.lastwidth)
+        self.sys.stderr.write(f"\r{' ' * self.lastwidth}")
         self.sys.stderr.write(f"\r{verbosemessage}\n")
         self.lastwidth = len(output)
         self.sys.stderr.write(f"\r{output}")
@@ -155,8 +150,6 @@ class VerboseProgressBar(HashProgressBar):
 
 
 def test(progressbar):
-    import time
-
     for n in range(progressbar.min, progressbar.max + 1, 5):
         progressbar.amount = n
         progressbar.show("Some message")

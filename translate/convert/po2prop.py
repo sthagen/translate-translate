@@ -26,6 +26,7 @@ for examples and usage instructions.
 import warnings
 
 from translate.convert import accesskey, convert
+from translate.lang import data
 from translate.misc import quote
 from translate.storage import po, properties
 
@@ -114,8 +115,6 @@ class reprop:
 
     def _explode_gaia_plurals(self):
         """Explode the gaia plurals."""
-        from translate.lang import data
-
         for unit in self.inputstore.units:
             if not unit.hasplural():
                 continue
@@ -150,7 +149,6 @@ class reprop:
             "many": "many",
             "other": "",
         }
-        from translate.lang import data
 
         for unit in self.inputstore.units:
             if not unit.hasplural():
@@ -219,13 +217,7 @@ class reprop:
                         value = self._handle_accesskeys(unit, key)
                     self.inecho = False
                     assert isinstance(value, str)
-                    returnline = "{key}{delimiter}{value}{term}{eol}".format(
-                        key=f"{self.personality.key_wrap_char}{key}{self.personality.key_wrap_char}",
-                        delimiter=delimiter if delimiter_pos != -1 or value else "",
-                        value=f"{self.personality.value_wrap_char}{self.personality.encode(value)}{self.personality.value_wrap_char}",
-                        term=self.personality.pair_terminator,
-                        eol=eol,
-                    )
+                    returnline = f"{self.personality.key_wrap_char}{key}{self.personality.key_wrap_char}{delimiter if delimiter_pos != -1 or value else ''}{self.personality.value_wrap_char}{self.personality.encode(value)}{self.personality.value_wrap_char}{self.personality.pair_terminator}{eol}"
             else:
                 self.inecho = True
                 returnline = line + eol
@@ -320,9 +312,7 @@ def main(argv=None):
         default=properties.default_dialect,
         type="choice",
         choices=list(properties.dialects),
-        help="override the input file format: {} (for .properties files, default: {})".format(
-            ", ".join(properties.dialects), properties.default_dialect
-        ),
+        help=f"override the input file format: {', '.join(properties.dialects)} (for .properties files, default: {properties.default_dialect})",
         metavar="TYPE",
     )
     parser.add_option(

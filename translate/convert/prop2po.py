@@ -24,8 +24,11 @@ for examples and usage instructions.
 """
 
 import logging
+import re
 
+from translate.convert import convert
 from translate.convert.accesskey import UnitMixer
+from translate.lang import data
 from translate.storage import po, properties
 
 logger = logging.getLogger(__name__)
@@ -194,10 +197,6 @@ class prop2po:
                 self.unit = unit
                 self.variants = {}
 
-        import re
-
-        from translate.lang import data
-
         regex = re.compile(r"([^\[\]]*)(?:\[(.*)\])?")
         names = data.cldr_plural_categories
         new_store = type(postore)()
@@ -311,7 +310,6 @@ class prop2po:
         if current_plural:
             # The file ended with a set of plural units
             _append_plural_unit(new_store, plurals, current_plural)
-            current_plural = ""
 
         # if everything went well, there should be nothing left in plurals
         if len(plurals) != 0:
@@ -487,8 +485,6 @@ formats = {
 
 
 def main(argv=None):
-    from translate.convert import convert
-
     parser = convert.ConvertOptionParser(
         formats, usetemplates=True, usepots=True, description=__doc__
     )
@@ -499,9 +495,7 @@ def main(argv=None):
         default=properties.default_dialect,
         type="choice",
         choices=list(properties.dialects.keys()),
-        help="override the input file format: {} (for .properties files, default: {})".format(
-            ", ".join(properties.dialects.keys()), properties.default_dialect
-        ),
+        help=f"override the input file format: {', '.join(properties.dialects.keys())} (for .properties files, default: {properties.default_dialect})",
         metavar="TYPE",
     )
     parser.add_option(

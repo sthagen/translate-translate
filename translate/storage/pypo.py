@@ -30,16 +30,12 @@ import logging
 import re
 from itertools import chain
 from string import punctuation
-from typing import TYPE_CHECKING
 
-from unicode_segmentation_rs import gettext_wrap, text_width
+from unicode_segmentation_rs import gettext_wrap
 
 from translate.misc import quote
 from translate.misc.multistring import multistring
 from translate.storage import pocommon, poparser
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +66,7 @@ def splitlines(text):
     """
     Split lines based on first newline char.
 
-    Can not use univerzal newlines as they match any newline like
+    Can not use universal newlines as they match any newline like
     character inside text and that breaks on files with unix newlines
     and LF chars inside comments.
 
@@ -139,37 +135,6 @@ class PoWrapper:
             return [text] if text else []
         return gettext_wrap(text, self.width)
 
-    def _wrap_chunks(self, chunks: Iterable[list[str]]) -> list[str]:
-        """Wrap chunks into lines."""
-        lines = []
-        current_line = []
-        current_width = 0
-
-        for chunk in chunks:
-            chunk_width = sum(text_width(part) for part in chunk)
-
-            # Try to add chunk to current line
-            if current_width + chunk_width <= self.width:
-                current_line.extend(chunk)
-                current_width += chunk_width
-            # Chunk doesn't fit
-            else:
-                if current_line:
-                    # Save current line and start new one
-                    lines.append("".join(current_line))
-                    current_line = []
-                    current_width = 0
-
-                # Add the whole chunk as one line
-                current_line.extend(chunk)
-                current_width += chunk_width
-
-        # Add remaining line
-        if current_line:
-            lines.append("".join(current_line))
-
-        return lines
-
 
 def quoteforpo(text: str | None, wrapper_obj: PoWrapper | None = None) -> list[str]:
     """Quotes the given text for a PO file, returning quoted and escaped lines."""
@@ -221,7 +186,7 @@ def extractstr(string: str) -> str:
     right = string.rfind('"')
     if right > -1:
         return string[left : right + 1]
-    return string[left:] + '"'
+    return f'{string[left:]}"'
 
 
 class pounit(pocommon.pounit):
@@ -415,7 +380,7 @@ class pounit(pocommon.pounit):
             commentlist = self.automaticcomments
             linestart = "#."
         newcomments = [
-            "".join((linestart, " " if line else "", line, self.newline))
+            f"{linestart}{' ' if line else ''}{line}{self.newline}"
             for line in text.split(self.newline)
         ]
         if position == "append":
@@ -686,7 +651,7 @@ class pounit(pocommon.pounit):
                     comment = comment.removesuffix("\\n")
                     # Before we used to strip. Necessary in some cases?
                     combinedcomment.append(comment)
-                partcomments = self.quote("_:{}".format("".join(combinedcomment)))
+                partcomments = self.quote(f"_:{''.join(combinedcomment)}")
                 # Strip heading empty line for multiline string, it was already added above
                 if partcomments[0] == '""':
                     partcomments = partcomments[1:]
@@ -880,9 +845,7 @@ class pofile(pocommon.pofile):
         markedpos = []
 
         def addcomment(thepo):
-            thepo.msgidcomments.append(
-                '"_: {}\\n"'.format(" ".join(thepo.getlocations()))
-            )
+            thepo.msgidcomments.append(f'"_: {" ".join(thepo.getlocations())}\\n"')
             markedpos.append(thepo)
 
         for thepo in self.units:
@@ -901,11 +864,11 @@ class pofile(pocommon.pofile):
                     origpo = id_dict[id]
                     if origpo not in markedpos and not origpo.msgctxt:
                         origpo.msgctxt.append(
-                            '"{}"'.format(escapeforpo(" ".join(origpo.getlocations())))
+                            f'"{escapeforpo(" ".join(origpo.getlocations()))}"'
                         )
                         markedpos.append(thepo)
                     thepo.msgctxt.append(
-                        '"{}"'.format(escapeforpo(" ".join(thepo.getlocations())))
+                        f'"{escapeforpo(" ".join(thepo.getlocations()))}"'
                     )
                     if thepo.msgctxt != id_dict[id].msgctxt:
                         uniqueunits.append(thepo)
@@ -921,7 +884,7 @@ class pofile(pocommon.pofile):
                         addcomment(thepo)
                     else:
                         thepo.msgctxt.append(
-                            '"{}"'.format(escapeforpo(" ".join(thepo.getlocations())))
+                            f'"{escapeforpo(" ".join(thepo.getlocations()))}"'
                         )
                 id_dict[id] = thepo
                 uniqueunits.append(thepo)
