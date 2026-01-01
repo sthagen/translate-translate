@@ -37,7 +37,7 @@ test = [
 ]
 types = [
   "setuptools>=61.2",
-  "types-lxml==2025.11.25",
+  "types-lxml==2026.1.1",
   "wcwidth-stubs==0.2.14.0"
 ]
 
@@ -125,7 +125,7 @@ trados = [
   "BeautifulSoup4>=4.13.0"
 ]
 yaml = [
-  "ruamel.yaml>=0.18.0,<0.19.0"
+  "ruamel.yaml>=0.18.0,<0.20.0"
 ]
 
 [project.readme]
