@@ -18,10 +18,16 @@
 
 """Contains XLIFF-specific placeables."""
 
+from __future__ import annotations
+
 from copy import copy
+from typing import TYPE_CHECKING
 
 from translate.storage.placeables import base
 from translate.storage.placeables.strelem import StringElem
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = (
     "Bpt",
@@ -84,7 +90,9 @@ class UnknownXML(StringElem):
     iseditable = True
 
     # INITIALIZERS #
-    def __init__(self, sub=None, id=None, rid=None, xid=None, xml_node=None, **kwargs):
+    def __init__(
+        self, sub=None, id=None, rid=None, xid=None, xml_node=None, **kwargs
+    ) -> None:
         super().__init__(sub=sub, id=id, rid=rid, xid=xid, **kwargs)
         if xml_node is None:
             raise ValueError("xml_node must be a lxml node")
@@ -94,7 +102,7 @@ class UnknownXML(StringElem):
             self.has_content = True
 
     # SPECIAL METHODS #
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         String representation of the sub-tree with the current node as the
         root.
@@ -171,4 +179,4 @@ def to_xliff_placeables(tree):
     return newtree
 
 
-parsers = []
+parsers: list[Callable[[str], list[StringElem] | None]] = []

@@ -63,13 +63,13 @@ class tbxunit(lisa.LISAunit):
             return self.namespaced("descrip")
         return self.namespaced("note")
 
-    def removenotes(self, origin=None):
+    def removenotes(self, origin=None) -> None:
         """Remove all the translator notes."""
         notes = self.xmlelement.iterdescendants(self._get_origin_element(origin))
         for note in notes:
             self.xmlelement.remove(note)
 
-    def addnote(self, text, origin=None, position="append"):
+    def addnote(self, text, origin=None, position="append") -> None:
         """Add a note specifically in a "note" tag."""
         if position != "append":
             self.removenotes(origin=origin)
@@ -108,14 +108,12 @@ class tbxunit(lisa.LISAunit):
             and node.get("type") == "Translation needed"
         )
 
-    def _getnotelist(self, origin=None):
+    def _getnotelist(self, origin=None) -> list[str]:
         """
         Returns the text from notes matching ``origin`` or all notes.
 
         :param origin: The origin of the note (or note type)
-        :type origin: String
         :return: The text from notes matching ``origin``
-        :rtype: List
         """
         note_nodes = self._getnotenodes(origin=origin)
         # TODO: consider using xpath to construct initial_list directly
@@ -156,8 +154,6 @@ class tbxunit(lisa.LISAunit):
 
         The deprecated administrative status in TBX basic maps to translate toolkit's
         concept of obsolete units.
-
-        :rtype: bool
         """
         for note in self._getnotenodes(origin="pos"):
             if self._is_administrative_status_term_node(note) and self._getnodetext(
@@ -193,6 +189,6 @@ class tbxfile(lisa.LISAfile):
 </martif>"""
     XMLindent = {"indent": "    ", "toplevel": False}
 
-    def addheader(self):
+    def addheader(self) -> None:
         """Initialise headers with TBX specific things."""
         setXMLlang(self.document.getroot(), self.sourcelanguage)

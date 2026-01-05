@@ -31,15 +31,13 @@ from translate.storage import csvl10n, po
 logger = logging.getLogger(__name__)
 
 
-def replacestrings(source, *pairs):
+def replacestrings(source: str, *pairs: tuple[str, str]) -> str:
     r"""
     Use ``pairs`` of ``(original, replacement)`` to replace text found in
     ``source``.
 
     :param source: String to on which ``pairs`` of strings are to be replaced
-    :type source: String
     :param \*pairs: Strings to be matched and replaced
-    :type \*pairs: One or more tuples of (original, replacement)
     :return: String with ``*pairs`` of strings replaced
     """
     for orig, new in pairs:
@@ -67,7 +65,7 @@ class csv2po:
     file.
     """
 
-    def __init__(self, templatepo=None, charset=None, duplicatestyle="keep"):
+    def __init__(self, templatepo=None, charset=None, duplicatestyle="keep") -> None:
         """Construct the converter..."""
         self.pofile = templatepo
         self.charset = charset
@@ -81,7 +79,7 @@ class csv2po:
             self.unmatched = 0
             self.makeindex()
 
-    def makeindex(self):
+    def makeindex(self) -> None:
         """Makes indexes required for searching..."""
         for pounit in self.pofile.units:
             joinedcomment = " ".join(pounit.getlocations())
@@ -117,7 +115,7 @@ class csv2po:
         pounit.setcontext(csvunit.getcontext())
         return pounit
 
-    def handlecsvunit(self, csvunit):
+    def handlecsvunit(self, csvunit) -> None:
         """Handles reintegrating a csv unit into the .po file."""
         if len(csvunit.location.strip()) > 0 and csvunit.location in self.commentindex:
             pounit = self.commentindex[csvunit.location]
@@ -235,7 +233,7 @@ def convertcsv(
     charset=None,
     columnorder=None,
     duplicatestyle="msgctxt",
-):
+) -> int:
     """
     Reads in inputfile using csvl10n, converts using csv2po, writes to
     outputfile.
@@ -255,11 +253,11 @@ def convertcsv(
     return 1
 
 
-def columnorder_callback(option, opt, value, parser):
+def columnorder_callback(option, opt, value, parser) -> None:
     setattr(parser.values, option.dest, value.split(","))
 
 
-def main(argv=None):
+def main(argv=None) -> None:
     formats = {
         ("csv", "po"): ("po", convertcsv),
         ("csv", "pot"): ("po", convertcsv),
