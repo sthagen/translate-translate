@@ -287,7 +287,7 @@ class Dialect:
         """
         Find the type and position of the delimiter in a property line.
 
-        Property files can be delimited by "=", ":" or whitespace (space for now).
+        Property files can be delimited by "=", ":" or whitespace (any whitespace character).
         We find the position of each delimiter, then find the one that appears
         first.
 
@@ -312,12 +312,21 @@ class Dialect:
                 start_pos += 1
         # Find the position of each delimiter type
         for delimiter, value in delimiters.items():
-            pos = line.find(delimiter, start_pos)
-            while pos != -1:
-                if value == -1 and line[pos - 1] != "\\":
-                    delimiters[delimiter] = pos
-                    break
-                pos = line.find(delimiter, pos + 1)
+            if delimiter == " ":
+                # For whitespace delimiter, find any whitespace character (tab, space, etc.)
+                pos = start_pos
+                while pos < len(line):
+                    if line[pos].isspace() and (pos == 0 or line[pos - 1] != "\\"):
+                        delimiters[delimiter] = pos
+                        break
+                    pos += 1
+            else:
+                pos = line.find(delimiter, start_pos)
+                while pos != -1:
+                    if value == -1 and line[pos - 1] != "\\":
+                        delimiters[delimiter] = pos
+                        break
+                    pos = line.find(delimiter, pos + 1)
         # Find the first delimiter
         mindelimiter = None
         minpos = -1
@@ -1138,8 +1147,9 @@ class propfile(base.TranslationStore):
         inmultilinevalue = False
         inmultilinecomment = False
         was_header = False
+        unit_start_line = 1
 
-        for line in propsrc.split("\n"):
+        for linenum, line in enumerate(propsrc.split("\n"), start=1):
             # handle multiline value if we're in one
             line = rstripeol(line)
             if inmultilinevalue:
@@ -1154,8 +1164,10 @@ class propfile(base.TranslationStore):
                 if not inmultilinevalue:
                     # we're finished, add it to the list...
                     newunit.value = self.personality.value_strip(newunit.value)
+                    newunit._line_number = unit_start_line
                     self.addunit(newunit)
                     newunit = self.UnitClass("", self.personality.name)
+                    unit_start_line = linenum + 1
             # otherwise, this could be a comment
             # FIXME handle // inline comments
             elif (
@@ -1177,14 +1189,18 @@ class propfile(base.TranslationStore):
                 # this is a blank line...
                 # avoid adding comment only units
                 if newunit.name:
+                    newunit._line_number = unit_start_line
                     self.addunit(newunit)
                     newunit = self.UnitClass("", self.personality.name)
+                    unit_start_line = linenum + 1
                 else:
                     newunit.comments.append("")
 
                 if not was_header and str(newunit).strip():
+                    newunit._line_number = unit_start_line
                     self.addunit(newunit)
                     newunit = self.UnitClass("", self.personality.name)
+                    unit_start_line = linenum + 1
                     was_header = True
 
             else:
@@ -1211,8 +1227,10 @@ class propfile(base.TranslationStore):
                     for comment in inline_comments:
                         if comment not in self.personality.drop_comments:
                             newunit.comments.append(comment)
+                    newunit._line_number = unit_start_line
                     self.addunit(newunit)
                     newunit = self.UnitClass("", self.personality.name)
+                    unit_start_line = linenum + 1
                 else:
                     newunit.name = self.personality.key_strip(line[:delimiter_pos])
                     newunit.missing = ismissing
@@ -1233,10 +1251,13 @@ class propfile(base.TranslationStore):
                         )
                     else:
                         newunit.value = self.personality.value_strip(value_part)
+                        newunit._line_number = unit_start_line
                         self.addunit(newunit)
                         newunit = self.UnitClass("", self.personality.name)
+                        unit_start_line = linenum + 1
         # see if there is a leftover one...
         if inmultilinevalue or any(newunit.comments):
+            newunit._line_number = unit_start_line
             self.addunit(newunit)
 
         if self.personality.has_plurals:

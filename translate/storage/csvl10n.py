@@ -371,6 +371,11 @@ class csvfile(base.TranslationStore):
                     # HACKISH: most probably a default, not real detection
                     self.dialect.quoting = csv.QUOTE_ALL
                     self.dialect.doublequote = True
+                elif self.dialect.quoting == csv.QUOTE_NONNUMERIC:
+                    # QUOTE_NONNUMERIC causes csv.reader to convert unquoted values to floats
+                    # which fails for non-numeric strings like header names
+                    self.dialect.quoting = csv.QUOTE_ALL
+                    self.dialect.doublequote = True
                 # Add delimiter for single value CSV where none is present or is obviously invalid
                 if not self.dialect.delimiter or self.dialect.delimiter in {
                     '"',
@@ -398,6 +403,7 @@ class csvfile(base.TranslationStore):
         for row in reader:
             newce = self.UnitClass()
             newce.fromdict(row)
+            newce._line_number = reader.line_num
             if not first_row or not newce.match_header():
                 self.addunit(newce)
             first_row = False

@@ -28,14 +28,19 @@ from __future__ import annotations
 import copy
 import logging
 import re
+from functools import lru_cache
 from itertools import chain
 from string import punctuation
+from typing import TYPE_CHECKING
 
 from unicode_segmentation_rs import gettext_wrap
 
 from translate.misc import quote
 from translate.misc.multistring import multistring
 from translate.storage import pocommon, poparser
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +67,7 @@ po_open_parenthesis_chars = {"{", "("}
 po_punctuation = set(punctuation)
 
 
-def splitlines(text):
+def splitlines(text: bytes) -> tuple[list[bytes], str]:
     r"""
     Split lines based on first newline char.
 
@@ -189,8 +194,13 @@ def unescape(line: str) -> str:
     return po_unescape_re.sub(unescapehandler, line)
 
 
-def unquotefrompo(postr: list[str]) -> str:
+@lru_cache(maxsize=2048)
+def _unquotefrompo(postr: tuple[str]) -> str:
     return "".join(unescape(line[1:-1]) for line in postr)
+
+
+def unquotefrompo(postr: list[str]) -> str:
+    return _unquotefrompo(tuple(postr))
 
 
 def is_null(lst: list[str]) -> bool:
@@ -235,6 +245,8 @@ class pounit(pocommon.pounit):
         self.msgid_pluralcomments: list[str] = []
         self.msgid_plural: list[str] = []
         self.msgstr: list[str] | dict[int, list[str]] = []
+        self._msgstrlen_cache: int | None = None
+        self._typecomments_cache: list[str] | None = None
         super().__init__(source)
 
     @property
@@ -250,6 +262,7 @@ class pounit(pocommon.pounit):
             self.automaticcomments = []
             self.sourcecomments = []
             self.typecomments = []
+            self._typecomments_cache = []
             self.msgidcomments = []
 
     def _get_all_comments(self):
@@ -317,12 +330,13 @@ class pounit(pocommon.pounit):
     def target(self):
         """Returns the unescaped msgstr."""
         if isinstance(self.msgstr, dict):
-            return multistring(list(map(unquotefrompo, self.msgstr.values())))
+            return multistring([unquotefrompo(value) for value in self.msgstr.values()])
         return unquotefrompo(self.msgstr)
 
     @target.setter
     def target(self, target) -> None:
         """Sets the msgstr to the given (unescaped) value."""
+        self._msgstrlen_cache = None
         self._rich_target = None
         if self.hasplural():
             if isinstance(target, multistring):
@@ -446,9 +460,14 @@ class pounit(pocommon.pounit):
         return len(unquotefrompo(self.msgid))
 
     def _msgstrlen(self):
-        if isinstance(self.msgstr, dict):
-            return sum(len(unquotefrompo(msgstr)) for msgstr in self.msgstr.values())
-        return len(unquotefrompo(self.msgstr))
+        if self._msgstrlen_cache is None:
+            if isinstance(self.msgstr, dict):
+                self._msgstrlen_cache = sum(
+                    len(unquotefrompo(msgstr)) for msgstr in self.msgstr.values()
+                )
+            else:
+                self._msgstrlen_cache = len(unquotefrompo(self.msgstr))
+        return self._msgstrlen_cache
 
     def merge(
         self, otherunit, overwrite=False, comments=True, authoritative=False
@@ -505,6 +524,7 @@ class pounit(pocommon.pounit):
         if comments:
             mergelists(self.othercomments, otherunit.othercomments)
             mergelists(self.typecomments, otherunit.typecomments)
+            self._typecomments_cache = None
             if not authoritative:
                 # We don't bring across otherunit.automaticcomments as we
                 # consider ourself to be the the authority.  Same applies
@@ -554,7 +574,7 @@ class pounit(pocommon.pounit):
         # Before, the equivalent of the following was the final return statement:
         # return len(self.source.strip()) == 0
 
-    def _extracttypecomment(self):
+    def _extracttypecomment(self) -> Generator[str]:
         for tc in self.typecomments:
             for flag in tc.split(","):
                 value = flag.strip()
@@ -562,13 +582,16 @@ class pounit(pocommon.pounit):
                     continue
                 yield value
 
-    def hastypecomment(self, typecomment, parsed=None):
+    def _ensure_typecomments_cache(self) -> None:
+        if self._typecomments_cache is None:
+            self._typecomments_cache = list(self._extracttypecomment())
+
+    def hastypecomment(self, typecomment: str) -> bool:
         """Check whether the given type comment is present."""
         if not self.typecomments:
             return False
-        if not parsed:
-            parsed = self._extracttypecomment()
-        return typecomment in parsed
+        self._ensure_typecomments_cache()
+        return typecomment in self._typecomments_cache
 
     def hasmarkedcomment(self, commentmarker) -> bool:
         """
@@ -584,17 +607,18 @@ class pounit(pocommon.pounit):
                 return True
         return False
 
-    def settypecomment(self, typecomment, present=True) -> None:
+    def settypecomment(self, typecomment: str, present: bool = True) -> None:
         """Alters whether a given typecomment is present."""
-        typecomments = list(self._extracttypecomment())
-        if self.hastypecomment(typecomment, typecomments) != present:
+        if self.hastypecomment(typecomment) != present:
+            # The typecomments cache might be still missing if typecomments are not present
+            self._ensure_typecomments_cache()
             if present:
-                typecomments.append(typecomment)
+                self._typecomments_cache.append(typecomment)
             else:
-                typecomments.remove(typecomment)
-            if typecomments:
-                typecomments.sort()
-                comments_str = ", ".join(typecomments)
+                self._typecomments_cache.remove(typecomment)
+            if self._typecomments_cache:
+                self._typecomments_cache.sort()
+                comments_str = ", ".join(self._typecomments_cache)
                 self.typecomments = [f"#, {comments_str}{self.newline}"]
             else:
                 self.typecomments = []
@@ -821,7 +845,7 @@ class pounit(pocommon.pounit):
         return id
 
 
-class pofile(pocommon.pofile):
+class pofile(pocommon.pofile[pounit]):
     """A .po file containing various units."""
 
     UnitClass = pounit
@@ -848,7 +872,7 @@ class pofile(pocommon.pofile):
         lines, self.newline = splitlines(input)
         # clear units to get rid of automatically generated headers before parsing
         self.units = []
-        poparser.parse_units(poparser.ParseState(iter(lines), self.create_unit), self)
+        poparser.parse_units(poparser.PoParseState(lines, self.create_unit), self)
 
     def removeduplicates(self, duplicatestyle="merge") -> None:
         """

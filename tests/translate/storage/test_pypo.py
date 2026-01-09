@@ -162,6 +162,48 @@ class TestPYPOUnit(test_po.TestPOUnit):
         assert str(unit) == '# # Double commented comment\nmsgid "File"\nmsgstr ""\n'
         assert unit.getnotes() == "# Double commented comment"
 
+    def test_notes_with_blank_lines(self) -> None:
+        """Tests that blank comment lines (just #) are preserved."""
+        unit = self.UnitClass("File")
+        # Add a note with blank lines in it
+        unit.addnote("Line 1\n\nLine 3", origin="translator")
+        # The serialized output should have # on blank lines
+        expected = '# Line 1\n#\n# Line 3\nmsgid "File"\nmsgstr ""\n'
+        assert str(unit) == expected
+        # Getting notes back should preserve the blank lines
+        assert unit.getnotes("translator") == "Line 1\n\nLine 3"
+
+        # Test parsing a file with blank comment lines
+        po_content = (
+            b"# Translation file\n"
+            b"#\n"
+            b"# This is a comment\n"
+            b"#\n"
+            b"# Another comment\n"
+            b'msgid ""\n'
+            b'msgstr ""\n'
+        )
+        store = pypo.pofile()
+        store.parse(BytesIO(po_content))
+        header = store.units[0]
+
+        # Verify blank lines are parsed correctly into header.othercomments
+        # Expected: ['# Translation file\n', '#\n', '# This is a comment\n', '#\n', '# Another comment\n']
+        assert len(header.othercomments) == 5
+        assert header.othercomments[1] == "#\n", "Second line should be a blank comment"
+        assert header.othercomments[3] == "#\n", "Fourth line should be a blank comment"
+
+        # Verify notes preserve blank lines
+        notes = header.getnotes("translator")
+        assert notes == "Translation file\n\nThis is a comment\n\nAnother comment"
+
+        # Verify re-serialization preserves blank comment lines
+        output = BytesIO()
+        store.serialize(output)
+        result = output.getvalue()
+        assert b"#\n" in result
+        assert result.count(b"#\n") == 2
+
     def test_wrap_firstlines(self) -> None:
         """
         Tests that we wrap the first line correctly a first line if longer then 71 chars
@@ -730,3 +772,29 @@ msgstr ""\r
         outstore.addunit(unit)
 
         assert max(len(line) for line in bytes(outstore).decode().splitlines()) <= 77
+
+    def test_line_number(self) -> None:
+        """Test that line numbers are correctly tracked for PO units."""
+        posource = b"""# Translator comment
+#. Automatic comment
+#: location.c:123
+msgid "Hello"
+msgstr "Bonjour"
+
+# Another comment
+msgid "World"
+msgstr "Monde"
+
+#~ msgid "Obsolete"
+#~ msgstr "Obsolete Translation"
+"""
+        pofile = self.poparse(posource)
+
+        # First unit should start at line 1 (with comments)
+        assert pofile.units[0].line_number == 1
+
+        # Second unit should start at line 7 (after blank line)
+        assert pofile.units[1].line_number == 7
+
+        # Obsolete unit should start at line 11
+        assert pofile.units[2].line_number == 11

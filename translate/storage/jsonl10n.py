@@ -79,6 +79,7 @@ from typing import (
     Any,
     BinaryIO,
     ClassVar,
+    NotRequired,
     TextIO,
     TypedDict,
     cast,
@@ -169,9 +170,10 @@ class DumpArgsType(TypedDict):
     separators: tuple[str, ...]
     indent: int
     ensure_ascii: bool
+    sort_keys: NotRequired[bool]
 
 
-class JsonFile(base.DictStore):
+class JsonFile(base.DictStore[FlatJsonUnit]):
     """A JSON file."""
 
     UnitClass: ClassVar[type[BaseJsonUnit]] = FlatJsonUnit

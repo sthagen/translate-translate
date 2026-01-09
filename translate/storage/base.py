@@ -24,7 +24,7 @@ import codecs
 import logging
 from io import BytesIO
 from itertools import starmap
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar
 
 from translate.lang.data import plural_tags
 from translate.misc.multistring import multistring
@@ -127,12 +127,23 @@ class TranslationUnit:
     _rich_source = None
     _rich_target = None
     _state_n = 0
+    _line_number: int | None = None
     notes = ""
 
     def __init__(self, source=None) -> None:
         """Constructs a TranslationUnit containing the given source string."""
         if source is not None:
             self.source = source
+
+    @property
+    def line_number(self) -> int | None:
+        """
+        Line number in the source file where this unit was found.
+
+        The line number is 1-based (first line is line 1). Returns None if the
+        format doesn't support line numbering or if the information is not available.
+        """
+        return self._line_number
 
     def __eq__(self, other: TranslationUnit) -> bool:
         """
@@ -631,10 +642,13 @@ class MetadataTranslationUnit(TranslationUnit):
         return hash((base_hash, metadata_items))
 
 
-class TranslationStore:
+U = TypeVar("U", bound=TranslationUnit)
+
+
+class TranslationStore(Generic[U]):
     """Base class for stores for multiple translation units of type UnitClass."""
 
-    UnitClass: ClassVar[type[TranslationUnit]] = TranslationUnit
+    UnitClass: ClassVar[type[U]] = TranslationUnit
     """The class of units that will be instantiated and used by this class"""
     Name = "Base translation store"
     """The human usable name of this store type"""
@@ -705,11 +719,11 @@ class TranslationStore:
         """Iterator over all the units in this store."""
         yield from self.units
 
-    def getunits(self):
+    def getunits(self) -> list[U]:
         """Return a list of all units in this store."""
         return list(self.unit_iter())
 
-    def addunit(self, unit: TranslationUnit) -> None:
+    def addunit(self, unit: U) -> None:
         """
         Append the given unit to the object's list of units.
 
@@ -721,7 +735,7 @@ class TranslationStore:
         unit._store = self
         self.units.append(unit)
 
-    def removeunit(self, unit: TranslationUnit) -> None:
+    def removeunit(self, unit: U) -> None:
         """
         Remove the given unit to the object's list of units.
 
@@ -733,7 +747,7 @@ class TranslationStore:
         self.units.remove(unit)
         self.remove_unit_from_index(unit)
 
-    def addsourceunit(self, source: str) -> TranslationUnit:
+    def addsourceunit(self, source: str) -> U:
         """Add and returns a new unit with the given source string."""
         unit = self.UnitClass(source)
         self.addunit(unit)
@@ -744,14 +758,14 @@ class TranslationStore:
         self.require_index()
         return self.id_index.get(id)
 
-    def findunit(self, source: str) -> TranslationUnit | None:
+    def findunit(self, source: str) -> U | None:
         """Find the unit with the given source string."""
         self.require_index()
         if source in self.sourceindex:
             return self.sourceindex[source][0]
         return None
 
-    def findunits(self, source: str) -> list[TranslationUnit] | None:
+    def findunits(self, source: str) -> list[U] | None:
         """Find the units with the given source string."""
         self.require_index()
         if source in self.sourceindex:
@@ -1194,7 +1208,10 @@ class DictUnit(TranslationUnit):
         self.setid(str(unitid), unitid)
 
 
-class DictStore(TranslationStore):
+T = TypeVar("T", bound=DictUnit)
+
+
+class DictStore(TranslationStore[T]):
     def get_root_node(self):
         if self.units and all(
             unit.get_unitid().parts[0][0] == "index" for unit in self.units
