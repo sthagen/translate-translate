@@ -188,7 +188,7 @@ def extractwithoutquotes(
                     if callable_includeescapes:
                         replace_escape = includeescapes(
                             section[epos : epos + lenescape + 1]
-                        )
+                        )  # ty:ignore[call-non-callable]
                         # TODO: deprecate old method of returning boolean from
                         # includeescape, by removing this if block
                         if not isinstance(replace_escape, str):
@@ -239,14 +239,14 @@ def extractwithoutquotes(
 
 
 # TODO: investigate if ord is needed
-def _encode_entity_char(char: str, codepoint2name: dict[str, str]) -> str:
+def _encode_entity_char(char: str, codepoint2name: dict[int, str]) -> str:
     charnum = ord(char)
     if charnum in codepoint2name:
         return f"&{codepoint2name[charnum]};"
     return char
 
 
-def entityencode(source: str, codepoint2name: dict[str, str]) -> str:
+def entityencode(source: str, codepoint2name: dict[int, str]) -> str:
     """
     Encode ``source`` using entities from ``codepoint2name``.
 
@@ -296,7 +296,7 @@ def _has_entity_end(source: str) -> bool:
     return False
 
 
-def entitydecode(source: str, name2codepoint: dict[str, str]) -> str:
+def entitydecode(source: str, name2codepoint: dict[str, int]) -> str:
     """
     Decode ``source`` using entities from ``name2codepoint``.
 
