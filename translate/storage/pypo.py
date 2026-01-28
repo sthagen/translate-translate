@@ -31,7 +31,7 @@ import re
 from functools import lru_cache
 from itertools import chain
 from string import punctuation
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, BinaryIO
 
 from unicode_segmentation_rs import gettext_wrap
 
@@ -40,7 +40,7 @@ from translate.misc.multistring import multistring
 from translate.storage import pocommon, poparser
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -350,9 +350,6 @@ class pounit(pocommon.pounit):
                 raise ValueError(
                     f"po msgid element has no plural but msgstr has {len(target)} elements ({target})"
                 )
-        templates = self.msgstr
-        if isinstance(templates, list):
-            templates = {0: templates}
         if isinstance(target, list):
             self.msgstr = {i: self.quote(target[i]) for i in range(len(target))}
         elif isinstance(target, dict):
@@ -382,7 +379,7 @@ class pounit(pocommon.pounit):
 
         :param origin: programmer, developer, source code, translator or None
         """
-        parts = []
+        parts: list[Iterable[str]] = []
         newline = self.newline
         if origin == "translator" or origin is None:
             parts.append(comment[2:] or newline for comment in self.othercomments)
@@ -593,7 +590,7 @@ class pounit(pocommon.pounit):
         self._ensure_typecomments_cache()
         return typecomment in self._typecomments_cache  # ty:ignore[unsupported-operator]
 
-    def hasmarkedcomment(self, commentmarker) -> bool:
+    def hasmarkedcomment(self, commentmarker: str) -> bool:
         """
         Check whether the given comment marker is present.
 
@@ -626,7 +623,7 @@ class pounit(pocommon.pounit):
     def isfuzzy(self):
         return self.hastypecomment("fuzzy")
 
-    def markfuzzy(self, present=True) -> None:  # ty:ignore[invalid-method-override]
+    def markfuzzy(self, present=True) -> None:
         if present:
             self.set_state_n(self.STATE[self.S_FUZZY][0])
         elif (self.hasplural() and not self._msgstrlen()) or is_null(self.msgstr):  # ty:ignore[invalid-argument-type]
@@ -635,7 +632,7 @@ class pounit(pocommon.pounit):
             self.set_state_n(self.STATE[self.S_TRANSLATED][0])
         self._domarkfuzzy(present)
 
-    def _domarkfuzzy(self, present=True) -> None:
+    def _domarkfuzzy(self, present: bool = True) -> None:
         self.settypecomment("fuzzy", present)
 
     def infer_state(self) -> None:
@@ -858,7 +855,7 @@ class pofile(pocommon.pofile[pounit]):
         self.newline = "\n"
         super().__init__(inputfile, **kwargs)
 
-    def create_unit(self):
+    def create_unit(self) -> pounit:
         return self.UnitClass(wrapper=self.wrapper)
 
     def parse(self, input) -> None:  # ty:ignore[invalid-method-override]
@@ -874,7 +871,7 @@ class pofile(pocommon.pofile[pounit]):
         self.units = []
         poparser.parse_units(poparser.PoParseState(lines, self.create_unit), self)
 
-    def removeduplicates(self, duplicatestyle="merge") -> None:
+    def removeduplicates(self, duplicatestyle: str = "merge") -> None:
         """
         Make sure each msgid is unique ; merge comments etc from
         duplicates into original.
@@ -933,7 +930,7 @@ class pofile(pocommon.pofile[pounit]):
                 uniqueunits.append(thepo)
         self.units = uniqueunits
 
-    def serialize(self, out) -> None:
+    def serialize(self, out: BinaryIO) -> None:
         """Write to file."""
         at_start = True
         try:
@@ -951,12 +948,12 @@ class pofile(pocommon.pofile[pounit]):
             out.seek(0)
             self.serialize(out)
 
-    def unit_iter(self):
+    def unit_iter(self) -> Generator[pounit]:
         for unit in self.units:
             if not (unit.isheader() or unit.isobsolete()):
                 yield unit
 
-    def addunit(self, unit) -> None:
+    def addunit(self, unit: pounit) -> None:
         needs_update = unit.wrapper != self.wrapper
         unit.wrapper = self.wrapper
         super().addunit(unit)

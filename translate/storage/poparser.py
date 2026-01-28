@@ -35,14 +35,13 @@ From the GNU gettext manual:
 from __future__ import annotations
 
 import re
+from collections import defaultdict
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from .pypo import pofile, pounit
-
-SINGLE_BYTE_ENCODING = "iso-8859-1"
 
 
 class PoParseError(ValueError):
@@ -60,48 +59,73 @@ class PoParseState:
         self,
         input_lines: list[bytes] | list[str],
         UnitClass: Callable[[], pounit],
-        encoding: str = SINGLE_BYTE_ENCODING,
+        encoding: str | None = None,
     ) -> None:
         # A single-byte encoding is first defined to be able to read the header
         # without risking UnicodeDecodeErrors. As soon as the header is parsed,
         # the encoding defined in the header is used to reset the parser and
         # re-parse all content (including the header) with the correct encoding.
         self._input_lines = input_lines
-        self._input_iterator = iter(input_lines)
         self.next_line: str = ""
-        self.last_line: str = ""
         self.lineno: int = 0
         self.eof: bool = False
-        self.encoding: str = encoding
+        # Configured encoding
+        self.encoding: str | None = encoding
+        # Currently used encoding, start with UTF-8 if not provided and
+        # fall back to iso-8859-1 on decoding error.
+        self._current_encoding = encoding if encoding is not None else "utf-8"
         self.read_line()
         self.UnitClass = UnitClass
+
+    def finalize_encoding(self, encoding: str) -> bool:
+        """Finalize encoding detection and check whether restart is needed."""
+        if encoding == self._current_encoding:
+            self.encoding = encoding
+            return True
+        return False
 
     def set_encoding(self, encoding: str) -> None:
         """Reset parser state to process file with a different encoding."""
         self.encoding = encoding
-        self._input_iterator = iter(self._input_lines)
         self.next_line = ""
-        self.last_line = ""
         self.lineno = 0
         self.eof = False
         self.read_line()
 
     def read_line(self) -> str:
-        self.last_line = current = self.next_line
+        current = self.next_line
         if self.eof:
             return current
+        next_lineno = self.lineno
         try:
-            next_line = next(self._input_iterator)
-            self.lineno += 1
-            while next_line.isspace():
-                next_line = next(self._input_iterator)
-                self.lineno += 1
-        except StopIteration:
-            self.next_line = ""
+            next_line = self._input_lines[next_lineno]
+        except IndexError:
             self.eof = True
         else:
+            while next_line.isspace():
+                next_lineno += 1
+                try:
+                    next_line = self._input_lines[next_lineno]
+                except IndexError:
+                    self.eof = True
+                    break
+
+        if self.eof:
+            self.next_line = ""
+        else:
+            # This is 1-based
+            self.lineno = next_lineno + 1
             if isinstance(next_line, bytes):
-                self.next_line = next_line.decode(self.encoding)
+                try:
+                    self.next_line = next_line.decode(self._current_encoding)
+                except UnicodeDecodeError:
+                    if self._current_encoding == "utf-8" and self.encoding is None:
+                        # Fall-back to single byte encoding for compatibility reasons
+                        self._current_encoding = "iso-8859-1"
+                        self.next_line = next_line.decode(self._current_encoding)
+                    else:
+                        raise
+
             else:
                 self.next_line = next_line
         return current
@@ -296,40 +320,24 @@ def parse_msgid_plural(parse_state: PoParseState, unit: pounit) -> bool:
 MSGSTR_ARRAY_ENTRY_LEN = len("msgstr[")
 
 
-def add_to_dict(
-    msgstr_dict: dict[int, list[str]],
-    line: str,
-    right_bracket_pos: int,
-    entry: list[str],
-) -> None:
-    index = int(line[MSGSTR_ARRAY_ENTRY_LEN:right_bracket_pos])
-    if index not in msgstr_dict:
-        msgstr_dict[index] = []
-    msgstr_dict[index].extend(entry)
-
-
-def get_entry(parse_state: PoParseState, right_bracket_pos: int) -> list[str]:
-    entry = []
-    parse_message(parse_state, "msgstr[", right_bracket_pos + 1, entry)
-    return entry
-
-
 def parse_msgstr_array_entry(
     parse_state: PoParseState, msgstr_dict: dict[int, list[str]]
 ) -> bool:
     line = parse_state.next_line
     right_bracket_pos = line.find("]", MSGSTR_ARRAY_ENTRY_LEN)
     if right_bracket_pos >= 0:
-        entry = get_entry(parse_state, right_bracket_pos)
+        entry = []
+        parse_message(parse_state, "msgstr[", right_bracket_pos + 1, entry)
         if entry:
-            add_to_dict(msgstr_dict, line, right_bracket_pos, entry)
+            index = int(line[MSGSTR_ARRAY_ENTRY_LEN:right_bracket_pos])
+            msgstr_dict[index].extend(entry)
             return True
         return False
     return False
 
 
 def parse_msgstr_array(parse_state: PoParseState, unit: pounit) -> bool:
-    msgstr_dict: dict[int, list[str]] = {}
+    msgstr_dict: dict[int, list[str]] = defaultdict(list)
     result = parse_msgstr_array_entry(parse_state, msgstr_dict)
     if not result:  # We require at least one result
         return False
@@ -339,17 +347,16 @@ def parse_msgstr_array(parse_state: PoParseState, unit: pounit) -> bool:
     return True
 
 
-def parse_plural(parse_state: PoParseState, unit: pounit) -> bool:
-    return bool(
-        parse_msgid_plural(parse_state, unit) and parse_msgstr_array(parse_state, unit)
-    )
-
-
 def parse_msg_entries(parse_state: PoParseState, unit: pounit) -> bool:
     parse_msgctxt(parse_state, unit)
-    return bool(
-        parse_msgid(parse_state, unit)
-        and (parse_msgstr(parse_state, unit) or parse_plural(parse_state, unit))
+    return parse_msgid(parse_state, unit) and (
+        # Try msgstr first because most strings are not plurals
+        parse_msgstr(parse_state, unit)
+        or (
+            # Try to parse as plural
+            parse_msgid_plural(parse_state, unit)
+            and parse_msgstr_array(parse_state, unit)
+        )
     )
 
 
@@ -394,12 +401,14 @@ def parse_header(parse_state: PoParseState, store: pofile) -> pounit | None:
         return None
     charset = get_header_charset(first_unit)
 
-    if parse_state.encoding == charset:
-        return first_unit
-
     # Configure store
     store._encoding = charset
     # Configure parser
+    if parse_state.finalize_encoding(charset):
+        # Use existing charset if there is no need to restart
+        return first_unit
+
+    # Restart parser on encoding change
     parse_state.set_encoding(charset)
 
     # Parse header with the new encoding

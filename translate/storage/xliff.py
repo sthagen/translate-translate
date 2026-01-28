@@ -23,6 +23,7 @@ The official recommendation is to use the extension .xlf for XLIFF files.
 """
 
 import contextlib
+from typing import TypeVar
 
 from lxml import etree
 
@@ -95,7 +96,7 @@ class Xliff1Unit(XliffUnit):
             return
         setXMLspace(self.xmlelement, "preserve")
 
-    def createlanguageNode(self, lang, text, purpose):  # ty:ignore[invalid-method-override]
+    def createlanguageNode(self, lang, text, purpose):
         """Returns an xml Element setup with given parameters."""
         # TODO: for now we do source, but we have to test if it is target,
         # perhaps with parameter. Alternatively, we can use lang, if
@@ -473,7 +474,10 @@ class Xliff1Unit(XliffUnit):
         )
 
 
-class Xliff1File(XliffFile[Xliff1Unit]):
+U = TypeVar("U", bound=Xliff1Unit)
+
+
+class Xliff1File(XliffFile[U]):
     """Class representing a XLIFF file store."""
 
     UnitClass = Xliff1Unit
@@ -523,7 +527,7 @@ class Xliff1File(XliffFile[Xliff1Unit]):
 
     def createfilenode(
         self, filename, sourcelanguage=None, targetlanguage=None, datatype="plaintext"
-    ):
+    ) -> etree.Element:
         """
         Creates a filenode with the given filename. All parameters are
         needed for XLIFF compliance.
@@ -552,7 +556,7 @@ class Xliff1File(XliffFile[Xliff1Unit]):
         return filenode
 
     @staticmethod
-    def getfilename(filenode):
+    def getfilename(filenode) -> str | None:
         """Returns the name of the given file."""
         return filenode.get("original")
 

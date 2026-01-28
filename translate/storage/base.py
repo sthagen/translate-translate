@@ -24,7 +24,17 @@ import codecs
 import logging
 from io import BytesIO
 from itertools import starmap
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    ClassVar,
+    Generic,
+    Literal,
+    Self,
+    TypedDict,
+    TypeVar,
+)
 
 from translate.lang.data import plural_tags
 from translate.misc.multistring import multistring
@@ -33,7 +43,7 @@ from translate.storage.placeables import parse as rich_parse
 from translate.storage.workflow import StateEnum as states
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +59,11 @@ ENCODING_BOMS = (
 )
 
 MISSING = object()
+
+
+class EncodingDict(TypedDict):
+    encoding: str | None
+    confidence: float | None
 
 
 class ParseError(Exception):
@@ -145,7 +160,7 @@ class TranslationUnit:
         """
         return self._line_number
 
-    def __eq__(self, other: TranslationUnit) -> bool:  # ty:ignore[invalid-method-override]
+    def __eq__(self, other: object) -> bool:
         """
         Compares two TranslationUnits.
 
@@ -153,6 +168,8 @@ class TranslationUnit:
         :return: Returns *True* if the supplied :class:`TranslationUnit`
                  equals this unit.
         """
+        if not isinstance(other, TranslationUnit):
+            return False
         return (
             self.source == other.source
             and self.target == other.target
@@ -476,7 +493,7 @@ class TranslationUnit:
         if not self.target or overwrite:
             self.rich_target = otherunit.rich_target
 
-    def unit_iter(self):
+    def unit_iter(self) -> Generator[Self]:
         """Iterator that only returns this unit."""
         yield self
 
@@ -485,14 +502,14 @@ class TranslationUnit:
         return [self]
 
     @classmethod
-    def buildfromunit(cls, unit):
+    def buildfromunit(cls, unit: TranslationUnit) -> Self:
         """
         Build a native unit from a foreign unit.
 
         Preserving as much information as possible.
         """
         if type(unit) is cls and hasattr(unit, "copy") and callable(unit.copy):
-            return unit.copy()
+            return unit.copy()  # ty:ignore[call-top-callable, invalid-return-type]
         newunit = cls(unit.source)
         newunit.target = unit.target
         newunit.markfuzzy(unit.isfuzzy())
@@ -564,7 +581,7 @@ class MetadataTranslationUnit(TranslationUnit):
     accessible via a `metadata` property with getters and setters.
     """
 
-    def __init__(self, *args, metadata=None, **kwargs):
+    def __init__(self, *args, metadata=None, **kwargs) -> None:
         """
         Initialize the internal dictionary.
 
@@ -595,7 +612,7 @@ class MetadataTranslationUnit(TranslationUnit):
 
     metadata = property(getmetadata, setmetadata)
 
-    def __eq__(self, other: TranslationUnit) -> bool:  # ty:ignore[invalid-method-override]
+    def __eq__(self, other: object) -> bool:
         """
         Compare two units including their metadata.
 
@@ -648,7 +665,7 @@ U = TypeVar("U", bound=TranslationUnit)
 class TranslationStore(Generic[U]):
     """Base class for stores for multiple translation units of type UnitClass."""
 
-    UnitClass: ClassVar[type[U]] = TranslationUnit  # ty:ignore[invalid-assignment]
+    UnitClass: type[U] = TranslationUnit  # ty:ignore[invalid-assignment]
     """The class of units that will be instantiated and used by this class"""
     Name = "Base translation store"
     """The human usable name of this store type"""
@@ -670,7 +687,7 @@ class TranslationStore(Generic[U]):
         """Construct a blank TranslationStore."""
         self.units = []
         if unitclass:
-            self.UnitClass = unitclass  # ty:ignore[invalid-attribute-access]
+            self.UnitClass = unitclass
         self._encoding = encoding
         self.locationindex = {}
         self.sourceindex = {}
@@ -715,7 +732,7 @@ class TranslationStore(Generic[U]):
         """Set the project type for this store."""
         self._project_style = project_style
 
-    def unit_iter(self):
+    def unit_iter(self) -> Generator[U]:
         """Iterator over all the units in this store."""
         yield from self.units
 
@@ -855,7 +872,7 @@ class TranslationStore(Generic[U]):
         self.serialize(out)
         return out.getvalue()
 
-    def serialize(self, out):
+    def serialize(self, out: BinaryIO) -> None:
         """
         Converts to a bytes representation that can be parsed back using
         :meth:`~.TranslationStore.parsestring`.
@@ -901,12 +918,12 @@ class TranslationStore(Generic[U]):
         return newstore
 
     @staticmethod
-    def fallback_detection(text):
+    def fallback_detection(text: bytes) -> EncodingDict:
         """Simple detection based on BOM in case chardet is not available."""
         for bom, encoding in ENCODING_BOMS:
             if text.startswith(bom):
                 return {"encoding": encoding, "confidence": 1.0}
-        return None
+        return {"encoding": None, "confidence": None}
 
     def detect_encoding(
         self, text: bytes, default_encodings: list[str] | None = None
@@ -917,6 +934,7 @@ class TranslationStore(Generic[U]):
         """
         if not default_encodings:
             default_encodings = ["utf-8"]
+        detected_encoding: EncodingDict
         try:
             # pylint: disable-next=import-outside-toplevel
             from charset_normalizer import detect  # noqa: PLC0415
@@ -928,21 +946,24 @@ class TranslationStore(Generic[U]):
                 detected_encoding["confidence"] is None
                 or detected_encoding["confidence"] < 0.48
             ):
-                detected_encoding = None
+                detected_encoding["encoding"] = None
             elif detected_encoding["encoding"] == "ascii":
                 detected_encoding["encoding"] = self.encoding
-            else:
-                detected_encoding["encoding"] = detected_encoding["encoding"].lower()  # ty:ignore[possibly-missing-attribute]
+            elif detected_encoding["encoding"]:
+                detected_encoding["encoding"] = detected_encoding["encoding"].lower()
 
         encodings = []
         # Purposefully accessed the internal _encoding, as encoding is never 'auto'
         if self._encoding == "auto":
-            if detected_encoding and detected_encoding["encoding"] not in encodings:
+            if (
+                detected_encoding["encoding"]
+                and detected_encoding["encoding"] not in encodings
+            ):
                 encodings.append(detected_encoding["encoding"])
             for encoding in default_encodings:
                 if encoding not in encodings:
                     encodings.append(encoding)
-        elif detected_encoding:
+        elif detected_encoding["encoding"]:
             if "-" in detected_encoding["encoding"]:
                 encoding, suffix = detected_encoding["encoding"].rsplit("-", 1)
             else:
@@ -977,7 +998,7 @@ class TranslationStore(Generic[U]):
             r_encoding = "utf-8"
         return r_text, r_encoding
 
-    def parse(self, data):
+    def parse(self, data) -> None:
         """
         Parser to process the given source string.
 
@@ -1191,7 +1212,7 @@ class DictUnit(TranslationUnit):
             raise ValueError(f"Unsupported element: {child_element}")
 
     def storevalues(self, output) -> None:
-        self.storevalue(output, self.value)  # ty:ignore[unresolved-attribute]
+        raise NotImplementedError
 
     def getvalue(self):
         """Returns dictionary for serialization."""
