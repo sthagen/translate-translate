@@ -11,9 +11,12 @@ Converters
 
    general_usage
    android2po
+   asciidoc2po
+   arb2po
    csv2po
    csv2tbx
    flatxml2po
+   fluent2po
    html2po
    ical2po
    ini2po
@@ -59,11 +62,16 @@ converters follow a :doc:`general pattern of usage <general_usage>`,
 understanding that will make the converters much easier to use and understand.
 
 * :doc:`android2po <android2po>` -- Android resources to PO converter
+* :doc:`asciidoc2po <asciidoc2po>` -- AsciiDoc file converter
+* :doc:`arb2po <arb2po>` -- ARB (Application Resource Bundle) converter. Used
+  by Flutter apps.
 * :doc:`csv2po <csv2po>` -- Comma Separated Value (CSV) converter. Useful for
   doing translations using a spreadsheet.
 * :doc:`csv2tbx <csv2tbx>` -- Create TBX (TermBase eXchange) files from Comma
   Separated Value (CSV) files
 * :doc:`flatxml2po <flatxml2po>` -- Flat XML converter
+* :doc:`fluent2po <fluent2po>` -- Fluent (.ftl) converter. Used by Firefox,
+  Anki, etc.
 * :doc:`html2po <html2po>` -- HTML converter
 * :doc:`ical2po <ical2po>` -- iCalendar file converter
 * :doc:`ini2po <ini2po>` -- Windows INI file converter

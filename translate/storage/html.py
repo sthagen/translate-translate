@@ -118,8 +118,15 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         "og:title",
         "og:description",
         "og:site_name",
+        "og:image:alt",
         "twitter:title",
         "twitter:description",
+        "twitter:image:alt",
+        "video:actor:role",
+        "video:tag",
+        "article:section",
+        "article:tag",
+        "payment:description",
     ]
     """Document metadata from meta elements with these names will be extracted as translation units.
     Includes standard meta tags and common social media tags (Open Graph and Twitter Cards).
@@ -177,6 +184,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         self.tag_path = []
         self.tu_content = []
         self.tu_location = None
+        self.tu_docpath = None
         self.ignore_depth = 0  # Track nesting level of ignored elements
         self.comment_ignore = False  # Track if inside <!-- translate:off -->
         self.ignore_tag_stack = []  # Track which tags have ignore attribute
@@ -188,6 +196,12 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         self._id_seen = set()  # track seen ids to disambiguate labels
         self._units_by_source = {}  # Track units by normalized source to add context only when needed for disambiguation
         self._units_by_src_ctx = {}  # Fast lookup for units created with explicit context: (source, context) -> unit
+        # Stack of dicts for sibling tag counts at each nesting level (for docpath)
+        self._sibling_counts = [{}]
+        # Stack of (tag, index) tuples for current docpath
+        self._docpath_stack = []
+        # Track translated language value when <html lang=""> is translated, used to sync og:locale
+        self._translated_lang = None
 
         # parse
         if inputfile is not None:
@@ -216,12 +230,18 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         return htmlsrc.decode(self.encoding)
 
     def parse(self, htmlsrc) -> None:  # ty:ignore[invalid-method-override]
+        # Reset translation state for new parse
+        self._translated_lang = None
         htmlsrc = self.do_encoding(htmlsrc)
         self.feed(htmlsrc)
 
     def is_extraction_ignored(self):
         """Check if we're currently in an ignored section."""
         return self.ignore_depth > 0 or self.comment_ignore
+
+    def _build_docpath(self) -> str:
+        """Build the current document path from the docpath stack."""
+        return "/".join(f"{tag}[{index}]" for tag, index in self._docpath_stack)
 
     def begin_translation_unit(self) -> None:
         # at the start of a translation unit:
@@ -230,6 +250,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         self.emit_translation_unit()
         self.tu_content = []
         self.tu_location = f"{self.filename}+{'.'.join(self.tag_path)}:{self.getpos()[0]}-{self.getpos()[1] + 1}"
+        self.tu_docpath = self._build_docpath()
 
     def end_translation_unit(self) -> None:
         # at the end of a translation unit:
@@ -237,6 +258,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
         self.emit_translation_unit()
         self.tu_content = []
         self.tu_location = None
+        self.tu_docpath = None
 
     def append_markup(self, markup) -> None:
         # if within a translation unit: add to the queue to be processed later.
@@ -354,6 +376,8 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
                     self._units_by_src_ctx[normalized_content, explicit_context] = unit
 
             unit.addlocation(self.tu_location)
+            if self.tu_docpath:
+                unit.setdocpath(self.tu_docpath)
 
             # If no explicit context, capture a context hint (from id/ancestor) for potential disambiguation
             context_hint = None
@@ -448,6 +472,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
                 "html_content": normalized_value,
                 "attrname": attrname,
                 "location": f"{self.filename}+{'.'.join(self.tag_path)}[{attrname}]:{self.getpos()[0]}-{self.getpos()[1] + 1}",
+                "docpath": self._build_docpath() + f"[{attrname}]",
             }
         return None
 
@@ -472,6 +497,8 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
                         # Register for faster lookups
                         self._units_by_src_ctx[tu["html_content"], full_explicit] = unit
                 unit.addlocation(tu["location"])
+                if tu.get("docpath"):
+                    unit.setdocpath(tu["docpath"])
 
                 if not full_explicit:
                     hint_base = markup.get("context_hint")
@@ -496,6 +523,8 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
                 translated_value = self.callback(normalized_value)
                 if translated_value != normalized_value:
                     translated_lang = translated_value
+                    # Store translated language for og:locale synchronization
+                    self._translated_lang = translated_value
 
         for attrname, attrvalue in attrs:
             # When translating the lang attribute on the <html> tag, we intentionally discard
@@ -511,6 +540,14 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
                     name = attrs_dict.get("name", "").lower()
                     if not name:
                         name = attrs_dict.get("property", "").lower()
+                    # Automatically synchronize og:locale with the translated language when
+                    # the <html lang=""> attribute was translated during this parse.
+                    # This ensures consistency between the page language and Open Graph metadata.
+                    # Similar to how dir is automatically set, this intentionally overrides
+                    # any explicit translation to maintain consistency.
+                    if name == "og:locale" and self._translated_lang:
+                        result.append((attrname, self._translated_lang))
+                        continue
                     if name in self.TRANSLATABLE_METADATA:
                         normalized_value = self.WHITESPACE_RE.sub(
                             " ", attrvalue
@@ -548,9 +585,17 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
                 attr_strings.append(f' {attrname}="{attrvalue}"')
         return f"<{tag}{''.join(attr_strings)}{' /' if startend else ''}>"
 
+    def _pop_docpath_level(self) -> None:
+        """Pop the current docpath level (sibling counts and path entry)."""
+        if self._docpath_stack:
+            self._docpath_stack.pop()
+        if len(self._sibling_counts) > 1:
+            self._sibling_counts.pop()
+
     def auto_close_empty_element(self) -> None:
         if self.tag_path and self.tag_path[-1] in self.EMPTY_HTML_ELEMENTS:
             self.tag_path.pop()
+            self._pop_docpath_level()
 
     def get_leading_whitespace(self, text: str):
         match = self.LEADING_WHITESPACE_RE.search(text)
@@ -565,6 +610,12 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
     def handle_starttag(self, tag, attrs) -> None:
         self.auto_close_empty_element()
         self.tag_path.append(tag)
+
+        # Update docpath tracking: count siblings and push new level
+        counts = self._sibling_counts[-1]
+        counts[tag] = counts.get(tag, 0) + 1
+        self._docpath_stack.append((tag, counts[tag]))
+        self._sibling_counts.append({})
 
         # Check for data-translate-ignore attribute
         attrs_dict = dict(attrs)
@@ -657,11 +708,14 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
             ) from None
         if popped != tag and popped in self.EMPTY_HTML_ELEMENTS:
             popped = self.tag_path.pop()
+            self._pop_docpath_level()
         if popped != tag:
             raise ParseError(
                 "Mismatched closing tag: "
                 f"expected '{popped}' got '{tag}' at line {self.getpos()[0]}"
             )
+
+        self._pop_docpath_level()
 
         self.append_markup({"type": "endtag", "html_content": f"</{tag}>"})
 
@@ -691,6 +745,12 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
     def handle_startendtag(self, tag, attrs) -> None:
         self.auto_close_empty_element()
         self.tag_path.append(tag)
+
+        # Update docpath tracking: count siblings and push new level
+        counts = self._sibling_counts[-1]
+        counts[tag] = counts.get(tag, 0) + 1
+        self._docpath_stack.append((tag, counts[tag]))
+        self._sibling_counts.append({})
 
         # Check for data-translate-ignore attribute
         attrs_dict = dict(attrs)
@@ -779,6 +839,7 @@ class htmlfile(html.parser.HTMLParser, base.TranslationStore):
             self.ignore_depth -= 1
 
         self.tag_path.pop()
+        self._pop_docpath_level()
         # For startend, if we pushed an id, pop it now
         if self._id_pushed_stack:
             pushed = self._id_pushed_stack.pop()

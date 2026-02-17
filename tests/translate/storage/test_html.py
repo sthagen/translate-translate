@@ -538,6 +538,52 @@ pre tag
         assert store.units[1].source == "Page description"
         assert store.units[2].source == "Twitter Title"
 
+    def test_extraction_meta_additional_og_twitter_tags(self) -> None:
+        """Check that additional Open Graph and Twitter meta tags can be extracted."""
+        h = html.htmlfile()
+
+        # Test og:image:alt and twitter:image:alt
+        store = h.parsestring(
+            """<html><head>
+            <meta property="og:image:alt" content="Description of the image">
+            <meta name="twitter:image:alt" content="Twitter image description">
+            </head><body></body></html>"""
+        )
+        assert len(store.units) == 2
+        assert store.units[0].source == "Description of the image"
+        assert store.units[1].source == "Twitter image description"
+
+        # Test video tags
+        store = h.parsestring(
+            """<html><head>
+            <meta property="video:actor:role" content="Lead Actor">
+            <meta property="video:tag" content="action, thriller">
+            </head><body></body></html>"""
+        )
+        assert len(store.units) == 2
+        assert store.units[0].source == "Lead Actor"
+        assert store.units[1].source == "action, thriller"
+
+        # Test article tags
+        store = h.parsestring(
+            """<html><head>
+            <meta property="article:section" content="Technology">
+            <meta property="article:tag" content="programming, python">
+            </head><body></body></html>"""
+        )
+        assert len(store.units) == 2
+        assert store.units[0].source == "Technology"
+        assert store.units[1].source == "programming, python"
+
+        # Test payment:description
+        store = h.parsestring(
+            """<html><head>
+            <meta property="payment:description" content="Premium subscription">
+            </head><body></body></html>"""
+        )
+        assert len(store.units) == 1
+        assert store.units[0].source == "Premium subscription"
+
     def test_data_translate_comment_attribute(self) -> None:
         """Check that data-translate-comment attribute is extracted as a note."""
         h = html.htmlfile()
@@ -582,3 +628,76 @@ pre tag
         assert store.units[0].source == "<strong>Bold</strong> text here"
         notes = store.units[0].getnotes(origin="source code")
         assert notes == "This is important"
+
+
+class TestHTMLDocpath:
+    h = html.htmlfile
+
+    def test_basic_structure(self) -> None:
+        """Test docpath for basic HTML structure."""
+        store = self.h.parsestring(
+            "<html><body><h1>Title</h1><p>First</p><p>Second</p></body></html>"
+        )
+        docpaths = [u.getdocpath() for u in store.units]
+        assert docpaths == [
+            "html[1]/body[1]/h1[1]",
+            "html[1]/body[1]/p[1]",
+            "html[1]/body[1]/p[2]",
+        ]
+
+    def test_nested_structure(self) -> None:
+        """Test docpath with nested sections."""
+        store = self.h.parsestring(
+            "<html><body>"
+            "<h1>Chapter</h1><p>Intro</p>"
+            "<div><p>Nested</p></div>"
+            "</body></html>"
+        )
+        docpaths = [u.getdocpath() for u in store.units]
+        assert docpaths == [
+            "html[1]/body[1]/h1[1]",
+            "html[1]/body[1]/p[1]",
+            "html[1]/body[1]/div[1]/p[1]",
+        ]
+
+    def test_multiple_headings(self) -> None:
+        """Test docpath with multiple heading levels."""
+        store = self.h.parsestring(
+            "<html><body>"
+            "<h1>Title</h1>"
+            "<h2>Sub1</h2>"
+            "<p>Content1</p>"
+            "<h2>Sub2</h2>"
+            "<p>Content2</p>"
+            "</body></html>"
+        )
+        docpaths = [u.getdocpath() for u in store.units]
+        assert docpaths == [
+            "html[1]/body[1]/h1[1]",
+            "html[1]/body[1]/h2[1]",
+            "html[1]/body[1]/p[1]",
+            "html[1]/body[1]/h2[2]",
+            "html[1]/body[1]/p[2]",
+        ]
+
+    def test_list_items(self) -> None:
+        """Test docpath for list items."""
+        store = self.h.parsestring(
+            "<html><body><ul><li>One</li><li>Two</li></ul></body></html>"
+        )
+        docpaths = [u.getdocpath() for u in store.units]
+        assert docpaths == [
+            "html[1]/body[1]/ul[1]/li[1]",
+            "html[1]/body[1]/ul[1]/li[2]",
+        ]
+
+    def test_docpath_stable_across_content_changes(self) -> None:
+        """Test that docpath is the same for structurally equivalent documents."""
+        store1 = self.h.parsestring("<html><body><h1>Short</h1><p>A</p></body></html>")
+        store2 = self.h.parsestring(
+            "<html><body><h1>A much longer title here</h1>"
+            "<p>A much longer paragraph with more content</p></body></html>"
+        )
+        assert [u.getdocpath() for u in store1.units] == [
+            u.getdocpath() for u in store2.units
+        ]

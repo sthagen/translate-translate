@@ -1,5 +1,5 @@
 #
-# Copyright 2023 Zuza Software Foundation & Anders Kaplan
+# Copyright 2025 translate-toolkit contributors
 #
 # This file is part of translate.
 #
@@ -18,23 +18,22 @@
 #
 
 """
-Convert Markdown files to Gettext PO localization files.
+Convert AsciiDoc files to Gettext PO localization files.
 
-See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/md2po.html
+See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/asciidoc2po.html
 for examples and usage instructions.
 """
 
 from translate.convert import convert
-from translate.storage import markdown, po
+from translate.storage import asciidoc, po
 
 
-class MD2POOptionParser(convert.ConvertOptionParser, convert.DocpathMerger):
-    def __init__(self) -> None:
+class AsciiDoc2POOptionParser(convert.ConvertOptionParser, convert.DocpathMerger):
+    def __init__(self):
         formats = {
-            "md": ("po", self._extract_translation_units),
-            "markdown": ("po", self._extract_translation_units),
-            "txt": ("po", self._extract_translation_units),
-            "text": ("po", self._extract_translation_units),
+            "adoc": ("po", self._extract_translation_units),
+            "asciidoc": ("po", self._extract_translation_units),
+            "asc": ("po", self._extract_translation_units),
             None: ("po", self._extract_translation_units),
         }
         super().__init__(formats, usetemplates=True, usepots=True, description=__doc__)
@@ -48,7 +47,7 @@ class MD2POOptionParser(convert.ConvertOptionParser, convert.DocpathMerger):
         templatefile,
         duplicatestyle,
         multifilestyle,
-    ) -> int:
+    ):
         if hasattr(self, "outputstore"):
             if templatefile is None:
                 self._parse_and_extract(inputfile, self.outputstore)
@@ -65,9 +64,9 @@ class MD2POOptionParser(convert.ConvertOptionParser, convert.DocpathMerger):
         return 1
 
     @staticmethod
-    def _parse_and_extract(inputfile, outputstore) -> None:
-        """Extract translation units from a markdown file and add them to an existing message store (pofile object) without any further processing."""
-        parser = markdown.MarkdownFile(inputfile=inputfile)
+    def _parse_and_extract(inputfile, outputstore):
+        """Extract translation units from an AsciiDoc file and add them to an existing message store (pofile object) without any further processing."""
+        parser = asciidoc.AsciiDocFile(inputfile=inputfile)
         for tu in parser.units:
             if not tu.isheader():
                 storeunit = outputstore.addsourceunit(tu.source)
@@ -79,11 +78,11 @@ class MD2POOptionParser(convert.ConvertOptionParser, convert.DocpathMerger):
             inputfile,
             templatefile,
             outputstore,
-            markdown.MarkdownFile,
+            asciidoc.AsciiDocFile,
             filter_header=True,
         )
 
-    def recursiveprocess(self, options) -> None:
+    def recursiveprocess(self, options):
         """Recurse through directories and process files. (override)."""
         if options.multifilestyle == "onefile":
             self.outputstore = po.pofile()
@@ -103,7 +102,7 @@ class MD2POOptionParser(convert.ConvertOptionParser, convert.DocpathMerger):
             return True
         return super().isrecursive(fileoption, filepurpose=filepurpose)
 
-    def checkoutputsubdir(self, options, subdir) -> None:
+    def checkoutputsubdir(self, options, subdir):
         """
         Check if subdir under options.output needs to be created, and
         create if necessary. Do nothing if in single-output-file mode. (override).
@@ -119,8 +118,8 @@ class MD2POOptionParser(convert.ConvertOptionParser, convert.DocpathMerger):
         return super().openoutputfile(options, fulloutputpath)
 
 
-def main(argv=None) -> None:
-    parser = MD2POOptionParser()
+def main(argv=None):
+    parser = AsciiDoc2POOptionParser()
     parser.run(argv)
 
 
