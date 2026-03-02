@@ -24,7 +24,7 @@ lint = [
   {include-group = "pylint"}
 ]
 pre-commit = [
-  "pre-commit==4.5.1"
+  "prek==0.3.4"
 ]
 pylint = [
   "pylint==4.0.5"
@@ -226,6 +226,7 @@ ignore = [
   "*.yaml",
   "*.yml",
   ".well-known/funding-manifest-urls",
+  "AGENTS.md",
   "CREDITS",
   "docs/*",
   "docs/*/*",
