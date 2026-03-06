@@ -37,7 +37,7 @@ test = [
 ]
 types = [
   "setuptools>=61.2",
-  "ty==0.0.20",
+  "ty==0.0.21",
   "types-lxml==2026.2.16"
 ]
 
@@ -340,6 +340,7 @@ norecursedirs = ".git build docs"
 extend-safe-fixes = [
   "FURB113",
   "PLC2801",
+  "TC001",
   "TCH003"
 ]
 # CONFIG - intentional configuration
