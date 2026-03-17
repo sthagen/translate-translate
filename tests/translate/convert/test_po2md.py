@@ -64,6 +64,26 @@ class TestPO2MD(test_convert.TestConvertCommand):
             "file.md", content or "# Markdown\nYou are only coming through in waves."
         )
 
+    def test_directory_of_markdown_files_ignores_txt_files(self) -> None:
+        self.given_directory_of_markdown_files()
+        self.create_testfile("mddir/notes.txt", "Text file content")
+        self.given_translation_file()
+        self.run_command("translation.po", "testout", template="mddir")
+        assert os.path.isdir(self.get_testfilename("testout"))
+        assert os.path.isfile(self.get_testfilename("testout/file1.md"))
+        assert os.path.isfile(self.get_testfilename("testout/file2.md"))
+        assert not os.path.isfile(self.get_testfilename("testout/notes.txt"))
+
+    def test_explicit_txt_template_is_processed(self) -> None:
+        self.create_testfile(
+            "file.txt", "# Markdown\nYou are only coming through in waves."
+        )
+        self.given_translation_file()
+        self.run_command("translation.po", "out.txt", template="file.txt")
+        assert os.path.isfile(self.get_testfilename("out.txt"))
+        content = self.read_testfile("out.txt").decode()
+        assert "Översatt innehåll" in content
+
     def given_directory_of_markdown_files(self) -> None:
         os.makedirs("mddir", exist_ok=True)
         self.create_testfile("mddir/file1.md", "# Heading\nContent of file 1")
@@ -132,6 +152,44 @@ You are only coming through in waves.
             )
             == output
         )
+
+    def test_markdown_hyperlink_translation_with_full_link_in_po(self) -> None:
+        """Test that PO entries with full markdown hyperlinks (without placeholders) are matched."""
+        self.given_markdown_file(
+            "The [OSPO Alliance EN](https://ospo-alliance.org) website\n"
+        )
+        self.given_translation_file(
+            lines=[
+                "#: file.md:1",
+                'msgid "The [OSPO Alliance EN](https://ospo-alliance.org) website"',
+                'msgstr "Die Website [OSPO Alliance DE](https://ospo-alliance.org)"',
+            ]
+        )
+        self.run_command("translation.po", "out.md", template="file.md")
+        output = self.then_translated_markdown_file_is_written(
+            "Die Website [OSPO Alliance DE](https://ospo-alliance.org)"
+        )
+        assert "The [OSPO Alliance EN]" not in output
+
+    def test_markdown_multiple_hyperlinks_translation_with_full_links_in_po(
+        self,
+    ) -> None:
+        """Test that PO entries with multiple full markdown hyperlinks are matched."""
+        self.given_markdown_file(
+            "Visit [Google](https://google.com) and [GitHub](https://github.com) for more.\n"
+        )
+        self.given_translation_file(
+            lines=[
+                "#: file.md:1",
+                'msgid "Visit [Google](https://google.com) and [GitHub](https://github.com) for more."',
+                'msgstr "Översatt [Google](https://google.com) och [GitHub](https://github.com)."',
+            ]
+        )
+        self.run_command("translation.po", "out.md", template="file.md")
+        output = self.then_translated_markdown_file_is_written("Översatt")
+        assert "[Google](https://google.com)" in output
+        assert "[GitHub](https://github.com)" in output
+        assert "Visit" not in output
 
     def test_markdown_translation_ignore_sections(self) -> None:
         """Test that ignored sections are preserved and translations in PO are not applied to them."""

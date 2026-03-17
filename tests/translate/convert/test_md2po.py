@@ -77,6 +77,22 @@ You are only coming through in waves.
             output.parse(handle)
         assert len(output.units) == 3
 
+    def test_markdown_directory_ignores_txt_files(self) -> None:
+        self.given_directory_of_markdown_files()
+        self.create_testfile("mddir/notes.txt", "Text file content")
+        self.run_command("mddir", "podir", multifile="single")
+        assert os.path.isdir(self.get_testfilename("podir"))
+        assert os.path.isfile(self.get_testfilename("podir/file1.po"))
+        assert os.path.isfile(self.get_testfilename("podir/file2.po"))
+        assert not os.path.isfile(self.get_testfilename("podir/notes.po"))
+
+    def test_explicit_txt_file_is_processed(self) -> None:
+        self.create_testfile("file.txt", "# Heading\nText file content")
+        self.run_command("file.txt", "test.po")
+        assert os.path.isfile(self.get_testfilename("test.po"))
+        content = self.read_testfile("test.po").decode()
+        assert "Text file content" in content
+
     def given_directory_of_markdown_files(self) -> None:
         os.makedirs("mddir", exist_ok=True)
         self.create_testfile("mddir/file1.md", "# Heading\nContent of file 1")
@@ -87,6 +103,26 @@ You are only coming through in waves.
         content = self.read_testfile("test.po").decode()
         assert "coming through" in content
         return content
+
+    def test_markdown_hyperlink_extraction(self) -> None:
+        """Test that markdown hyperlinks are extracted with placeholders."""
+        self.given_markdown_file(
+            "The [OSPO Alliance EN](https://ospo-alliance.org) website\n"
+        )
+        self.run_command("file.md", "test.po")
+        assert os.path.isfile(self.get_testfilename("test.po"))
+        content = self.read_testfile("test.po").decode()
+        assert 'msgid "The [OSPO Alliance EN]{1} website"' in content
+
+    def test_markdown_multiple_hyperlinks_extraction(self) -> None:
+        """Test that multiple markdown hyperlinks are extracted with placeholders."""
+        self.given_markdown_file(
+            "Visit [Google](https://google.com) and [GitHub](https://github.com) for more.\n"
+        )
+        self.run_command("file.md", "test.po")
+        assert os.path.isfile(self.get_testfilename("test.po"))
+        content = self.read_testfile("test.po").decode()
+        assert 'msgid "Visit [Google]{1} and [GitHub]{2} for more."' in content
 
     def test_markdown_translation_ignore_sections(self) -> None:
         """Test that content between translate:off and translate:on is not extracted."""
