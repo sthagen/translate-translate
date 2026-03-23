@@ -24,20 +24,20 @@ lint = [
   {include-group = "pylint"}
 ]
 pre-commit = [
-  "prek==0.3.6"
+  "prek==0.3.8"
 ]
 pylint = [
   "pylint==4.0.5"
 ]
 test = [
-  "pytest-cov==7.0.0",
+  "pytest-cov==7.1.0",
   "pytest-xdist==3.8.0",
   "pytest==9.0.2",
   "syrupy==5.1.0"
 ]
 types = [
   "setuptools>=61.2",
-  "ty==0.0.23",
+  "ty==0.0.24",
   "types-lxml==2026.2.16"
 ]
 
