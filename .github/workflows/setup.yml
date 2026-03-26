@@ -4,6 +4,7 @@ on:
   push:
     branches-ignore:
     - renovate/**
+    - dependabot/**
     tags:
     - '*'
   pull_request:
@@ -14,7 +15,7 @@ permissions:
 jobs:
   setup:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -27,7 +28,7 @@ jobs:
     - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
       with:
         enable-cache: false
-        version: 0.11.0
+        version: 0.11.1
     - name: Install apt dependencies
       run: |
         sudo apt-get update
@@ -39,11 +40,11 @@ jobs:
     - name: pydistcheck
       run: uvx pydistcheck --inspect dist/*
     - name: pyroma
-      run: uvx pyroma dist/*.tar.gz
+      run: uvx --with pip pyroma dist/*.tar.gz
     - name: check-wheel-contents
       run: uvx check-wheel-contents dist/*.whl
     - name: check-manifest
-      run: uvx check-manifest -v
+      run: uvx --with pip check-manifest -v
     - name: Install test (source)
       run: |
         uv venv test-ttk-release-src
