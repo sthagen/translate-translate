@@ -24,7 +24,7 @@ lint = [
   {include-group = "pylint"}
 ]
 pre-commit = [
-  "prek==0.3.8"
+  "prek==0.3.9"
 ]
 pylint = [
   "pylint==4.0.5"
@@ -37,7 +37,7 @@ test = [
 ]
 types = [
   "setuptools>=61.2",
-  "ty==0.0.29",
+  "ty==0.0.31",
   "types-lxml==2026.2.16"
 ]
 
@@ -112,7 +112,7 @@ spellcheck = [
   "pyenchant==3.3.0"
 ]
 subtitles = [
-  "aeidon>=1.15,<1.16"
+  "aeidon>=1.15,<1.17"
 ]
 toml = [
   "tomlkit>=0.13.0,<0.15.0"
