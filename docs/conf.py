@@ -23,7 +23,7 @@ project = "Translate Toolkit"
 copyright = "Translate Toolkit authors"
 
 # The short X.Y version.
-version = "3.19.6"
+version = "3.19.7"
 
 # The full version, including alpha/beta/rc tags
 release = version
@@ -59,6 +59,11 @@ ogp_social_cards = {
 
 # The master toctree document.
 master_doc = "index"
+
+# Do not add every autodoc object to the table of contents. The generated API
+# pages document thousands of methods and attributes, and adding all of them to
+# navigation structures makes the HTML build much slower.
+toc_object_entries = False
 
 # -- Missing modules --------------------------------------------------
 
