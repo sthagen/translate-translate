@@ -10,14 +10,46 @@ from . import test_convert
 
 class TestPOT2PO:
     @staticmethod
-    def convertpot(potsource, posource=None):
+    def convertpot_raw(potsource, posource=None, **kwargs):
         """Helper that converts pot source to po source without requiring files."""
         potfile = BytesIO(potsource.encode())
         pofile = BytesIO(posource.encode()) if posource else None
         pooutfile = BytesIO()
-        pot2po.convertpot(potfile, pooutfile, pofile)
-        pooutfile.seek(0)
-        return po.pofile(pooutfile.read())
+        pot2po.convertpot(potfile, pooutfile, pofile, **kwargs)
+        return pooutfile.getvalue().decode()
+
+    @classmethod
+    def convertpot(cls, potsource, posource=None):
+        """Helper that converts pot source to po source without requiring files."""
+        poout = cls.convertpot_raw(potsource, posource)
+        return po.pofile(poout.encode())
+
+    @staticmethod
+    def quoted_payloads(block: str) -> list[str]:
+        return [
+            line[1:-1]
+            for line in block.splitlines()
+            if line.startswith('"') and line.endswith('"')
+        ]
+
+    def test_max_line_length_wraps_output(self) -> None:
+        long_text = (
+            "This sentence contains enough words to require wrapping in PO output."
+        )
+        output = self.convertpot_raw(f'msgid "{long_text}"\nmsgstr ""\n', maxlength=24)
+        unit_block = output.rsplit("\n\n", 1)[1].split("msgstr", 1)[0]
+
+        assert f'msgid "{long_text}"' not in unit_block
+        assert unit_block.startswith('msgid ""\n')
+        assert all(len(line) <= 24 for line in self.quoted_payloads(unit_block))
+
+    def test_max_line_length_zero_disables_wrapping(self) -> None:
+        long_text = (
+            "This sentence contains enough words to require wrapping in PO output."
+        )
+        output = self.convertpot_raw(f'msgid "{long_text}"\nmsgstr ""\n', maxlength=0)
+
+        assert f'msgid "{long_text}"' in output
 
     @staticmethod
     def singleunit(pofile):
@@ -68,6 +100,32 @@ msgstr[0] ""
         posource = f"""#: simple.label{po.lsep}simple.accesskey\n#, fuzzy\nmsgid "A &hard coded newline.\\n"\nmsgstr "&Hart gekoeerde nuwe lyne\\n"\n"""
         newpo = self.convertpot(potsource, posource)
         assert str(self.singleunit(newpo)) == posource
+
+    def test_fuzzy_merge_records_previous_msgid(self) -> None:
+        """Fuzzy reused translations should retain the old source as previous."""
+        potsource = """msgid "too few arguments"\nmsgstr ""\n"""
+        posource = """msgid "too many arguments"\nmsgstr "trop d arguments"\n"""
+        poexpected = """#, fuzzy
+#| msgid "too many arguments"
+msgid "too few arguments"
+msgstr "trop d arguments"
+"""
+        newpo = self.convertpot(potsource, posource)
+        assert str(self.singleunit(newpo)) == poexpected
+
+    def test_fuzzy_merge_records_previous_context(self) -> None:
+        """Fuzzy reused translations should retain the old context as previous."""
+        potsource = """msgctxt "new context"\nmsgid "Open"\nmsgstr ""\n"""
+        posource = """msgctxt "old context"\nmsgid "Open"\nmsgstr "Ouvrir"\n"""
+        poexpected = """#, fuzzy
+#| msgctxt "old context"
+#| msgid "Open"
+msgctxt "new context"
+msgid "Open"
+msgstr "Ouvrir"
+"""
+        newpo = self.convertpot(potsource, posource)
+        assert str(self.singleunit(newpo)) == poexpected
 
     def test_merging_plurals_with_fuzzy_matching(self) -> None:
         """Test that when we merge PO files with a fuzzy message that it remains fuzzy."""
@@ -121,7 +179,12 @@ msgstr[1] "%d handleidings."
         """
         potsource = f"""#: singlespace.label{po.lsep}singlespace.accesskey\nmsgid "&We have spaces"\nmsgstr ""\n"""
         posource = f"""#: doublespace.label{po.lsep}doublespace.accesskey\nmsgid "&We  have  spaces"\nmsgstr "&One  het  spasies"\n"""
-        poexpected = f"""#: singlespace.label{po.lsep}singlespace.accesskey\n#, fuzzy\nmsgid "&We have spaces"\nmsgstr "&One  het  spasies"\n"""
+        poexpected = f"""#: singlespace.label{po.lsep}singlespace.accesskey
+#, fuzzy
+#| msgid "&We  have  spaces"
+msgid "&We have spaces"
+msgstr "&One  het  spasies"
+"""
         newpo = self.convertpot(potsource, posource)
         print(newpo)
         assert str(self.singleunit(newpo)) == poexpected
@@ -139,8 +202,22 @@ msgstr[1] "%d handleidings."
         posource = (
             """#: location.c:1\n#: location.c:10\nmsgid "Source"\nmsgstr "Target"\n\n"""
         )
-        poexpected1 = """#: location.c:1\n#, fuzzy\nmsgid ""\n"_: location.c:1\\n"\n"Source"\nmsgstr "Target"\n"""
-        poexpected2 = """#: location.c:10\n#, fuzzy\nmsgid ""\n"_: location.c:10\\n"\n"Source"\nmsgstr "Target"\n"""
+        poexpected1 = """#: location.c:1
+#, fuzzy
+#| msgid "Source"
+msgid ""
+"_: location.c:1\\n"
+"Source"
+msgstr "Target"
+"""
+        poexpected2 = """#: location.c:10
+#, fuzzy
+#| msgid "Source"
+msgid ""
+"_: location.c:10\\n"
+"Source"
+msgstr "Target"
+"""
         newpo = self.convertpot(potsource, posource)
         print("Expected:\n", poexpected1, "Actual:\n", newpo.units[1])
         assert str(newpo.units[1]) == poexpected1
@@ -263,6 +340,7 @@ msgstr "Sertifikate"
 """
         expected = r"""#: pref.certs.title
 #, fuzzy
+#| msgid "Certificates"
 msgid ""
 "_: pref.certs.title\n"
 "Certificates"
@@ -342,7 +420,14 @@ msgstr "Sertifikate"
         )
         posource = """#~ msgid "About"\n#~ msgstr "Omtrent"\n"""
         expected1 = """#: resurrect1.c\nmsgid "About"\nmsgstr "Omtrent"\n"""
-        expected2 = """#: resurrect2.c\n#, fuzzy\nmsgid ""\n"_: resurrect2.c\\n"\n"About"\nmsgstr "Omtrent"\n"""
+        expected2 = """#: resurrect2.c
+#, fuzzy
+#| msgid "About"
+msgid ""
+"_: resurrect2.c\\n"
+"About"
+msgstr "Omtrent"
+"""
         newpo = self.convertpot(potsource, posource)
         print(newpo)
         assert len(newpo.units) == 3
@@ -424,7 +509,12 @@ msgstr ""
 
         potsource = """#: file.c:1\n#, c-format\nmsgid "%d computers"\nmsgstr ""\n"""
         posource = """#: file.c:2\n#, c-format\nmsgid "%s computers "\nmsgstr "%s-rekenaars"\n"""
-        poexpected = """#: file.c:1\n#, c-format, fuzzy\nmsgid "%d computers"\nmsgstr "%s-rekenaars"\n"""
+        poexpected = """#: file.c:1
+#, c-format, fuzzy
+#| msgid "%s computers "
+msgid "%d computers"
+msgstr "%s-rekenaars"
+"""
         newpo = self.convertpot(potsource, posource)
         newpounit = self.singleunit(newpo)
         assert newpounit.isfuzzy()
@@ -463,6 +553,8 @@ msgstr "sms"
 
 #: something.h:6
 #, fuzzy
+#| msgctxt "context0"
+#| msgid "text"
 msgctxt "context2"
 msgid "text"
 msgstr "teks"
@@ -797,6 +889,7 @@ class TestPOT2POCommand(test_convert.TestConvertCommand, TestPOT2PO):
     expected_options = [
         "-t TEMPLATE, --template=TEMPLATE",
         "-P, --pot",
+        "-m MAXLENGTH, --maxlinelength=MAXLENGTH",
         "--tm",
         "-s MIN_SIMILARITY, --similarity=MIN_SIMILARITY",
         "--nofuzzymatching",

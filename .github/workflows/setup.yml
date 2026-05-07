@@ -28,7 +28,7 @@ jobs:
     - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       with:
         enable-cache: false
-        version: 0.11.9
+        version: 0.11.11
     - name: Install apt dependencies
       run: |
         sudo apt-get update
@@ -92,6 +92,7 @@ jobs:
     needs:
     - setup
     runs-on: ubuntu-24.04
+    environment: pypi
     permissions:
       # this permission is mandatory for trusted publishing
       id-token: write

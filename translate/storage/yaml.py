@@ -161,6 +161,7 @@ class YAMLFile(base.DictStore[YAMLUnit]):
     @property
     def yaml(self):
         yaml = YAML()
+        yaml.max_depth = 128
         for arg, value in self.dump_args.items():
             setattr(yaml, arg, value)
         return yaml
