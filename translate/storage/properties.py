@@ -133,6 +133,7 @@ import re
 from codecs import iterencode
 from copy import deepcopy
 from dataclasses import dataclass
+from typing import TypeVar
 
 from lxml import etree
 
@@ -243,20 +244,6 @@ def _key_strip(key: str) -> str:
     if newkey[-1:] == "\\":
         newkey += key[len(newkey) : len(newkey) + 1]
     return newkey.lstrip()
-
-
-dialects: dict[str, type[Dialect]] = {}
-default_dialect = "java"
-
-
-def register_dialect(dialect: type[Dialect]) -> type[Dialect]:
-    """Decorator that registers the dialect."""
-    dialects[dialect.name] = dialect
-    return dialect
-
-
-def get_dialect(dialect=default_dialect):
-    return dialects.get(dialect)
 
 
 class Dialect:
@@ -385,6 +372,22 @@ class Dialect:
     @staticmethod
     def get_expand_output_target_mapping(names: list[str]) -> list[str]:
         return names
+
+
+_DialectT = TypeVar("_DialectT", bound=Dialect)
+
+dialects: dict[str, type[Dialect]] = {}
+default_dialect = "java"
+
+
+def register_dialect(dialect: type[_DialectT]) -> type[_DialectT]:
+    """Decorator that registers the dialect."""
+    dialects[dialect.name] = dialect
+    return dialect
+
+
+def get_dialect(dialect=default_dialect):
+    return dialects.get(dialect)
 
 
 @register_dialect
@@ -695,7 +698,7 @@ class proppluralunit(base.TranslationUnit):
     def _get_language_mapping(lang):
         if lang:
             locale = lang.replace("_", "-").split("-")[0]
-            return data.plural_tags.get(locale, data.plural_tags["en"])
+            return data.get_cldr_plural_tags(locale)
         return None
 
     def _get_existing_mapping(self):
@@ -764,7 +767,7 @@ class proppluralunit(base.TranslationUnit):
         else:
             strings = [text]
         if mapping is None:
-            mapping = self._store.get_plural_tags()  # ty:ignore[unresolved-attribute]
+            mapping = self._store.get_plural_tags(text)  # ty:ignore[unresolved-attribute]
 
         strings = self._get_strings(strings, mapping)
         units = self._get_units(mapping)
