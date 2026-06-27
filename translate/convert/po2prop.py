@@ -34,6 +34,29 @@ from translate.storage import po, properties
 eol = "\n"
 
 
+def _get_key_end(line, delimiter_pos, key, personality):
+    """Return where the output key ends in the template line."""
+    key_start = len(line[:delimiter_pos]) - len(line[:delimiter_pos].lstrip())
+    key_wrap_char = personality.key_wrap_char
+    if key_wrap_char and line[key_start : key_start + 1] == key_wrap_char:
+        key_end = key_start + 1
+        while key_end < delimiter_pos:
+            if line[key_end] == key_wrap_char and line[key_end - 1] != "\\":
+                return key_end + 1
+            key_end += 1
+    return min(key_start + len(key), delimiter_pos)
+
+
+def _get_delimiter_spacing(line, delimiter_pos, key_end):
+    """Return the whitespace around the delimiter."""
+    postspace_end = delimiter_pos + 1
+    while postspace_end < len(line) and line[postspace_end].isspace():
+        postspace_end += 1
+    postspace = line[delimiter_pos + 1 : postspace_end]
+
+    return line[key_end:delimiter_pos], postspace
+
+
 def applytranslation(key, propunit, inunit, mixedkeys):
     """Applies the translation for key in the po unit to the prop unit."""
     # this converts the po-style string to a prop-style string
@@ -190,15 +213,10 @@ class reprop:
                 delimiter = f" {self.personality.delimiters[0]} "
             else:
                 key = self.personality.key_strip(line[:delimiter_pos])
-                # Calculate space around the equal sign
-                prespace = line[line.find(" ", len(key)) : delimiter_pos]
-                postspacestart = len(line[delimiter_pos + 1 :])
-                postspaceend = len(line[delimiter_pos + 1 :].lstrip())
-                postspace = line[
-                    delimiter_pos + 1 : delimiter_pos
-                    + (postspacestart - postspaceend)
-                    + 1
-                ]
+                key_end = _get_key_end(line, delimiter_pos, key, self.personality)
+                prespace, postspace = _get_delimiter_spacing(
+                    line, delimiter_pos, key_end
+                )
                 delimiter = prespace + delimiter_char + postspace
             # Check for the special marker used for empty keys (e.g., "=value")
             lookup_key = key or EMPTY_KEY_MARKER
@@ -232,7 +250,7 @@ def convertstrings(
     inputfile,
     outputfile,
     templatefile,
-    personality="strings",
+    personality=None,
     includefuzzy=False,
     encoding=None,
     outputthreshold=None,
@@ -243,7 +261,7 @@ def convertstrings(
         inputfile,
         outputfile,
         templatefile,
-        personality="strings",
+        personality=personality or "strings",
         includefuzzy=includefuzzy,
         encoding=encoding,
         outputthreshold=outputthreshold,
@@ -275,12 +293,13 @@ def convertprop(
     inputfile,
     outputfile,
     templatefile,
-    personality="java",
+    personality=None,
     includefuzzy=False,
     encoding=None,
     remove_untranslated=False,
     outputthreshold=None,
 ) -> bool:
+    personality = personality or "java"
     inputstore = po.pofile(inputfile)
 
     if not convert.should_output_store(inputstore, outputthreshold):
@@ -312,7 +331,7 @@ def main(argv=None) -> None:
         "",
         "--personality",
         dest="personality",
-        default=properties.default_dialect,
+        default=None,
         type="choice",
         choices=list(properties.dialects),
         help=f"override the input file format: {', '.join(properties.dialects)} (for .properties files, default: {properties.default_dialect})",

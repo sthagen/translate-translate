@@ -76,6 +76,19 @@ class TestPO2Prop:
         print(propfile)
         assert propfile == propexpected
 
+    def test_escaped_backslash_key_spacing(self) -> None:
+        """Check that key-owned whitespace is not duplicated as delimiter padding."""
+        posource = """#: path%5C%5C+
+msgid "old"
+msgstr "new"
+"""
+        proptemplate = r"""path\\ =old
+"""
+        propexpected = r"""path\\ =new
+"""
+        propfile = self.merge2prop(proptemplate, posource)
+        assert propfile == propexpected
+
     def test_no_value(self) -> None:
         """Check that we can handle keys without value."""
         posource = """#: KEY\nmsgctxt "KEY"\nmsgid ""\nmsgstr ""\n"""
@@ -268,6 +281,29 @@ msgstr "translated"
             proptemplate, posource, personality="strings", encoding="utf-16"
         )
         assert propfile == propexpectedstrings
+
+    def test_strings_preserves_quoted_key_spacing(self) -> None:
+        """Check merging .strings entries whose quoted key starts or ends with spaces."""
+        posource = """#: +todo+
+msgid " todo "
+msgstr " translated "
+
+#: +for+
+msgid " for "
+msgstr " translated "
+"""
+        proptemplate = """/*  todo  */
+" todo " = " todo ";
+" for "=" for ";
+""".encode("utf-16")
+        propexpected = """/*  todo  */
+" todo " = " translated ";
+" for "=" translated ";
+"""
+        propfile = self.merge2prop(
+            proptemplate, posource, personality="strings", encoding="utf-16"
+        )
+        assert propfile == propexpected
 
     def test_merging_untranslated_simple(self) -> None:
         """Check merging untranslated entries in two 1) use English 2) drop key, value pair."""
@@ -557,3 +593,46 @@ class TestPO2PropCommand(test_convert.TestConvertCommand, TestPO2Prop):
         "--removeuntranslated",
         "--nofuzzy",
     ]
+
+    def test_strings_output_uses_strings_personality_by_default(self) -> None:
+        """Check .strings output still uses the strings personality by default."""
+        self.create_testfile(
+            "translations.po",
+            """#: greeting
+msgid "Hello"
+msgstr "Ahoj"
+""",
+        )
+        self.create_testfile(
+            "template.strings", '"greeting" = "Hello";\n'.encode("utf-16")
+        )
+
+        self.run_command(
+            "translations.po", "output.strings", template="template.strings"
+        )
+
+        assert self.read_testfile("output.strings").decode("utf-16") == (
+            '"greeting" = "Ahoj";\n'
+        )
+
+    def test_strings_output_honors_personality_option(self) -> None:
+        """Check .strings output passes the personality option through."""
+        self.create_testfile(
+            "translations.po",
+            """#: greeting
+msgid "Hello"
+msgstr "Ahoj"
+""",
+        )
+        self.create_testfile("template.strings", '"greeting" = "Hello";')
+
+        self.run_command(
+            "translations.po",
+            "output.strings",
+            template="template.strings",
+            personality="strings-utf8",
+        )
+
+        assert self.read_testfile("output.strings").decode() == (
+            '"greeting" = "Ahoj";\n'
+        )
