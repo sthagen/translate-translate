@@ -24,7 +24,7 @@ lint = [
   {include-group = "pylint"}
 ]
 pre-commit = [
-  "prek==0.4.5"
+  "prek==0.4.9"
 ]
 pylint = [
   "pylint==4.0.6"
@@ -33,11 +33,11 @@ test = [
   "pytest-cov==7.1.0",
   "pytest-xdist==3.8.0",
   "pytest==9.1.1",
-  "syrupy==5.3.4"
+  "syrupy==5.5.3"
 ]
 types = [
   "setuptools>=61.2",
-  "ty==0.0.55",
+  "ty==0.0.58",
   "types-lxml==2026.2.16"
 ]
 
@@ -100,7 +100,7 @@ levenshtein = [
   "RapidFuzz>=3.14.0"
 ]
 markdown = [
-  "mistletoe>=1.4.0,<1.6.0"
+  "mistletoe>=1.4.0,<1.7.0"
 ]
 php = [
   "phply>=1.2.6,<1.3"
@@ -242,12 +242,12 @@ ignore = [
   "tests/*/*/*/*",
   "tests/*/*/*/*/*",
   "tools/benchmark.py",  # Internal benchmarking
-  "tools/phase",  # TODO: investigate purpuse, it was never installed
-  "tools/phaselist2goals",  # TODO: investigate purpuse, it was never installed
-  "translate/convert/odfxml",  # TODO: investigate purpuse, it was never installed
-  "translate/convert/roundtrip-gaia",  # TODO: investigate purpuse, it was never installed
-  "translate/convert/roundtrip-mozilla",  # TODO: investigate purpuse, it was never installed
-  "translate/convert/roundtrip-OOo",  # TODO: investigate purpuse, it was never installed
+  "tools/phase",  # TODO: investigate purpose, it was never installed
+  "tools/phaselist2goals",  # TODO: investigate purpose, it was never installed
+  "translate/convert/odfxml",  # TODO: investigate purpose, it was never installed
+  "translate/convert/roundtrip-gaia",  # TODO: investigate purpose, it was never installed
+  "translate/convert/roundtrip-mozilla",  # TODO: investigate purpose, it was never installed
+  "translate/convert/roundtrip-OOo",  # TODO: investigate purpose, it was never installed
   "translate/storage/debug.properties"  # TODO: this should be converted to tests
 ]
 
