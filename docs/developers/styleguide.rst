@@ -24,6 +24,11 @@ You can also trigger check manually, to check all files run:
 
     pre-commit run --all
 
+The checks include `REUSE <https://reuse.software/>`_ compliance validation.
+When adding files, especially third-party material, ensure their copyright and
+licensing information is recorded in the file header or :file:`REUSE.toml` and
+that the corresponding license text is available in :file:`LICENSES`.
+
 .. _pre-commit: https://pre-commit.com/
 
 .. _styleguide-python:
@@ -261,9 +266,9 @@ Deprecation:
          run_fast()
 
 
-.. _reST field lists: http://sphinx-doc.org/domains.html#info-field-lists
-.. _Python cross-referencing: http://sphinx-doc.org/domains.html#cross-referencing-python-objects
-.. _Sphinx: http://sphinx-doc.org/
-.. _reStructuredText primer: http://sphinx-doc.org/rest.html
-.. _Sphinx documentation: http://sphinx-doc.org/contents.html
-.. _paragraph-level markup: http://sphinx-doc.org/markup/para.html#paragraph-level-markup
+.. _reST field lists: https://sphinx-doc.org/domains.html#info-field-lists
+.. _Python cross-referencing: https://sphinx-doc.org/domains.html#cross-referencing-python-objects
+.. _Sphinx: https://sphinx-doc.org/
+.. _reStructuredText primer: https://sphinx-doc.org/rest.html
+.. _Sphinx documentation: https://sphinx-doc.org/contents.html
+.. _paragraph-level markup: https://sphinx-doc.org/markup/para.html#paragraph-level-markup

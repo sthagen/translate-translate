@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """Tests for the HTML classes."""
 
@@ -37,6 +37,16 @@ def test_guess_encoding() -> None:
             b"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd"><html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><!-- base href="http://home.online.no/~rut-aane/linux.html" --><link rel="shortcut icon" href="http://home.online.no/~rut-aane/peng16x16a.gif"><meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><meta name="Description" content="Linux newbie stuff and a little about Watching TV under Linux"><meta name="MSSmartTagsPreventParsing" content="TRUE"><meta name="GENERATOR" content="Mozilla/4.7 [en] (X11; I; Linux 2.2.5-15 i586) [Netscape]"><title>Some Linux for beginners</title><style type="text/css">"""
         )
         == "iso-8859-1"
+    )
+    assert (
+        h.guess_encoding(
+            b'<meta content="text/html; charset=windows-1250" http-equiv="content-type">'
+        )
+        == "windows-1250"
+    )
+    assert (
+        h.guess_encoding(b'<meta charset="UTF-8"><meta data-charset="windows-1252">')
+        == "UTF-8"
     )
 
 
@@ -116,7 +126,7 @@ class TestHTMLExtraction:
         )
         assert (
             self.strip_html(
-                '<h3><a href="http://www.firefox.com/" class="producttitle"><img src="../images/product-firefox-50.png" width="50" height="50" alt="" class="featured" style="display: block; margin-bottom: 30px;" /><strong>Firefox for Desktop</strong></a></h3>'
+                '<h3><a href="https://www.firefox.com/" class="producttitle"><img src="../images/product-firefox-50.png" width="50" height="50" alt="" class="featured" style="display: block; margin-bottom: 30px;" /><strong>Firefox for Desktop</strong></a></h3>'
             )
             == "Firefox for Desktop"
         )
@@ -124,7 +134,7 @@ class TestHTMLExtraction:
     def test_extraction_tag_figcaption(self) -> None:
         """Check that we can extract figcaption."""
         h = html.htmlfile()
-        # Example form http://www.w3schools.com/tags/tag_figcaption.asp
+        # Example form https://www.w3schools.com/tags/tag_figcaption.asp
         store = h.parsestring(
             """
                <figure>
@@ -140,7 +150,7 @@ class TestHTMLExtraction:
     def test_extraction_tag_caption_td_th(self) -> None:
         """Check that we can extract table related translatable: th, td and caption."""
         h = html.htmlfile()
-        # Example form http://www.w3schools.com/tags/tag_caption.asp
+        # Example form https://www.w3schools.com/tags/tag_caption.asp
         store = h.parsestring(
             """
             <table>
@@ -166,7 +176,7 @@ class TestHTMLExtraction:
     def test_extraction_attr_alt(self) -> None:
         """Check that we can extract title attribute."""
         h = html.htmlfile()
-        # Example from http://www.netmechanic.com/news/vol6/html_no1.htm
+        # Example from https://www.netmechanic.com/news/vol6/html_no1.htm
         store = h.parsestring(
             """
             <img src="cafeteria.jpg" height="200" width="200" alt="UAHC campers enjoy a meal in the camp cafeteria">
@@ -181,7 +191,7 @@ class TestHTMLExtraction:
         """Check that we can extract title attribute."""
         h = html.htmlfile()
 
-        # Example form http://www.w3schools.com/tags/att_global_title.asp
+        # Example form https://www.w3schools.com/tags/att_global_title.asp
         store = h.parsestring(
             """
             <p><abbr title="World Health Organization">WHO</abbr> was founded in 1948.</p>
@@ -196,7 +206,7 @@ class TestHTMLExtraction:
         assert store.units[1].source == "Free Web tutorials"
         assert store.units[2].source == "W3Schools.com"
 
-        # Example from http://www.netmechanic.com/news/vol6/html_no1.htm
+        # Example from https://www.netmechanic.com/news/vol6/html_no1.htm
         store = h.parsestring(
             """
             <table width="100" border="2" title="Henry Jacobs Camp summer 2003 schedule">
@@ -628,6 +638,18 @@ pre tag
         assert store.units[0].source == "<strong>Bold</strong> text here"
         notes = store.units[0].getnotes(origin="source code")
         assert notes == "This is important"
+
+    def test_inherited_translate_comment_is_not_duplicated(self) -> None:
+        """A reused resumed unit should retain one copy of an inherited note."""
+        store = html.htmlfile().parsestring(
+            '<p data-translate-context="shared" data-translate-comment="note">'
+            "Same<i data-translate-ignore>skip</i>Same</p>"
+        )
+
+        assert len(store.units) == 1
+        assert store.units[0].source == "Same"
+        assert store.units[0].getcontext() == "shared"
+        assert store.units[0].getnotes(origin="source code") == "note"
 
 
 class TestHTMLDocpath:

@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """Tests for the Markdown classes."""
 
@@ -163,6 +163,49 @@ class TestMarkdownTranslationUnitExtractionAndTranslation(TestCase):
         translated_output = self.get_translated_output(store)
         assert translated_output == "\n## (sweet *potato*) ##\n"
         assert store.units[0].getlocations()[0].endswith("2")
+
+    def test_atx_heading_with_mdx_explicit_id(self) -> None:
+        store = self.parse("### Anonymous learners {/* #anonymous */}\n")
+        unit_sources = self.get_translation_unit_sources(store)
+        assert unit_sources == ["Anonymous learners"]
+        translated_output = self.get_translated_output(store)
+        assert translated_output == "### (Anonymous learners) {/* #anonymous */}\n"
+
+    def test_atx_heading_strips_explicit_id_from_migrated_translation(self) -> None:
+        inputfile = BytesIO(b"### Anonymous learners {/* #anonymous */}\n")
+        store = markdown.MarkdownFile(
+            inputfile=inputfile,
+            callback=lambda text: (
+                "Anonyme Lernende {/* #anonymous */}"
+                if text == "Anonymous learners"
+                else text
+            ),
+        )
+
+        assert store.filesrc == "### Anonyme Lernende {/* #anonymous */}\n"
+
+    def test_atx_heading_with_classic_explicit_id(self) -> None:
+        store = self.parse("### Anonymous *learners* {#anonymous} ###\n")
+        unit_sources = self.get_translation_unit_sources(store)
+        assert unit_sources == ["Anonymous *learners*"]
+        translated_output = self.get_translated_output(store)
+        assert translated_output == "### (Anonymous *learners*) {#anonymous} ###\n"
+
+    def test_setext_heading_with_explicit_id(self) -> None:
+        store = self.parse("Anonymous learners {/* #anonymous */}\n----------\n")
+        unit_sources = self.get_translation_unit_sources(store)
+        assert unit_sources == ["Anonymous learners"]
+        translated_output = self.get_translated_output(store)
+        assert translated_output == (
+            "(Anonymous learners) {/* #anonymous */}\n----------\n"
+        )
+
+    def test_heading_with_malformed_explicit_id(self) -> None:
+        store = self.parse("### Anonymous learners {/* #anonymous /*}\n")
+        unit_sources = self.get_translation_unit_sources(store)
+        assert unit_sources == ["Anonymous learners {/* #anonymous /*}"]
+        translated_output = self.get_translated_output(store)
+        assert translated_output == "### (Anonymous learners {/* #anonymous /*})\n"
 
     def test_empty_atx_heading(self) -> None:
         input = [
@@ -537,7 +580,7 @@ author: John Smith
 
     def test_parse_without_callback_no_duplicate_units(self) -> None:
         """Parsing with default callback should not create duplicate units for links."""
-        md = "Click [here](http://example.com) for more info.\n"
+        md = "Click [here](https://example.com) for more info.\n"
         inputfile = BytesIO(md.encode())
         store = markdown.MarkdownFile(inputfile=inputfile)
         unit_sources = self.get_translation_unit_sources(store)
@@ -703,11 +746,11 @@ class TestMarkdownNoPlaceholders(TestMarkdownTranslationUnitExtractionAndTransla
 
     def test_parse_without_callback_no_duplicate_units(self) -> None:
         """In no_placeholders mode, full link syntax is preserved in unit sources."""
-        md = "Click [here](http://example.com) for more info.\n"
+        md = "Click [here](https://example.com) for more info.\n"
         inputfile = BytesIO(md.encode())
         store = markdown.MarkdownFile(inputfile=inputfile, no_placeholders=True)
         unit_sources = self.get_translation_unit_sources(store)
-        assert unit_sources == ["Click [here](http://example.com) for more info."]
+        assert unit_sources == ["Click [here](https://example.com) for more info."]
         assert store.units[0].getdocpath() == "p[1]"
 
     def test_parse_without_callback_multiple_links(self) -> None:
@@ -729,6 +772,26 @@ class TestMarkdownNoPlaceholders(TestMarkdownTranslationUnitExtractionAndTransla
 
 
 class TestMarkdownRendering:
+    def test_legacy_explicit_heading_id_translation(self) -> None:
+        source = "### Anonymous learners {/* #anonymous */}\n"
+        legacy_source = "Anonymous learners {/* #anonymous */}"
+
+        for legacy_target in (
+            "Anonyme Lernende",
+            "Anonyme Lernende {/* #anonymous */}",
+            "Anonyme Lernende {#translated-anchor}",
+        ):
+            inputfile = BytesIO(source.encode())
+            store = markdown.MarkdownFile(
+                inputfile=inputfile,
+                callback=lambda text, target=legacy_target: (
+                    target if text == legacy_source else text
+                ),
+            )
+
+            assert [unit.source for unit in store.units] == ["Anonymous learners"]
+            assert store.filesrc == "### Anonyme Lernende {/* #anonymous */}\n"
+
     def test_hard_line_break_in_translation_unit(self) -> None:
         input = "yes box\n"
         inputfile = BytesIO(input.encode())
@@ -819,7 +882,7 @@ Don't translate this
 
 <!-- translate:off -->
 
-**Bold** and *italic* text with [links](http://example.com)
+**Bold** and *italic* text with [links](https://example.com)
 
 <!-- translate:on -->
 
@@ -833,7 +896,7 @@ After
 
 <!-- translate:off -->
 
-**Bold** and *italic* text with [links](http://example.com)
+**Bold** and *italic* text with [links](https://example.com)
 
 <!-- translate:on -->
 
@@ -934,8 +997,8 @@ After
 
 <!-- translate:off -->
 
-[Reference 1]: http://example.com "Title 1"
-[Reference 2]: http://example.org
+[Reference 1]: https://example.com "Title 1"
+[Reference 2]: https://example.org
 
 <!-- translate:on -->
 
@@ -945,8 +1008,8 @@ More text
         unit_sources = self.get_translation_unit_sources(store)
         assert unit_sources == ["Text", "More text"]
         # Verify the link references are preserved in output
-        assert "[Reference 1]: http://example.com" in store.filesrc
-        assert "[Reference 2]: http://example.org" in store.filesrc
+        assert "[Reference 1]: https://example.com" in store.filesrc
+        assert "[Reference 2]: https://example.org" in store.filesrc
 
     def test_docpath_heading_hierarchy(self) -> None:
         """Test logical document path with heading hierarchy."""

@@ -6,7 +6,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -15,14 +15,14 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Count strings and words for supported localization files.
 
 These include: XLIFF, TMX, Gettex PO and MO, Qt .ts and .qm, Wordfast TM, etc
 
-See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/pocount.html
+See: https://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/pocount.html
 for examples and usage instructions.
 """
 
@@ -301,7 +301,7 @@ class FullRenderer(Renderer):
         print(f"Processing file : {ConsoleColor.HEADER()}{title}{ConsoleColor.ENDC()}")
         print("Type               Strings      Words (source)    Words (translation)")
         print(
-            f"{ConsoleColor.OKGREEN()}Translated:   %5d (%3d%%) %10d (%3d%%) %15d"  # noqa: RUF073
+            f"{ConsoleColor.OKGREEN()}Translated:   %5d (%3d%%) %10d (%3d%%) %15d"  # ruff:ignore[f-string-percent-format]
             % (
                 stats["translated"],
                 percent(stats["translated"], stats["total"]),
@@ -312,7 +312,7 @@ class FullRenderer(Renderer):
             + ConsoleColor.ENDC()
         )
         print(
-            f"{ConsoleColor.WARNING()}Fuzzy:        %5d (%3d%%) %10d (%3d%%)             n/a"  # noqa: RUF073
+            f"{ConsoleColor.WARNING()}Fuzzy:        %5d (%3d%%) %10d (%3d%%)             n/a"  # ruff:ignore[f-string-percent-format]
             % (
                 stats["fuzzy"],
                 percent(stats["fuzzy"], stats["total"]),
@@ -322,7 +322,7 @@ class FullRenderer(Renderer):
             + ConsoleColor.ENDC()
         )
         print(
-            f"{ConsoleColor.FAIL()}Untranslated: %5d (%3d%%) %10d (%3d%%)             n/a"  # noqa: RUF073
+            f"{ConsoleColor.FAIL()}Untranslated: %5d (%3d%%) %10d (%3d%%)             n/a"  # ruff:ignore[f-string-percent-format]
             % (
                 stats["untranslated"],
                 percent(stats["untranslated"], stats["total"]),

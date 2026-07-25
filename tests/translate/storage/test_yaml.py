@@ -1,4 +1,5 @@
 import pytest
+from ruamel.yaml.comments import CommentedMap
 
 from translate.misc.multistring import multistring
 from translate.storage import base, yaml
@@ -565,6 +566,26 @@ key2: value2
         assert store.units[0].getnotes() == ""
         assert store.units[1].getnotes() == ""
 
+    def test_sibling_keys_are_indexed_once(self) -> None:
+        """Comment extraction should not scan all sibling keys per value."""
+
+        class CountingCommentedMap(CommentedMap):
+            def __init__(self, *args, **kwargs) -> None:
+                self.keys_calls = 0
+                super().__init__(*args, **kwargs)
+
+            def keys(self):
+                self.keys_calls += 1
+                return super().keys()
+
+        data = CountingCommentedMap(
+            (f"key_{index}", f"value_{index}") for index in range(10)
+        )
+
+        list(self.StoreClass()._flatten(data))
+
+        assert data.keys_calls == 1
+
     def test_multiline_literal_format(self) -> None:
         """Test that multiline strings use literal format (|) for better readability."""
         # Test 1: New file with multiline content
@@ -649,6 +670,26 @@ class TestRubyYAMLResourceStore(test_monolingual.TestMonolingualStore):
         store = self.StoreClass()
         store.parse(data)
         assert bytes(store) == data.encode("ascii")
+
+    def test_plural_tags_only_resolved_for_plural_mappings(self, monkeypatch) -> None:
+        store = self.StoreClass()
+        get_plural_tags = store.get_plural_tags
+        get_plural_tags_calls = 0
+
+        def counting_get_plural_tags(target=None):
+            nonlocal get_plural_tags_calls
+            get_plural_tags_calls += 1
+            return get_plural_tags(target)
+
+        monkeypatch.setattr(store, "get_plural_tags", counting_get_plural_tags)
+        data = "en:\n" + "".join(
+            f"  group_{index}:\n    message: Value {index}\n" for index in range(100)
+        )
+
+        store.parse(data)
+
+        assert len(store.units) == 100
+        assert get_plural_tags_calls == 0
 
     def test_ruby_wrong(self) -> None:
         data = """no_data: No data

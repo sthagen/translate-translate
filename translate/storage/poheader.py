@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """class that handles all header functions for a header in a po file."""
 
@@ -309,14 +309,16 @@ class poheader:
         """
         header = self.parseheader()
         if lang := header.get("Language"):
+            # ruff:ignore[import-outside-top-level]
             # pylint: disable-next=import-outside-toplevel
-            from translate.lang.data import langcode_ire  # noqa: PLC0415
+            from translate.lang.data import langcode_ire
 
             if langcode_ire.match(lang):
                 return lang
         if "X-Poedit-Language" in header:
+            # ruff:ignore[import-outside-top-level]
             # pylint: disable-next=import-outside-toplevel
-            from translate.lang import poedit  # noqa: PLC0415
+            from translate.lang import poedit
 
             language = header.get("X-Poedit-Language")
             country = header.get("X-Poedit-Country")
@@ -324,23 +326,27 @@ class poheader:
         if "Language-Code" in header:  # Used in Plone files
             return header.get("Language-Code")
         if "Language-Team" in header:
+            # ruff:ignore[import-outside-top-level]
             # pylint: disable-next=import-outside-toplevel
-            from translate.lang.team import guess_language  # noqa: PLC0415
+            from translate.lang.team import guess_language
 
             return guess_language(header.get("Language-Team"))
         return None
 
-    def settargetlanguage(self, lang: str) -> None:
+    def settargetlanguage(self, targetlanguage: str | None) -> None:
         """
         Set the target language in the header.
 
         This removes any custom Poedit headers if they exist.
 
-        :param lang: the new target language code
+        :param targetlanguage: the new target language code
         """
-        if isinstance(lang, str) and len(lang) > 1:
+        if isinstance(targetlanguage, str) and len(targetlanguage) > 1:
             self.updateheader(
-                add=True, Language=lang, X_Poedit_Language=None, X_Poedit_Country=None
+                add=True,
+                Language=targetlanguage,
+                X_Poedit_Language=None,
+                X_Poedit_Country=None,
             )
 
     def getprojectstyle(self) -> str | None:

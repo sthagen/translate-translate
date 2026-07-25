@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 r"""
 Classes that hold units of .properties, and similar, files that are used in
@@ -44,11 +44,11 @@ Java
     pairs that are not translated.
 
     The following `.properties file description
-    <http://docs.oracle.com/javase/7/docs/api/java/util/Properties.html#load(java.io.Reader)>`_
+    <https://docs.oracle.com/javase/7/docs/api/java/util/Properties.html#load(java.io.Reader)>`_
     gives a good references to the .properties specification.
 
     Properties file may also hold Java `MessageFormat
-    <http://docs.oracle.com/javase/7/docs/api/java/text/MessageFormat.html>`_
+    <https://docs.oracle.com/javase/7/docs/api/java/text/MessageFormat.html>`_
     messages.  No special handling is provided in this storage class for
     MessageFormat, but this may be implemented in future.
 
@@ -69,7 +69,7 @@ Strings
 Flex
     Adobe Flex files seem to be normal .properties files but in UTF-8 just like
     Mozilla files. This
-    `page <http://livedocs.adobe.com/flex/3/html/help.html?content=l10n_3.html>`_
+    `page <https://flex.apache.org/doc/flex/using/flx_l10n_ln.html>`_
     provides the information used to implement the dialect.
 
 Skype
@@ -665,7 +665,7 @@ class DialectStrings(Dialect):
         return ret.replace('\\"', '"')
 
     @classmethod
-    def encode(cls, string, encoding=None):  # noqa: ARG003
+    def encode(cls, string, encoding=None):  # ruff:ignore[unused-class-method-argument]
         return string.translate(cls.encode_trans)
 
     @classmethod
@@ -928,7 +928,7 @@ class DialectJoomla(Dialect):
         return string.replace('"_QQ_"', '"')
 
     @classmethod
-    def encode(cls, string, encoding=None):  # noqa: ARG003
+    def encode(cls, string, encoding=None):  # ruff:ignore[unused-class-method-argument]
         """Encode the string."""
         if not string:
             return string
@@ -1433,7 +1433,7 @@ class XWikiPageProperties(xwikifile):
  * You should have received a copy of the GNU Lesser General Public
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * 02110-1301 USA, or see the FSF site: https://www.fsf.org.
 -->
 
 """

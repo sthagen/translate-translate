@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
 
 """
@@ -52,9 +52,9 @@ Module for parsing Qt .qm files.
     The code can parse files correctly.  But it could be cleaned up to be
     more readable, especially the part that breaks the file into sections.
 
-http://qt.gitorious.org/+kde-developers/qt/kde-qt/blobs/master/tools/linguist/shared/qm.cpp
-`Plural information <http://qt.gitorious.org/+kde-developers/qt/kde-qt/blobs/master/tools/linguist/shared/numerus.cpp>`_
-`QLocale languages <http://docs.huihoo.com/qt/4.5/qlocale.html#Language-enum>`_
+https://code.qt.io/cgit/qt/qttools.git/tree/src/linguist/shared/qm.cpp
+`Plural information <https://code.qt.io/cgit/qt/qttools.git/tree/src/linguist/shared/numerus.cpp>`_
+`QLocale languages <https://docs.huihoo.com/qt/4.5/qlocale.html#Language-enum>`_
 """
 
 import codecs
@@ -119,7 +119,7 @@ class qmfile(base.TranslationStore):
         sectionheader = 5
 
         def section_debug(name, section_type, startsection, length) -> None:
-            print(  # noqa: T201
+            print(  # ruff:ignore[print]
                 f"Section: {name} (type: {section_type:#x}, offset: {startsection:#x}, length: {length})"
             )
 

@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,10 +14,11 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 from lxml import etree
 
+from translate.misc.xml_helpers import parse_xml
 from translate.storage.xml_extract import extract, misc
 from translate.storage.xml_name import XmlNamer
 
@@ -234,6 +235,21 @@ def get_xliff_source_target_doms(unit):
         return (unit.source_dom, unit.target_dom)
 
     return (unit.source_dom, unit.source_dom)
+
+
+def get_po_source_target_doms(unit):
+    """Build source and target DOM objects from PO strings with placeables."""
+
+    def parse_fragment(value, name):
+        wrapper = parse_xml(f"<wrapper>{value}</wrapper>")
+        node = etree.Element(name)
+        node.text = wrapper.text
+        node.extend(wrapper)
+        return node
+
+    source_dom = parse_fragment(unit.source, "source")
+    target_dom = parse_fragment(unit.target or unit.source, "target")
+    return source_dom, target_dom
 
 
 def replace_dom_text(

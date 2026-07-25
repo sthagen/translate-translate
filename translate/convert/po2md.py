@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,12 +14,12 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Translate Markdown files using Gettext PO localization files.
 
-See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/md2po.html
+See: https://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/md2po.html
 for examples and usage instructions.
 """
 
@@ -66,6 +66,7 @@ class MarkdownTranslator:
         outputstore = markdown.MarkdownFile(
             inputfile=templatefile,
             callback=self._lookup,
+            lookup_callback=self._lookup_translation,
             max_line_length=self.maxlength if self.maxlength > 0 else None,
             extract_code_blocks=self.extract_code_blocks,
             extract_frontmatter=self.extract_frontmatter,
@@ -75,15 +76,20 @@ class MarkdownTranslator:
         return 1
 
     def _lookup(self, string: str) -> str:
+        translation = self._lookup_translation(string)
+        return string if translation is None else translation
+
+    def _lookup_translation(self, string: str) -> str | None:
+        """Return a usable translation, distinguishing misses from identity targets."""
         unit = self.inputstore.sourceindex.get(string, None)
         if unit is None:
-            return string
+            return None
         unit = unit[0]
         if unit.istranslated():
             return unit.target
         if self.includefuzzy and unit.isfuzzy():
             return unit.target
-        return unit.source
+        return None
 
 
 class PO2MDOptionParser(convert.ConvertOptionParser):

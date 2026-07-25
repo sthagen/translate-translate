@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """This module stores information and functionality that relates to plurals."""
 
@@ -294,7 +294,7 @@ _fixed_names = {
 
 
 scripts = {
-    # Codes pulled from http://unicode.org/iso15924/iso15924-codes.html
+    # Codes pulled from https://unicode.org/iso15924/iso15924-codes.html
     # Scripts were figured out from the languages's Wikipedia pages and the
     # real usage in https://mozilla.locamotion.org/
     "Deva": [
@@ -1062,10 +1062,10 @@ def simplercode(code):
 
     .. seealso::
 
-       - http://www.rfc-editor.org/rfc/bcp/bcp47.txt
-       - http://www.rfc-editor.org/rfc/rfc4646.txt
-       - http://www.rfc-editor.org/rfc/rfc4647.txt
-       - http://www.w3.org/International/articles/language-tags/
+       - https://www.rfc-editor.org/rfc/bcp/bcp47.txt
+       - https://www.rfc-editor.org/rfc/rfc4646.txt
+       - https://www.rfc-editor.org/rfc/rfc4647.txt
+       - https://www.w3.org/International/articles/language-tags/
     """
     if not code:
         return code

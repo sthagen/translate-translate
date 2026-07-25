@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 r"""
 Class that manages JSON data files for translation.
@@ -532,18 +532,16 @@ class I18NextV4File(JsonNestedFile):
         name_node=None,
         name_last_node=None,
         last_node=None,
+        plural_tags=None,
     ):
         if prev is None:
             prev = self.UnitClass.IdClass([])
+        if plural_tags is None:
+            plural_tags = self.get_plural_tags()
         if isinstance(data, dict):
-            processed = set()
+            processed_plural_bases = set()
 
             for k, v in data.items():
-                # Check already processed items
-                if k in processed:
-                    continue
-
-                plurals = []
                 suffix = ""
                 plural_base = ""
 
@@ -551,17 +549,11 @@ class I18NextV4File(JsonNestedFile):
                     plural_base, suffix = k.rsplit("_", 1)
 
                 if suffix in cldr_plural_categories:
-                    plurals = [
-                        f"{plural_base}_{suffix}" for suffix in self.get_plural_tags()
-                    ]
-
-                if plurals:
-                    sources = []
-                    items = []
-                    for key in plurals:
-                        processed.add(key)
-                        sources.append(data.get(key, ""))
-                        items.append(key)
+                    if plural_base in processed_plural_bases:
+                        continue
+                    processed_plural_bases.add(plural_base)
+                    items = [f"{plural_base}_{suffix}" for suffix in plural_tags]
+                    sources = [data.get(key, "") for key in items]
 
                     unit = self.UnitClass(multistring(sources), items)
                     newid = prev.extend("key", plural_base)
@@ -570,7 +562,13 @@ class I18NextV4File(JsonNestedFile):
                     continue
 
                 yield from self._extract_units(
-                    v, stop, prev.extend("key", k), k, None, data
+                    v,
+                    stop,
+                    prev.extend("key", k),
+                    k,
+                    None,
+                    data,
+                    plural_tags,
                 )
         else:
             yield from super()._extract_units(

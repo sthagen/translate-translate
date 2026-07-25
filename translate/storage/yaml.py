@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 r"""Class that manages YAML data files for translation."""
 
@@ -190,7 +190,7 @@ class YAMLFile(base.DictStore[YAMLUnit]):
                         comment_lines.append(line[1:].strip())
         return comment_lines
 
-    def _get_key_comment(self, commented_map, key):
+    def _get_key_comment(self, commented_map, key, previous_key, is_first_key):
         """
         Extract the comment that appears before a key in a CommentedMap.
 
@@ -205,28 +205,22 @@ class YAMLFile(base.DictStore[YAMLUnit]):
             return None
 
         comment_lines = []
-        keys = list(commented_map.keys())
 
         # Check for top-level comment if this is the first key
-        if keys and keys[0] == key:
+        if is_first_key:
             ca_comment = getattr(commented_map.ca, "comment", None)
             if ca_comment and len(ca_comment) > 1 and ca_comment[1]:
                 comment_lines.extend(self._extract_comment_lines(ca_comment[1]))
 
         # For non-first keys, check the previous key's end comment
-        elif key in keys:
-            key_index = keys.index(key)
-            if key_index > 0 and hasattr(commented_map.ca, "items"):
-                prev_key = keys[key_index - 1]
-                prev_comment_info = commented_map.ca.items.get(prev_key)
-                if (
-                    prev_comment_info
-                    and len(prev_comment_info) > 2
-                    and prev_comment_info[2]
-                ):
-                    comment_lines.extend(
-                        self._extract_comment_lines(prev_comment_info[2])
-                    )
+        elif hasattr(commented_map.ca, "items"):
+            prev_comment_info = commented_map.ca.items.get(previous_key)
+            if (
+                prev_comment_info
+                and len(prev_comment_info) > 2
+                and prev_comment_info[2]
+            ):
+                comment_lines.extend(self._extract_comment_lines(prev_comment_info[2]))
 
         # Check for comments on separate lines before this key
         if hasattr(commented_map.ca, "items"):
@@ -238,11 +232,27 @@ class YAMLFile(base.DictStore[YAMLUnit]):
 
     def _parse_dict(self, data, prev):
         # Avoid using merged items, it is enough to have them once
+        keys = list(data.keys())
+        key_positions = {key: position for position, key in enumerate(keys)}
         for k, v in data.non_merged_items():
-            yield from self._flatten(v, prev.extend("key", k), parent_map=data, key=k)
+            position = key_positions[k]
+            yield from self._flatten(
+                v,
+                prev.extend("key", k),
+                parent_map=data,
+                key=k,
+                previous_key=keys[position - 1] if position else None,
+                is_first_key=position == 0,
+            )
 
     def _flatten(
-        self, data, prev=None, parent_map=None, key=None
+        self,
+        data,
+        prev=None,
+        parent_map=None,
+        key=None,
+        previous_key=None,
+        is_first_key=False,
     ) -> Generator[tuple[base.UnitId, str, str | None]]:
         """
         Flatten YAML dictionary.
@@ -254,16 +264,28 @@ class YAMLFile(base.DictStore[YAMLUnit]):
         if isinstance(data, dict):
             yield from self._parse_dict(data, prev)
         elif isinstance(data, str):
-            yield (prev, data, self._get_key_comment(parent_map, key))
+            yield (
+                prev,
+                data,
+                self._get_key_comment(parent_map, key, previous_key, is_first_key),
+            )
         elif isinstance(data, (bool, int)):
-            yield (prev, str(data), self._get_key_comment(parent_map, key))
+            yield (
+                prev,
+                str(data),
+                self._get_key_comment(parent_map, key, previous_key, is_first_key),
+            )
         elif isinstance(data, list):
             for k, v in enumerate(data):
                 yield from self._flatten(
                     v, prev.extend("index", k), parent_map=data, key=k
                 )
         elif isinstance(data, TaggedScalar):
-            yield (prev, data.value, self._get_key_comment(parent_map, key))
+            yield (
+                prev,
+                data.value,
+                self._get_key_comment(parent_map, key, previous_key, is_first_key),
+            )
         elif data is None:
             pass
         else:
@@ -356,8 +378,8 @@ class RubyYAMLFile(YAMLFile):
 
     def _parse_dict(self, data, prev):
         # Does this look like a plural?
-        tags = self.get_plural_tags()
         if data and all(x in cldr_plural_categories for x in data):
+            tags = self.get_plural_tags()
             # Ensure we have correct plurals ordering.
             values = [data[item] for item in tags if item in data]
 

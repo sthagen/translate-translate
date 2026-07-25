@@ -1,5 +1,6 @@
 from copy import copy
 from io import BytesIO
+from typing import SupportsIndex
 
 from pytest import mark, raises
 
@@ -91,6 +92,66 @@ class TestHelpers:
 
 class TestPYPOUnit(test_po.TestPOUnit):
     UnitClass = pypo.pounit
+
+    def test_merge_comments_does_not_scan_existing_comments(self) -> None:
+        """Comment merging should index existing comments once."""
+
+        class CountingList(list):
+            contains_calls = 0
+
+            def __contains__(self, item: object) -> bool:
+                type(self).contains_calls += 1
+                return super().__contains__(item)
+
+        unit = self.UnitClass("message")
+        unit.othercomments = CountingList(["#\n", "# existing\n"])
+        other = self.UnitClass("message")
+        other.othercomments = ["#\n", "# existing\n", "# new\n", "# new\n"]
+
+        unit.merge(other)
+
+        assert CountingList.contains_calls == 0
+        assert unit.othercomments == ["#\n", "# existing\n", "#\n", "# new\n"]
+
+    def test_merge_source_references_does_not_scan_existing_references(self) -> None:
+        """Source reference merging should use indexed membership."""
+
+        class CountingReference(str):
+            comparisons = 0
+
+            def __eq__(self, other: object) -> bool:
+                type(self).comparisons += 1
+                return super().__eq__(other)
+
+            __hash__ = str.__hash__
+
+        class ReferenceComment(str):
+            def split(
+                self, sep: str | None = None, maxsplit: SupportsIndex = -1
+            ) -> list[str]:
+                parts = super().split(sep, maxsplit)
+                return [parts[0], *(CountingReference(part) for part in parts[1:])]
+
+        unit = self.UnitClass("message")
+        unit.sourcecomments = [ReferenceComment("#: old1 old2\n")]
+        other = self.UnitClass("message")
+        other.sourcecomments = [ReferenceComment("#: new1 new2\n")]
+
+        unit.merge(other)
+
+        assert CountingReference.comparisons == 0
+        assert unit.getlocations() == ["old1", "old2", "new1", "new2"]
+
+    def test_merge_source_references_preserves_order_and_duplicates(self) -> None:
+        """Reference indexing should retain the existing merge semantics."""
+        unit = self.UnitClass("message")
+        unit.sourcecomments = ["#: existing first\n"]
+        other = self.UnitClass("message")
+        other.sourcecomments = ["#: existing new new\n"]
+
+        unit.merge(other)
+
+        assert unit.getlocations() == ["existing", "first", "new", "new"]
 
     def test_plurals(self) -> None:
         """Tests that plurals are handled correctly."""
@@ -310,6 +371,74 @@ class TestPYPOFile(test_po.TestPOFile):
         assert len(pofile.units) == 2
         assert str(pofile.units[0]).count("source1") == 2
         assert str(pofile.units[1]).count("source2") == 2
+
+    def test_merge_duplicates_msgctxt_does_not_compare_units(self) -> None:
+        """Context assignment should not scan previously handled units."""
+
+        class CountingPoUnit(pypo.pounit):
+            comparisons = 0
+
+            def __eq__(self, other: object) -> bool:
+                type(self).comparisons += 1
+                return super().__eq__(other)
+
+        store = self.StoreClass(noheader=True)
+        for source in ("first", "second"):
+            for location in ("source1", "source2", "source3"):
+                unit = CountingPoUnit(source)
+                unit.addlocation(location)
+                store.addunit(unit)
+
+        store.removeduplicates("msgctxt")
+
+        assert CountingPoUnit.comparisons == 0
+        contexts = [unit.getpreviouscontext() for unit in store.units]
+        assert contexts == [
+            "source1",
+            "source2",
+            "source3",
+            "source1",
+            "source2",
+            "source3",
+        ]
+
+        store.removeduplicates("msgctxt")
+
+        assert CountingPoUnit.comparisons == 0
+        assert [unit.getpreviouscontext() for unit in store.units] == contexts
+
+    @mark.parametrize("location", ["same", ""])
+    def test_merge_duplicates_msgctxt_drops_identical_contexts(
+        self, location: str
+    ) -> None:
+        """Duplicates remain duplicates when their derived contexts match."""
+        store = self.StoreClass(noheader=True)
+        for _ in range(3):
+            unit = pypo.pounit("message")
+            if location:
+                unit.addlocation(location)
+            store.addunit(unit)
+
+        store.removeduplicates("msgctxt")
+
+        assert len(store.units) == 1
+        assert store.units[0].getpreviouscontext() == location
+
+    def test_merge_duplicates_msgctxt_extends_existing_context(self) -> None:
+        """Location context should extend rather than replace existing context."""
+        store = self.StoreClass(noheader=True)
+        for location in ("source1", "source2"):
+            unit = pypo.pounit("message")
+            unit.setcontext("existing")
+            unit.addlocation(location)
+            store.addunit(unit)
+
+        store.removeduplicates("msgctxt")
+
+        assert [unit.getpreviouscontext() for unit in store.units] == [
+            "existing",
+            "existingsource2",
+        ]
 
     def test_merge_blanks(self) -> None:
         """Checks that merging adds msgid_comments to blanks."""
@@ -568,6 +697,44 @@ msgstr ""
         assert unit.target == "Dawn"
         unit.target = "Glow"
         assert unit.target == "Glow"
+
+    def test_source_cache_invalidation(self) -> None:
+        unit = pypo.pounit("Aurora")
+        assert unit._source_cache is None
+        assert unit.source == "Aurora"
+        assert unit._source_cache == "Aurora"
+        unit.source = "Dawn"
+        assert unit._source_cache is None
+        assert unit.source == "Dawn"
+        assert unit._source_cache == "Dawn"
+
+    def test_source_cache_tracks_raw_message_mutations(self) -> None:
+        unit = pypo.pounit("Aurora")
+        assert unit.source == "Aurora"
+
+        unit.msgid = ['"Dawn"']
+        assert unit.source == "Dawn"
+        assert unit.getid() == "Dawn"
+
+        unit.msgid[0] = '"Glow"'
+        assert unit.source == "Glow"
+        assert 'msgid "Glow"' in str(unit)
+
+        unit.msgid_plural = ['"Glows"']
+        assert unit.source.strings == ["Glow", "Glows"]
+
+        unit.msgid_plural.append('" again"')
+        assert unit.source.strings == ["Glow", "Glows again"]
+
+    def test_plural_source_returns_fresh_multistring(self) -> None:
+        unit = pypo.pounit(multistring(["Aurora", "Auroras"]))
+
+        first = unit.source
+        second = unit.source
+
+        assert first.strings == ["Aurora", "Auroras"]
+        assert second.strings == ["Aurora", "Auroras"]
+        assert first is not second
 
     def test_plural_target_returns_fresh_multistring(self) -> None:
         unit = pypo.pounit("Aurora")

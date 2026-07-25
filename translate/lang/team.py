@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Module to guess the language ISO code based on the 'Language-Team' entry in
@@ -781,4 +781,4 @@ if __name__ == "__main__":
 
     for fname in argv[1:]:
         store = factory.getobject(fname)
-        print(fname, guess_language(store.parseheader().get("Language-Team", "")))  # noqa: T201  # ty:ignore[unresolved-attribute]
+        print(fname, guess_language(store.parseheader().get("Language-Team", "")))  # ruff:ignore[print]  # ty:ignore[unresolved-attribute]

@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 #
 
 """
@@ -22,11 +22,11 @@ Module for parsing Qt .ts files for translation.
 
 Currently this module supports the old format of .ts files. Some applications
 use the newer .ts format which are documented here:
-`TS file format 4.3 <http://doc.qt.io/archives/4.3/linguist-ts-file-format.html>`_,
-`Example <http://svn.ez.no/svn/ezcomponents/trunk/Translation/docs/linguist-format.txt>`_
+`TS file format 4.3 <https://doc.qt.io/archives/4.3/linguist-ts-file-format.html>`_,
+`Example <https://github.com/zetacomponents/Translation/blob/master/docs/linguist-format.txt>`_
 
-`Specification of the valid variable entries <http://doc.qt.io/qt-5/qstring.html#arg>`_,
-`2 <http://doc.qt.io/qt-5/qstring.html#arg-2>`_
+`Specification of the valid variable entries <https://doc.qt.io/qt-5/qstring.html#arg>`_,
+`2 <https://doc.qt.io/qt-5/qstring.html#arg-2>`_
 """
 
 from __future__ import annotations
@@ -77,7 +77,9 @@ class QtTsParser:
             # Preserve the original doctype so round-tripped TS files keep the
             # same declaration shape as the input.
             self.doctype = self.document.docinfo.doctype or None
-            assert self.document.getroot().tag == "TS"
+            root = self.document.getroot()
+            assert root.tag == "TS"
+            self._validate_version(root)
 
     @staticmethod
     def _parse_content(content: str | bytes) -> etree._ElementTree:
@@ -89,6 +91,15 @@ class QtTsParser:
     @staticmethod
     def _looks_like_xml(content: str) -> bool:
         return content.lstrip().startswith("<")
+
+    @staticmethod
+    def _validate_version(root: etree._Element) -> None:
+        """Ensure the document uses a legacy TS version."""
+        version = root.get("version")
+        if version is not None and not version.startswith("1."):
+            raise ValueError(
+                f"TS version '{version}' is not compatible with the legacy TS format."
+            )
 
     @staticmethod
     def _normalize_text_input(content: str) -> str:

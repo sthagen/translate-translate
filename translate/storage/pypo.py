@@ -7,7 +7,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -16,7 +16,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Classes that hold units of Gettext .po files (pounit) or entire
@@ -247,6 +247,8 @@ class pounit(pocommon.pounit):
         self.msgstr: list[str] | dict[int, list[str]] = []
         self._msgstrlen_cache: int | None = None
         self._typecomments_cache: list[str] | None = None
+        self._source_cache: str | tuple[str, ...] | None = None
+        self._source_cache_key: tuple[str | None, ...] | None = None
         self._target_cache: str | tuple[str, ...] | None = None
         super().__init__(source)
 
@@ -280,12 +282,9 @@ class pounit(pocommon.pounit):
     def _invalidate_target_cache(self) -> None:
         self._target_cache = None
 
-    def _get_source_vars(self, msgid, msgid_plural):
-        singular = unquotefrompo(msgid)
-        if self.hasplural():
-            pluralform = unquotefrompo(msgid_plural)
-            return multistring([singular, pluralform])
-        return singular
+    def _invalidate_source_cache(self) -> None:
+        self._source_cache = None
+        self._source_cache_key = None
 
     def quote(self, text: str) -> list[str]:
         return quoteforpo(text, self.wrapper)
@@ -304,7 +303,22 @@ class pounit(pocommon.pounit):
     @property
     def source(self):
         """Unescaped msgid."""
-        return self._get_source_vars(self.msgid, self.msgid_plural)
+        # The raw fields are public mutable lists, so use their current contents
+        # as the key rather than relying solely on the source setter.
+        source_cache_key = (*self.msgid, None, *self.msgid_plural)
+        if self._source_cache is None or self._source_cache_key != source_cache_key:
+            singular = unquotefrompo(self.msgid)
+            if self.hasplural():
+                self._source_cache = (
+                    singular,
+                    unquotefrompo(self.msgid_plural),
+                )
+            else:
+                self._source_cache = singular
+            self._source_cache_key = source_cache_key
+        if isinstance(self._source_cache, tuple):
+            return multistring(list(self._source_cache))
+        return self._source_cache
 
     @source.setter
     def source(self, source: str | list[str] | multistring) -> None:
@@ -314,6 +328,7 @@ class pounit(pocommon.pounit):
         :param source: an unescaped source string.
         """
         self._rich_source = None
+        self._invalidate_source_cache()
         self.msgid, self.msgid_plural = self._set_source_vars(source)
 
     def _get_prev_source(self):
@@ -518,26 +533,31 @@ class pounit(pocommon.pounit):
                 splitlist2 = []
                 prefix = "#"
                 for item in list1:
-                    splitlist1.extend(item.split()[1:])
-                    prefix = item.split()[0]
+                    parts = item.split()
+                    splitlist1.extend(parts[1:])
+                    prefix = parts[0]
                 for item in list2:
-                    splitlist2.extend(item.split()[1:])
-                    prefix = item.split()[0]
+                    parts = item.split()
+                    splitlist2.extend(parts[1:])
+                    prefix = parts[0]
+                existing = set(splitlist1)
                 list1.extend(
                     [
                         f"{prefix} {item}{lineend}"
                         for item in splitlist2
-                        if item not in splitlist1
+                        if item not in existing
                     ]
                 )
             elif list1 != list2:
                 # Normal merge, but conform to list1 newline style
+                existing = set(list1)
                 for item in list2:
                     if lineend:
                         item = item.rstrip() + lineend
                     # avoid duplicate comment lines (this might cause some problems)
-                    if item not in list1 or len(item) < 5:
+                    if item not in existing or len(item) < 5:
                         list1.append(item)
+                        existing.add(item)
 
         if not isinstance(otherunit, pounit):
             super().merge(otherunit, overwrite, comments)
@@ -912,13 +932,9 @@ class pofile(pocommon.pofile[pounit]):
         # about files already containing msgctxt? - test
         id_dict = {}
         uniqueunits = []
-        # TODO: this is using a list as the pos aren't hashable, but this is slow.
-        # probably not used frequently enough to worry about it, though.
-        markedpos = []
 
         def addcomment(thepo) -> None:
             thepo.msgidcomments.append(f'"_: {" ".join(thepo.getlocations())}\\n"')
-            markedpos.append(thepo)
 
         for thepo in self.units:
             id = thepo.getid()
@@ -934,11 +950,10 @@ class pofile(pocommon.pofile[pounit]):
                         uniqueunits.append(thepo)
                 elif duplicatestyle == "msgctxt":
                     origpo = id_dict[id]
-                    if origpo not in markedpos and not origpo.msgctxt:
+                    if not origpo.msgctxt:
                         origpo.msgctxt.append(
                             f'"{escapeforpo(" ".join(origpo.getlocations()))}"'
                         )
-                        markedpos.append(thepo)
                     thepo.msgctxt.append(
                         f'"{escapeforpo(" ".join(thepo.getlocations()))}"'
                     )

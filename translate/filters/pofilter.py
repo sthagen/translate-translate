@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Perform quality checks on Gettext PO, XLIFF and TMX localization files.
@@ -23,9 +23,9 @@ Snippet files are created whenever a test fails.  These can be examined,
 corrected and merged back into the originals using pomerge.
 
 See:
-http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/pofilter.html
+https://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/pofilter.html
 for examples and usage instructions and
-http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/pofilter_tests.html
+https://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/pofilter_tests.html
 for full descriptions of all tests.
 """
 
@@ -168,7 +168,7 @@ class FilterOptionParser(optrecurse.RecursiveOptionParser):
             self.error("No valid filters were specified")
 
         if options.listfilters:
-            print(options.checkfilter.getfilterdocs())  # noqa: T201
+            print(options.checkfilter.getfilterdocs())  # ruff:ignore[print]
         else:
             self.recursiveprocess(options)
 

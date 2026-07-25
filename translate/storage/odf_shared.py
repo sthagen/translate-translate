@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 
 # Copied from git commit 96b9f1419453d8079dd1631c329f04d6e005baae from
@@ -28,6 +28,27 @@ office_uri = "urn:oasis:names:tc:opendocument:xmlns:office:1.0"
 presentation_uri = "urn:oasis:names:tc:opendocument:xmlns:presentation:1.0"
 text_uri = "urn:oasis:names:tc:opendocument:xmlns:text:1.0"
 svg_uri = "urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+
+
+ODF_EXTENSIONS = (
+    "odt",
+    "ods",
+    "odp",
+    "odg",
+    "odc",
+    "odf",
+    "odi",
+    "odm",
+    "ott",
+    "ots",
+    "otp",
+    "otg",
+    "otc",
+    "otf",
+    "oti",
+    "oth",
+)
+ODF_INPUT_EXTENSIONS = ("sxw", *ODF_EXTENSIONS)
 
 
 inline_elements = [

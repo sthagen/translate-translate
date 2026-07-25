@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """tests for storage base classes."""
 
@@ -92,6 +92,37 @@ def test_known_language_single_plural_tags_keep_language_mapping() -> None:
     assert store.get_plural_tags(multistring(["one form"])) == ["one", "other"]
 
 
+def test_plural_tags_are_cached_by_language_and_count(monkeypatch) -> None:
+    get_cldr_plural_tags = base.get_cldr_plural_tags
+    get_cldr_plural_tags_calls = 0
+
+    def counting_get_cldr_plural_tags(locale, plural_count=None):
+        nonlocal get_cldr_plural_tags_calls
+        get_cldr_plural_tags_calls += 1
+        return get_cldr_plural_tags(locale, plural_count)
+
+    monkeypatch.setattr(base, "get_cldr_plural_tags", counting_get_cldr_plural_tags)
+    store = base.TranslationStore()
+    store.settargetlanguage("en")
+
+    assert store.get_plural_tags(multistring(["one", "other"])) == ["one", "other"]
+    assert store.get_plural_tags(multistring(["first", "second"])) == [
+        "one",
+        "other",
+    ]
+
+    store.settargetlanguage("ar")
+    assert store.get_plural_tags(multistring(["one", "other"])) == [
+        "zero",
+        "one",
+        "two",
+        "few",
+        "many",
+        "other",
+    ]
+    assert get_cldr_plural_tags_calls == 2
+
+
 class TestTranslationUnit:
     """
     Tests a TranslationUnit.
@@ -139,7 +170,7 @@ class TestTranslationUnit:
         # Normalize metadata before first set of comparisons
         self.normalize_unit_metadata(unit1, unit2, unit3, unit4, unit5, unit6)
         # pylint: disable-next=comparison-with-itself
-        assert unit1 == unit1  # noqa: PLR0124
+        assert unit1 == unit1  # ruff:ignore[comparison-with-itself]
         assert unit1 == unit2
         assert unit1 != unit4
         unit1.target = "Stressed Ting"

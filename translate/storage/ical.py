@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Class that manages iCalender files for translation.
@@ -45,7 +45,7 @@ LANGUAGE Attribute
     of a single multilingual iCalendar file.
 
 Future Format Support
-    As this format used `vobject <http://eventable.github.io/vobject/>`_
+    As this format used `vobject <https://eventable.github.io/vobject/>`_
     which supports various formats including
     :wp:`vCard` it is possible to expand
     this format to understand those if needed.

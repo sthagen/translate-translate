@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """Base classes for storage interfaces."""
 
@@ -166,7 +166,7 @@ class TranslationUnit:
     Base class for translation units.
 
     Our concept of a *translation unit* is influenced heavily by `XLIFF
-    <http://docs.oasis-open.org/xliff/xliff-core/xliff-core.html>`_.
+    <https://docs.oasis-open.org/xliff/xliff-core/xliff-core.html>`_.
 
     As such most of the method- and variable names borrows from XLIFF
     terminology.
@@ -881,6 +881,7 @@ class TranslationStore(Generic[U]):
         self.locationindex = {}
         self.sourceindex = {}
         self.id_index = {}
+        self._plural_tags_cache: dict[tuple[str | None, int | None], list[str]] = {}
 
     @property
     def encoding(self):
@@ -897,19 +898,19 @@ class TranslationStore(Generic[U]):
             value = "utf-8"
         self._encoding = value
 
-    def getsourcelanguage(self):
+    def getsourcelanguage(self) -> str | None:
         """Get the source language for this store."""
         return self.sourcelanguage
 
-    def setsourcelanguage(self, sourcelanguage) -> None:
+    def setsourcelanguage(self, sourcelanguage: str) -> None:
         """Set the source language for this store."""
         self.sourcelanguage = sourcelanguage
 
-    def gettargetlanguage(self):
+    def gettargetlanguage(self) -> str | None:
         """Get the target language for this store."""
         return self.targetlanguage
 
-    def settargetlanguage(self, targetlanguage) -> None:
+    def settargetlanguage(self, targetlanguage: str | None) -> None:
         """Set the target language for this store."""
         self.targetlanguage = targetlanguage
 
@@ -1125,8 +1126,9 @@ class TranslationStore(Generic[U]):
             default_encodings = ["utf-8"]
         detected_encoding: EncodingDict
         try:
+            # ruff:ignore[import-outside-top-level]
             # pylint: disable-next=import-outside-toplevel
-            from charset_normalizer import detect  # noqa: PLC0415
+            from charset_normalizer import detect
         except ImportError:
             detected_encoding = self.fallback_detection(text)
         else:
@@ -1277,11 +1279,20 @@ class TranslationStore(Generic[U]):
     def get_plural_tags(
         self, target: list[str] | str | multistring | None = None
     ) -> list[str]:
-        locale = self.get_base_locale_code()
         plural_count = None
         if target is not None:
-            plural_count = len(self.UnitClass.get_plural_strings(target))
-        return get_cldr_plural_tags(locale, plural_count)
+            if isinstance(target, multistring):
+                plural_count = len(target.strings)
+            elif isinstance(target, list):
+                plural_count = len(target)
+            else:
+                plural_count = 1
+        cache_key = (self.gettargetlanguage(), plural_count)
+        if cache_key not in self._plural_tags_cache:
+            self._plural_tags_cache[cache_key] = get_cldr_plural_tags(
+                self.get_base_locale_code(), plural_count
+            )
+        return self._plural_tags_cache[cache_key]
 
 
 class UnitId:

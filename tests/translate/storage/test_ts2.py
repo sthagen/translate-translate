@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,14 +14,16 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Tests for Qt Linguist storage class.
 
 Reference implementation & tests:
-http://code.qt.io/cgit/qt/qttools.git/tree/tests/auto/linguist/lconvert/data
+https://code.qt.io/cgit/qt/qttools.git/tree/tests/auto/linguist/lconvert/data
 """
+
+import pytest
 
 from translate.storage import ts2 as ts
 from translate.storage.placeables import parse, xliff
@@ -138,6 +140,18 @@ class TestTSUnit(test_base.TestTranslationUnit):
 
 class TestTSfile(test_base.TestTranslationStore):
     StoreClass = ts.tsfile
+
+    @pytest.mark.parametrize("version", ["2.0", "2.1"])
+    def test_accepts_modern_version(self, version: str) -> None:
+        ts.tsfile.parsestring(f'<TS version="{version}"></TS>')
+
+    @pytest.mark.parametrize("version", ["1.0", "1.1", "3.0", "invalid"])
+    def test_rejects_incompatible_version(self, version: str) -> None:
+        with pytest.raises(
+            ValueError,
+            match=rf"TS version '{version}'.*TS 2\.x format",
+        ):
+            ts.tsfile.parsestring(f'<TS version="{version}"></TS>')
 
     def test_basic(self) -> None:
         tsfile = ts.tsfile()

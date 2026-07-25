@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 r"""
 Classes that hold units of .dtd files (:class:`dtdunit`) or entire files
@@ -25,7 +25,7 @@ These are specific .dtd files for localisation used by mozilla.
 Specifications
     The following information is provided by Mozilla:
 
-    `Specification <http://www.w3.org/TR/REC-xml/#sec-entexpand>`_
+    `Specification <https://www.w3.org/TR/REC-xml/#sec-entexpand>`_
 
     There is a grammar for entity definitions, which isn't really precise,
     as the spec says.  There's no formal specification for DTD files, it's

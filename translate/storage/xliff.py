@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Module for handling XLIFF files for translation.
@@ -611,11 +611,11 @@ class Xliff1File(XliffFile[U]):
 
     sourcelanguage = property(getsourcelanguage, setsourcelanguage)
 
-    def settargetlanguage(self, language) -> None:  # ty:ignore[invalid-method-override]
-        if not language:
+    def settargetlanguage(self, targetlanguage: str | None) -> None:
+        if not targetlanguage:
             return
         for filenode in self.document.getroot().iterchildren(self.namespaced("file")):
-            filenode.set("target-language", language)
+            filenode.set("target-language", targetlanguage)
 
     def gettargetlanguage(self):
         filenode = next(self.document.getroot().iterchildren(self.namespaced("file")))
@@ -797,7 +797,7 @@ class Xliff1File(XliffFile[U]):
     def parsestring(cls, storestring):
         """Parses the string to return the correct file object."""
         # pylint: disable-next=import-outside-toplevel
-        from translate.storage import poxliff  # noqa: PLC0415
+        from translate.storage import poxliff  # ruff:ignore[import-outside-top-level]
 
         xliff = super().parsestring(storestring)
         if xliff.units:

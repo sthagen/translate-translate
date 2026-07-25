@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Classes that hold units of PHP localisation files :class:`phpunit` or
@@ -51,7 +51,7 @@ Nested arrays without key for nested array are not supported:
 The working of PHP strings and specifically the escaping conventions which
 differ between single quote (') and double quote (") characters are
 implemented as outlined in the PHP documentation for the
-`String type <http://www.php.net/language.types.string>`_.
+`String type <https://www.php.net/language.types.string>`_.
 """
 
 import re
@@ -128,7 +128,7 @@ class PHPLexer(FilteredLexer):
             token_type = self.tokens[self.pos].type
             token_value = self.tokens[self.pos].value
             self.pos += 1
-            if token_type == "WHITESPACE":  # noqa: S105
+            if token_type == "WHITESPACE":  # ruff:ignore[hardcoded-password-string]
                 if "\n" in token_value:
                     break
                 continue
@@ -177,8 +177,8 @@ def phpencode(text, quotechar="'"):
     Convert Python string to PHP escaping.
 
     The encoding is implemented for
-    `'single quote' <http://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.single>`_
-    and `"double quote" <http://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.double>`_
+    `'single quote' <https://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.single>`_
+    and `"double quote" <https://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.double>`_
     syntax.
 
     heredoc and nowdoc are not implemented and it is not certain whether this
@@ -353,11 +353,18 @@ class phpfile(base.TranslationStore):
 
     def serialize(self, out) -> None:
         """Convert the units back to lines."""
+        array_units: dict[str, list[phpunit]] = {}
+        for unit in self.units:
+            name_parts = unit.name.split("->")
+            array_name = name_parts[0]
+            for name_part in name_parts[1:]:
+                array_units.setdefault(array_name, []).append(unit)
+                array_name = f"{array_name}->{name_part}"
 
         def write(text) -> None:
             out.write(text.encode(self.encoding))
 
-        def handle_array(unit, arrname, handled, indent=0) -> None:
+        def handle_array(arrname, handled, indent=0) -> None:
             if arrname in handled:
                 return
             children = set()
@@ -383,14 +390,10 @@ class phpfile(base.TranslationStore):
             indent += 4
             prefix = f"{arrname}->"
             pref_len = len(prefix)
-            for item in self.units:
-                if not item.name.startswith(prefix):
-                    continue
+            for item in array_units[arrname]:
                 name = item.name[pref_len:]
                 if "->" in name:
-                    handle_array(
-                        item, prefix + name.split("->", 1)[0], children, indent
-                    )
+                    handle_array(prefix + name.split("->", 1)[0], children, indent)
                 else:
                     write(item.getoutput(" " * indent, name))
             # Write array end
@@ -403,7 +406,7 @@ class phpfile(base.TranslationStore):
         handled = set()
         for unit in self.units:
             if "->" in unit.name:
-                handle_array(unit, unit.name.split("->", 1)[0], handled)
+                handle_array(unit.name.split("->", 1)[0], handled)
             else:
                 write(unit.getoutput())
 

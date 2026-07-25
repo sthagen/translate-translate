@@ -17,7 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Ngram models for language guessing.
@@ -167,4 +167,4 @@ if __name__ == "__main__":
     from translate.misc.file_discovery import get_abs_data_filename
 
     lm = NGram(get_abs_data_filename("langmodels"))
-    print(lm.classify(text))  # noqa: T201
+    print(lm.classify(text))  # ruff:ignore[print]

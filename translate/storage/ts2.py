@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Module for handling Qt linguist (.ts) files.
@@ -23,13 +23,13 @@ This will eventually replace the older ts.py which only supports the older
 format. While converters haven't been updated to use this module, we retain
 both.
 
-`TS file format 4.3 <http://doc.qt.io/archives/4.3/linguist-ts-file-format.html>`_,
-`4.8 <http://doc.qt.io/qt-4.8/linguist-ts-file-format.html>`_,
-`5 <http://doc.qt.io/qt-5/linguist-ts-file-format.html>`_.
-`Example <http://svn.ez.no/svn/ezcomponents/trunk/Translation/docs/linguist-format.txt>`_.
+`TS file format 4.3 <https://doc.qt.io/archives/4.3/linguist-ts-file-format.html>`_,
+`4.8 <https://doc.qt.io/qt-4.8/linguist-ts-file-format.html>`_,
+`5 <https://doc.qt.io/qt-5/linguist-ts-file-format.html>`_.
+`Example <https://github.com/zetacomponents/Translation/blob/master/docs/linguist-format.txt>`_.
 
-`Specification of the valid variable entries <http://doc.qt.io/qt-5/qstring.html#arg>`_,
-`2 <http://doc.qt.io/qt-5/qstring.html#arg-2>`_
+`Specification of the valid variable entries <https://doc.qt.io/qt-5/qstring.html#arg>`_,
+`2 <https://doc.qt.io/qt-5/qstring.html#arg-2>`_
 """
 
 from lxml import etree
@@ -276,7 +276,7 @@ class tsunit(lisa.LISAunit):
     def istranslatable(self):
         # Found a file in the wild with no context and an empty source. This
         # served as a header, so let's classify this as not translatable.
-        # http://bibletime.svn.sourceforge.net/viewvc/bibletime/trunk/bibletime/i18n/messages/bibletime_ui.ts
+        # https://bibletime.svn.sourceforge.net/viewvc/bibletime/trunk/bibletime/i18n/messages/bibletime_ui.ts
         # Furthermore, let's decide to handle obsolete units as untranslatable
         # like we do with PO.
         return bool(self.getid()) and not self.isobsolete()
@@ -446,12 +446,18 @@ class tsfile(lisa.LISAfile[tsunit]):
 
     def initbody(self) -> None:
         """Initialises self.body."""
-        self.namespace = self.document.getroot().nsmap.get(None, "")
-        self.header = self.document.getroot()
+        root = self.document.getroot()
+        version = root.get("version")
+        if version is not None and not version.startswith("2."):
+            raise ValueError(
+                f"TS version '{version}' is not compatible with the TS 2.x format."
+            )
+        self.namespace = root.nsmap.get(None, "")
+        self.header = root
         if self._contextname:
             self.body = self._getcontextnode(self._contextname)
         else:
-            self.body = self.document.getroot()
+            self.body = root
 
     def getsourcelanguage(self) -> str:
         """
@@ -479,7 +485,7 @@ class tsfile(lisa.LISAfile[tsunit]):
         """
         return data.normalize_code(self.header.get("language"))
 
-    def settargetlanguage(self, targetlanguage: str) -> None:
+    def settargetlanguage(self, targetlanguage: str | None) -> None:
         """
         Set the target language for this .ts file to *targetlanguage*.
 

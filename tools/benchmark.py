@@ -5,7 +5,7 @@
 #
 # translate is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # translate is distributed in the hope that it will be useful,
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 import argparse
 import cProfile
@@ -77,12 +77,12 @@ class TranslateBenchmarker:
                 sample_file = self.StoreClass()
                 for _stringnum in range(strings_per_file):
                     source_string = " ".join(
-                        f"word{random.randint(0, strings_per_file) * i}"  # noqa: S311
+                        f"word{random.randint(0, strings_per_file) * i}"  # ruff:ignore[suspicious-non-cryptographic-random-usage]
                         for i in range(source_words_per_string)
                     )
                     sample_unit = sample_file.addsourceunit(source_string)
                     sample_unit.target = " ".join(
-                        f"drow{random.randint(0, strings_per_file) * i}"  # noqa: S311
+                        f"drow{random.randint(0, strings_per_file) * i}"  # ruff:ignore[suspicious-non-cryptographic-random-usage]
                         for i in range(target_words_per_string)
                     )
                 sample_file.savefile(

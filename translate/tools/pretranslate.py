@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -14,13 +14,13 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses/>.
+# along with this program; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Fill localization files with suggested translations based on
 translation memory and existing translations.
 
-See: http://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/pretranslate.html
+See: https://docs.translatehouse.org/projects/translate-toolkit/en/latest/commands/pretranslate.html
 for examples and usage instructions.
 """
 
@@ -34,7 +34,7 @@ tmmatcher = None
 
 def memory(tmfiles, max_candidates=1, min_similarity=75, max_length=1000):
     """Returns the TM store to use. Only initialises on first call."""
-    global tmmatcher  # noqa: PLW0603
+    global tmmatcher  # ruff:ignore[global-statement]
     # Only initialise first time
     if tmmatcher is None:
         if isinstance(tmfiles, list):
