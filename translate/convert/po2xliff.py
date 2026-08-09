@@ -100,18 +100,20 @@ class po2xliff:
 
     @staticmethod
     def contextlist(location):
-        contexts = []
+        sourcefile, linenumber = location, None
         if ":" in location:
-            sourcefile, linenumber = location.split(":", 1)
-        else:
-            sourcefile, linenumber = location, None
-        contexts.append(("sourcefile", sourcefile))
+            head, tail = location.rsplit(":", 1)
+            if head and tail.isdigit():
+                sourcefile, linenumber = head, tail
+        contexts = [("sourcefile", sourcefile)]
         if linenumber:
             contexts.append(("linenumber", linenumber))
         return contexts
 
     def convertstore(self, inputstore, templatefile=None, **kwargs):
         """Converts a .po file to .xlf format."""
+        if not kwargs.get("targetlanguage"):
+            kwargs["targetlanguage"] = inputstore.parseheader().get("Language")
         if templatefile is None:
             outputstore = poxliff.PoXliffFile(**kwargs)
         else:

@@ -157,6 +157,20 @@ msgstr "kunye"
             ("sourcefile", "asdf.c"),
         ]
 
+    def test_location_without_linenumber(self) -> None:
+        """Non-numeric locations must not be split into sourcefile/linenumber."""
+        location = "office:document-content[0]/office:body[0]/text:p[0]"
+        minipo = f"""#: {location}
+msgid "one"
+msgstr "kunye"
+"""
+        xliff = self.po2xliff(minipo)
+        node = xliff.units[0].xmlelement
+        assert self.getcontexttuples(node, xliff.namespace) == [
+            ("sourcefile", location)
+        ]
+        assert xliff.units[0].getlocations() == [location]
+
     def test_othercomments(self) -> None:
         minipo = r"""# Translate?
 # How?
@@ -371,6 +385,39 @@ msgstr "Uno"
         xliff = self.po2xliff(minipo, "af", "es")
         assert xliff.sourcelanguage == "af"
         assert xliff.targetlanguage == "es"
+
+    def test_target_language_from_po_header(self) -> None:
+        minipo = r"""msgid ""
+msgstr ""
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "hello"
+msgstr "مرحبا"
+"""
+        assert self.po2xliff(minipo).targetlanguage == "ar"
+        assert self.po2xliff(minipo, targetlanguage="es").targetlanguage == "es"
+
+    def test_target_language_missing_from_po_header(self) -> None:
+        minipo = r"""msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "hello"
+msgstr "hello"
+"""
+        assert self.po2xliff(minipo).targetlanguage is None
+
+    def test_empty_target_language_in_po_header(self) -> None:
+        minipo = r"""msgid ""
+msgstr ""
+"Language: \n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "hello"
+msgstr "hello"
+"""
+        assert self.po2xliff(minipo).targetlanguage is None
 
     def test_variables(self) -> None:
         minipo = r'''msgid "%s%s%s%s has made %s his or her buddy%s%s"
