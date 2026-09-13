@@ -485,7 +485,8 @@ class TestTBXfile(test_base.TestTranslationStore):
 
         unit.target = None
         assert unit.source == "color"
-        assert unit.target is None
+        assert unit.target == ""
+        assert not unit.istranslated()
 
     def test_messed_up_language_data_does_not_match_configured_language(self) -> None:
         tbxdata = self.language_selection_tbx(
@@ -599,7 +600,7 @@ class TestTBXfile(test_base.TestTranslationStore):
         )
         unit = tbxfile.units[0]
 
-        assert unit.source is None
+        assert unit.source == "color"
         assert unit.target == "Farbe"
 
         unit.source = "colour"

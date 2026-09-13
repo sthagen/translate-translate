@@ -26,6 +26,7 @@ from typing import TypeVar
 
 from lxml import etree
 
+from translate.lang.data import DEFAULT_LANGS
 from translate.misc.xml_helpers import (
     expand_closing_tags,
     getText,
@@ -134,11 +135,38 @@ class LISAunit(base.TranslationUnit):
 
     @source.setter
     def source(self, source) -> None:
+        self._invalidate_store_indexes()
         self.setsource(source, sourcelang="en")
 
     def setsource(self, text, sourcelang="en") -> None:
         self._rich_source = None
-        self.source_dom = self.createlanguageNode(sourcelang, text, "source")
+        self._invalidate_store_indexes()
+        replacement = self.createlanguageNode(sourcelang, text, "source")
+        current = self.source_dom
+        if current is None or current.tag != replacement.tag:
+            self.source_dom = replacement
+            return
+        current_text = current
+        replacement_text = replacement
+        if self.textNode:
+            current_text = current.find(f".//{self.namespaced(self.textNode)}")
+            replacement_text = replacement.find(f".//{self.namespaced(self.textNode)}")
+        if current_text is None or replacement_text is None:
+            self.source_dom = replacement
+            return
+        # Keep language-level metadata and text-node attributes. Inline content
+        # belongs to the old text, but must survive a no-op source assignment.
+        if (
+            self.getNodeText(
+                current, getXMLspace(self.xmlelement, self._default_xml_space)
+            )
+            != text
+        ):
+            current_text.text = replacement_text.text
+            for child in list(current_text):
+                current_text.remove(child)
+            current_text.extend(replacement_text)
+        current.attrib.update(replacement.attrib)
 
     def set_target_dom(self, dom_node, append=False) -> None:
         languageNodes = self.getlanguageNodes()
@@ -203,12 +231,12 @@ class LISAunit(base.TranslationUnit):
         self.settarget(target)
 
     @staticmethod
-    def createlanguageNode(lang, text, purpose=None) -> None:
+    def createlanguageNode(lang, text, purpose=None) -> etree._Element:
         """
         Returns a xml Element setup with given parameters to represent a
         single language entry. Has to be overridden.
         """
-        return
+        raise NotImplementedError
 
     def getlanguageNodes(self):
         """Returns a list of all nodes that contain per language information."""
@@ -275,6 +303,11 @@ def normalize_language(language: str | None) -> str | None:
     return language.replace("_", "-").lower()
 
 
+DEFAULT_LANGUAGE_VARIANTS = {
+    language.split("_", 1)[0]: language.replace("_", "-") for language in DEFAULT_LANGS
+}
+
+
 class MultilingualLISAunit(LISAunit):
     """A LISA unit with sibling nodes representing different languages."""
 
@@ -300,13 +333,28 @@ class MultilingualLISAunit(LISAunit):
         for node in self.getlanguageNodes():
             if normalize_language(getXMLlang(node)) == language:
                 return node
+        default_language = DEFAULT_LANGUAGE_VARIANTS.get(language)
+        if default_language is not None:
+            for node in self.getlanguageNodes():
+                if normalize_language(getXMLlang(node)) == default_language:
+                    return node
         return None
 
     def _get_source_language_node(self):
         return self._get_language_node(self._get_source_language())
 
-    def _get_target_language_node(self):
-        return self._get_language_node(self._get_target_language())
+    def _get_target_language_node(self, language=None):
+        language = normalize_language(language or self._get_target_language())
+        node = self._get_language_node(language)
+        if (
+            node is not None
+            and normalize_language(getXMLlang(node)) != language
+            and normalize_language(self._get_source_language()) != language
+            and node is self._get_source_language_node()
+        ):
+            # A regional source is not an absent, distinct target language.
+            return None
+        return node
 
     def _get_fallback_source_node(self):
         language_nodes = self.getlanguageNodes()
@@ -350,26 +398,21 @@ class MultilingualLISAunit(LISAunit):
 
     @source.setter
     def source(self, source) -> None:
+        self._invalidate_store_indexes()
         self.setsource(source)
 
-    def _invalidate_store_indexes(self) -> None:
-        store = getattr(self, "_store", None)
-        if store is not None:
-            if hasattr(store, "_invalidate_indexes"):
-                store._invalidate_indexes()
-            else:
-                store.locationindex = {}
-                store.sourceindex = {}
-                store.id_index = {}
-
     def setsource(self, text, sourcelang=None) -> None:
-        super().setsource(text, sourcelang or self._get_source_language() or "en")
+        language = sourcelang or self._get_source_language() or "en"
+        source_node = self._get_language_node(language)
+        if source_node is not None and source_node is self.source_dom:
+            language = getXMLlang(source_node)
+        super().setsource(text, language)
         self._invalidate_store_indexes()
 
     def set_target_dom(self, dom_node, append=False) -> None:
         language_nodes = self.getlanguageNodes()
         target_node = (
-            self._get_language_node(getXMLlang(dom_node))
+            self._get_target_language_node(getXMLlang(dom_node))
             if dom_node is not None
             else self.get_target_dom()
         )
@@ -395,7 +438,7 @@ class MultilingualLISAunit(LISAunit):
 
     def get_target_dom(self, lang=None):
         if lang:
-            return self._get_language_node(lang)
+            return self._get_target_language_node(lang)
 
         target_language = self._get_target_language()
         if normalize_language(target_language) is not None:
@@ -433,7 +476,7 @@ class MultilingualLISAunit(LISAunit):
             "targetlanguage", "xx"
         )
         language_node = (
-            self._get_language_node(target_language)
+            self._get_target_language_node(target_language)
             if lang is not None
             else self.target_dom
         )

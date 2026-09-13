@@ -37,7 +37,7 @@ class StringsDictUnit(base.DictUnit):
         self.localized_format: str | None = None
 
         loc = source or ""
-        if len(loc) > 0 and loc[0] == ":":  # ty:ignore[index-out-of-bounds]
+        if len(loc) > 0 and loc[0] == ":":
             loc = loc[1:]
 
         # Check if this unit is a format string or a variable
@@ -79,6 +79,7 @@ class StringsDictUnit(base.DictUnit):
         return self.source
 
     def setid(self, value, unitid=None) -> None:
+        self._invalidate_store_indexes()
         previous_innerkey = (
             self.innerkey if getattr(self, "_unitid", None) is not None else None
         )
