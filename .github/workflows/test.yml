@@ -42,10 +42,10 @@ jobs:
       with:
         allow-prereleases: true
         python-version: ${{ matrix.python-version }}
-    - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+    - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       with:
         cache-suffix: ${{ steps.setup_python.outputs.python-version }}
-        version: 0.12.13
+        version: 0.12.17
     - name: Install apt dependencies
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -71,7 +71,7 @@ jobs:
       run: make test
     - name: Coverage
       run: uv run coverage xml
-    - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+    - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       with:
         name: ${{ runner.os }}, Python ${{ matrix.python-version }}, ${{ matrix.requirements }}
         token: ${{ secrets.CODECOV_TOKEN }} # zizmor: ignore[secrets-outside-env]
